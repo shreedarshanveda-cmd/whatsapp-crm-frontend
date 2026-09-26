@@ -1,263 +1,290 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>WhatsApp CRM Mobile</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vedashree AI WhatsApp CRM</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+body { font-family: 'Plus Jakarta Sans', sans-serif; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+</style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden select-none">
-  <div id="root"></div>
-
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-
-    const initialContacts = [
-      { id: "1", name: "Rahul Sharma", phone: "+91 98765 43210", source: "Facebook Ad", status: "active", unread: 2, lastMsg: "Price details please?", time: "10:30 AM" },
-      { id: "2", name: "Pooja Verma", phone: "+91 91234 56789", source: "Instagram DM", status: "active", unread: 0, lastMsg: "Payment confirmed, thank you!", time: "09:45 AM" },
-      { id: "3", name: "Amit Patel", phone: "+91 99887 76655", source: "Website Widget", status: "active", unread: 0, lastMsg: "Can you deliver to Delhi?", time: "Yesterday" },
-      { id: "4", name: "Suresh Gupta", phone: "+91 88776 65544", source: "Organic", status: "opted_out", unread: 0, lastMsg: "STOP", time: "24 Sep" }
-    ];
-
-    const initialMessages = {
-      "1": [
-        { id: "m1", sender: "customer", text: "Hi, I saw your ad on Facebook.", time: "10:28 AM" },
-        { id: "m2", sender: "bot", text: "Hello Rahul! How can we assist you today?", time: "10:29 AM" },
-        { id: "m3", sender: "customer", text: "Price details please?", time: "10:30 AM" }
-      ],
-      "2": [
-        { id: "m4", sender: "me", text: "Your tracking link sent.", time: "09:40 AM" },
-        { id: "m5", sender: "customer", text: "Payment confirmed, thank you!", time: "09:45 AM" }
-      ],
-      "3": [{ id: "m6", sender: "customer", text: "Can you deliver to Delhi?", time: "Yesterday" }],
-      "4": [{ id: "m7", sender: "customer", text: "STOP", time: "24 Sep" }]
-    };
-
-    function App() {
-      const [activeTab, setActiveTab] = useState("inbox");
-      const [selectedContact, setSelectedContact] = useState(null);
-      const [contacts, setContacts] = useState(initialContacts);
-      const [messages, setMessages] = useState(initialMessages);
-      const [replyText, setReplyText] = useState("");
-      const [campaignName, setCampaignName] = useState("");
-      const [broadcastSuccess, setBroadcastSuccess] = useState(false);
-
-      useEffect(() => {
-        if (window.lucide) window.lucide.createIcons();
-      }, [activeTab, selectedContact, messages]);
-
-      const handleSend = (e) => {
-        e.preventDefault();
-        if (!replyText.trim() || !selectedContact) return;
-        const newMsg = {
-          id: "m_" + Date.now(),
-          sender: "me",
-          text: replyText,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages(prev => ({
-          ...prev,
-          [selectedContact.id]: [...(prev[selectedContact.id] || []), newMsg]
-        }));
-        setReplyText("");
-      };
-
-      const handleBroadcast = (e) => {
-        e.preventDefault();
-        if (!campaignName) return;
-        setBroadcastSuccess(true);
-        setTimeout(() => setBroadcastSuccess(false), 3000);
-        setCampaignName("");
-      };
-
-      return (
-        <div className="flex flex-col h-screen w-full bg-slate-950">
-          {/* Top Bar */}
-          <header className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4">
-            <div className="flex items-center space-x-2">
-              {selectedContact && activeTab === "inbox" ? (
-                <button onClick={() => setSelectedContact(null)} className="text-slate-300 mr-2 p-1">
-                  <i data-lucide="arrow-left" className="w-5 h-5"></i>
-                </button>
-              ) : null}
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-sm border border-emerald-500/30">
-                W
-              </div>
-              <span className="font-bold text-sm text-white">
-                {selectedContact && activeTab === "inbox" ? selectedContact.name : "WA Cloud CRM"}
-              </span>
-            </div>
-            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">
-              Live Edge
-            </span>
-          </header>
-
-          {/* Main Body */}
-          <main className="flex-1 overflow-hidden relative">
-            {/* INBOX TAB */}
-            {activeTab === "inbox" && (
-              <div className="h-full flex flex-col">
-                {!selectedContact ? (
-                  /* Contacts List (Mobile Screen) */
-                  <div className="flex-1 overflow-y-auto divide-y divide-slate-800/80">
-                    {contacts.map(c => (
-                      <div 
-                        key={c.id} 
-                        onClick={() => setSelectedContact(c)}
-                        className="p-3.5 flex items-center space-x-3 active:bg-slate-900 transition">
-                        <div className="w-11 h-11 rounded-full bg-slate-800 text-slate-200 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                          {c.name.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-baseline mb-0.5">
-                            <h4 className="text-sm font-semibold text-white truncate">{c.name}</h4>
-                            <span className="text-[10px] text-slate-500">{c.time}</span>
-                          </div>
-                          <p className="text-xs text-slate-400 truncate">{c.lastMsg}</p>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                              {c.source}
-                            </span>
-                            {c.status === "opted_out" && (
-                              <span className="text-[9px] px-1 rounded bg-rose-950 text-rose-300 border border-rose-800">
-                                Opt-out
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  /* Active Chat View */
-                  <div className="h-full flex flex-col justify-between bg-slate-950">
-                    <div className="flex-1 p-3 overflow-y-auto space-y-3">
-                      {(messages[selectedContact.id] || []).map(m => (
-                        <div key={m.id} className={`flex flex-col ${m.sender === 'me' ? 'items-end' : m.sender === 'bot' ? 'items-center' : 'items-start'}`}>
-                          {m.sender === 'bot' ? (
-                            <span className="text-[11px] bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">
-                              AI: {m.text}
-                            </span>
-                          ) : (
-                            <div className={`max-w-[80%] p-2.5 rounded-2xl text-xs ${m.sender === 'me' ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'}`}>
-                              <p>{m.text}</p>
-                              <span className="text-[9px] block text-right mt-1 opacity-75">{m.time}</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Chat Input */}
-                    <form onSubmit={handleSend} className="p-2 border-t border-slate-800 bg-slate-900 flex space-x-2">
-                      <input 
-                        type="text" 
-                        value={replyText} 
-                        onChange={e => setReplyText(e.target.value)} 
-                        placeholder="Type reply..." 
-                        className="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none"
-                      />
-                      <button type="submit" className="bg-emerald-600 active:bg-emerald-700 text-white p-2 rounded-xl">
-                        <i data-lucide="send" className="w-4 h-4"></i>
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* BROADCAST TAB */}
-            {activeTab === "broadcast" && (
-              <div className="p-4 space-y-4 overflow-y-auto h-full">
-                <h2 className="text-base font-bold text-white">Broadcast Blast</h2>
-                {broadcastSuccess && (
-                  <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs rounded-lg">
-                    Broadcast Sent to 3 Leads!
-                  </div>
-                )}
-                <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
-                  <div>
-                    <label className="text-xs text-slate-400 block mb-1">Campaign Title</label>
-                    <input 
-                      type="text" 
-                      value={campaignName}
-                      onChange={e => setCampaignName(e.target.value)}
-                      placeholder="Special Sale Offer" 
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-slate-400 block mb-1">Select Meta Template</label>
-                    <select className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white">
-                      <option>welcome_offer_oct (Marketing)</option>
-                      <option>order_confirmation (Utility)</option>
-                    </select>
-                  </div>
-                  <button 
-                    onClick={handleBroadcast} 
-                    className="w-full bg-emerald-600 active:bg-emerald-700 text-white font-bold p-2.5 rounded-lg text-xs">
-                    Send 1-Click Broadcast
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* CONTACTS TAB */}
-            {activeTab === "contacts" && (
-              <div className="p-4 space-y-3 overflow-y-auto h-full">
-                <h2 className="text-base font-bold text-white">Leads ({contacts.length})</h2>
-                <div className="space-y-2">
-                  {contacts.map(c => (
-                    <div key={c.id} className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center">
-                      <div>
-                        <div className="text-xs font-bold text-white">{c.name}</div>
-                        <div className="text-[11px] text-slate-400">{c.phone}</div>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                          {c.source}
-                        </span>
-                      </div>
-                      <button 
-                        onClick={() => { setSelectedContact(c); setActiveTab("inbox"); }}
-                        className="text-xs bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-emerald-400 font-semibold">
-                        Chat
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </main>
-
-          {/* Bottom Mobile Tab Bar */}
-          <nav className="h-14 bg-slate-900 border-t border-slate-800 flex items-center justify-around px-2">
-            <button 
-              onClick={() => { setActiveTab("inbox"); setSelectedContact(null); }}
-              className={`flex flex-col items-center py-1 ${activeTab === 'inbox' ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
-              <i data-lucide="message-square" className="w-5 h-5"></i>
-              <span className="text-[10px] mt-0.5">Chats</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab("broadcast")}
-              className={`flex flex-col items-center py-1 ${activeTab === 'broadcast' ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
-              <i data-lucide="send" className="w-5 h-5"></i>
-              <span className="text-[10px] mt-0.5">Broadcast</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab("contacts")}
-              className={`flex flex-col items-center py-1 ${activeTab === 'contacts' ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
-              <i data-lucide="users" className="w-5 h-5"></i>
-              <span className="text-[10px] mt-0.5">Leads</span>
-            </button>
-          </nav>
-        </div>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-  </script>
+<body class="bg-[#0B0F19] text-slate-100 antialiased selection:bg-emerald-500/30">
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+const initialContacts = [
+{ id: "1", name: "Rahul Sharma", phone: "+91 98765 43210", source: "Meta Ads", status: "Active Lead", lastMsg: "Price details and combo pack available?", time: "10:30 AM", revenue: "₹1,499" },
+{ id: "2", name: "Pooja Verma", phone: "+91 91234 56789", source: "Instagram DM", status: "Converted", lastMsg: "Payment confirmed, thank you!", time: "09:45 AM", revenue: "₹3,200" },
+{ id: "3", name: "Amit Patel", phone: "+91 99887 76655", source: "Website Widget", status: "In Followup", lastMsg: "Can you deliver to Delhi?", time: "Yesterday", revenue: "—" },
+{ id: "4", name: "Suresh Gupta", phone: "+91 88776 65544", source: "Organic", status: "Opted-Out", lastMsg: "STOP", time: "24 Sep", revenue: "—" }
+];
+const initialMessages = {
+"1": [
+{ id: "m1", sender: "customer", text: "Hi, I clicked your Facebook Ad regarding health wellness combo.", time: "10:28 AM" },
+{ id: "m2", sender: "bot", text: "Namaste Rahul! Welcome to our store. We have exclusive 15% off today.", time: "10:29 AM" },
+{ id: "m3", sender: "customer", text: "Price details and combo pack available?", time: "10:30 AM" }
+],
+"2": [
+{ id: "m4", sender: "me", text: "Order packed. Dispatch details shared via Delhivery.", time: "09:40 AM" },
+{ id: "m5", sender: "customer", text: "Payment confirmed, thank you!", time: "09:45 AM" }
+],
+"3": [{ id: "m6", sender: "customer", text: "Can you deliver to Delhi?", time: "Yesterday" }],
+"4": [{ id: "m7", sender: "customer", text: "STOP", time: "24 Sep" }]
+};
+function App() {
+const [currentView, setCurrentView] = useState("overview");
+const [selectedContact, setSelectedContact] = useState(null);
+const [contacts, setContacts] = useState(initialContacts);
+const [messages, setMessages] = useState(initialMessages);
+const [replyText, setReplyText] = useState("");
+const [campaignName, setCampaignName] = useState("");
+const [broadcastSuccess, setBroadcastSuccess] = useState(false);
+useEffect(() => {
+if (window.lucide) window.lucide.createIcons();
+}, [currentView, selectedContact, messages]);
+const handleSend = (e) => {
+e.preventDefault();
+if (!replyText.trim() || !selectedContact) return;
+const newMsg = {
+id: "m_" + Date.now(),
+sender: "me",
+text: replyText,
+time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+};
+setMessages(prev => ({
+...prev,
+[selectedContact.id]: [...(prev[selectedContact.id] || []), newMsg]
+}));
+setReplyText("");
+};
+const handleBroadcast = (e) => {
+e.preventDefault();
+if (!campaignName) return;
+setBroadcastSuccess(true);
+setTimeout(() => setBroadcastSuccess(false), 3500);
+setCampaignName("");
+};
+return (
+<div className="min-h-screen flex flex-col bg-[#0B0F19] text-slate-100">
+<header className="h-16 border-b border-slate-800 bg-[#111625] sticky top-0 z-50 px-4 flex items-center justify-between">
+<div className="flex items-center space-x-3">
+<div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 p-[1px] shadow-lg shadow-emerald-500/20">
+<div className="w-full h-full bg-[#111625] rounded-[11px] flex items-center justify-center font-bold text-emerald-400 text-sm">⚡</div>
+</div>
+<div>
+<div className="flex items-center space-x-2">
+<h1 className="text-sm font-extrabold text-white">VEDASHREE CRM</h1>
+<span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 rounded mono font-semibold">CLOUD API</span>
+</div>
+<p className="text-[10px] text-slate-400">Meta Direct Zero-Cost</p>
+</div>
+</div>
+<div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+<span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+<span className="text-[11px] font-semibold text-emerald-400 mono">Edge Active</span>
+</div>
+</header>
+<div className="bg-[#111625] border-b border-slate-800 px-3 py-2 flex space-x-1 overflow-x-auto text-xs font-semibold">
+<button onClick={() => { setCurrentView("overview"); setSelectedContact(null); }} className={`px-3 py-1.5 rounded-lg flex items-center space-x-2 whitespace-nowrap ${currentView === 'overview' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400'}`}>
+<i data-lucide="layout-dashboard" className="w-3.5 h-3.5"></i>
+<span>Dashboard</span>
+</button>
+<button onClick={() => { setCurrentView("inbox"); setSelectedContact(null); }} className={`px-3 py-1.5 rounded-lg flex items-center space-x-2 whitespace-nowrap ${currentView === 'inbox' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400'}`}>
+<i data-lucide="message-square" className="w-3.5 h-3.5"></i>
+<span>Inbox</span>
+<span className="bg-emerald-500 text-black text-[9px] font-bold px-1.5 rounded-full">2</span>
+</button>
+<button onClick={() => { setCurrentView("broadcast"); setSelectedContact(null); }} className={`px-3 py-1.5 rounded-lg flex items-center space-x-2 whitespace-nowrap ${currentView === 'broadcast' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400'}`}>
+<i data-lucide="send" className="w-3.5 h-3.5"></i>
+<span>Broadcasts</span>
+</button>
+<button onClick={() => { setCurrentView("leads"); setSelectedContact(null); }} className={`px-3 py-1.5 rounded-lg flex items-center space-x-2 whitespace-nowrap ${currentView === 'leads' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400'}`}>
+<i data-lucide="users" className="w-3.5 h-3.5"></i>
+<span>Leads</span>
+</button>
+</div>
+<main className="flex-1 p-3 pb-8">
+{currentView === "overview" && (
+<div className="space-y-3">
+<div className="grid grid-cols-2 gap-2.5">
+<div className="p-3 bg-[#141B2D] border border-slate-800 rounded-xl">
+<div className="text-[11px] font-semibold text-slate-400 uppercase">Total Inbound</div>
+<div className="text-xl font-extrabold text-white mt-1 mono">1,482</div>
+<div className="text-[10px] text-emerald-400 mt-1">↑ 24% vs last week</div>
+</div>
+<div className="p-3 bg-[#141B2D] border border-slate-800 rounded-xl">
+<div className="text-[11px] font-semibold text-slate-400 uppercase">Active Deals</div>
+<div className="text-xl font-extrabold text-white mt-1 mono">₹18,400</div>
+<div className="text-[10px] text-teal-400 mt-1">12 Converted</div>
+</div>
+<div className="p-3 bg-[#141B2D] border border-slate-800 rounded-xl">
+<div className="text-[11px] font-semibold text-slate-400 uppercase">Delivery Rate</div>
+<div className="text-xl font-extrabold text-emerald-400 mt-1 mono">99.4%</div>
+<div className="text-[10px] text-slate-400 mt-1">D1 Logged</div>
+</div>
+<div className="p-3 bg-[#141B2D] border border-slate-800 rounded-xl">
+<div className="text-[11px] font-semibold text-slate-400 uppercase">API Cost</div>
+<div className="text-xl font-extrabold text-white mt-1 mono">₹0.00</div>
+<div className="text-[10px] text-emerald-400 mt-1">Free Tier Edge</div>
+</div>
+</div>
+<div className="bg-[#141B2D] border border-slate-800 rounded-xl p-3.5">
+<h3 className="text-xs font-bold text-white uppercase mb-3">Lead Attribution Channels</h3>
+<div className="space-y-2">
+<div>
+<div className="flex justify-between text-xs mb-1">
+<span className="text-slate-300">Meta WhatsApp Ads</span>
+<span className="mono text-white font-bold">58%</span>
+</div>
+<div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div className="bg-emerald-500 h-full" style={{ width: '58%' }}></div>
+</div>
+</div>
+<div>
+<div className="flex justify-between text-xs mb-1">
+<span className="text-slate-300">Instagram Funnel</span>
+<span className="mono text-white font-bold">27%</span>
+</div>
+<div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div className="bg-teal-500 h-full" style={{ width: '27%' }}></div>
+</div>
+</div>
+<div>
+<div className="flex justify-between text-xs mb-1">
+<span className="text-slate-300">Website Widget</span>
+<span className="mono text-white font-bold">15%</span>
+</div>
+<div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div className="bg-cyan-500 h-full" style={{ width: '15%' }}></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+)}
+{currentView === "inbox" && (
+<div className="bg-[#141B2D] border border-slate-800 rounded-xl overflow-hidden min-h-[500px] flex flex-col">
+{!selectedContact ? (
+<div>
+<div className="p-3 border-b border-slate-800 bg-[#111625] flex justify-between items-center">
+<span className="text-xs font-bold text-white uppercase">Chats (4)</span>
+<span className="text-[10px] text-emerald-400 mono">Synced D1</span>
+</div>
+<div className="divide-y divide-slate-800">
+{contacts.map(c => (
+<div key={c.id} onClick={() => setSelectedContact(c)} className="p-3 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
+<div className="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs flex-shrink-0 border border-slate-700">
+{c.name.charAt(0)}
+</div>
+<div className="flex-1 min-w-0">
+<div className="flex justify-between items-baseline mb-0.5">
+<h4 className="text-xs font-bold text-white truncate">{c.name}</h4>
+<span className="text-[10px] text-slate-500 mono">{c.time}</span>
+</div>
+<p className="text-[11px] text-slate-400 truncate mb-1">{c.lastMsg}</p>
+<div className="flex items-center space-x-1.5">
+<span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">{c.source}</span>
+{c.revenue !== "—" && <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono">{c.revenue}</span>}
+</div>
+</div>
+</div>
+))}
+</div>
+</div>
+) : (
+<div className="flex flex-col h-[500px]">
+<div className="p-3 bg-[#111625] border-b border-slate-800 flex justify-between items-center">
+<div className="flex items-center space-x-2">
+<button onClick={() => setSelectedContact(null)} className="p-1 rounded bg-slate-800 text-slate-300">
+<i data-lucide="chevron-left" className="w-4 h-4"></i>
+</button>
+<div>
+<div className="text-xs font-bold text-white">{selectedContact.name}</div>
+<div className="text-[10px] text-slate-400 mono">{selectedContact.phone}</div>
+</div>
+</div>
+<span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-emerald-400">{selectedContact.status}</span>
+</div>
+<div className="flex-1 p-3 overflow-y-auto space-y-2.5 bg-[#0B0F19]">
+{(messages[selectedContact.id] || []).map(m => (
+<div key={m.id} className={`flex flex-col ${m.sender === 'me' ? 'items-end' : m.sender === 'bot' ? 'items-center' : 'items-start'}`}>
+{m.sender === 'bot' ? (
+<div className="bg-[#141B2D] border border-emerald-500/30 text-emerald-300 text-[10px] px-3 py-1 rounded-full flex items-center space-x-1 my-1">
+<i data-lucide="sparkles" className="w-3 h-3 text-emerald-400"></i>
+<span>AI Bot: {m.text}</span>
+</div>
+) : (
+<div className={`max-w-[82%] p-2.5 rounded-xl text-xs ${m.sender === 'me' ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-[#182032] text-slate-100 rounded-bl-none border border-slate-700'}`}>
+<p>{m.text}</p>
+<span className={`block text-right mt-1 text-[9px] mono ${m.sender === 'me' ? 'text-emerald-200' : 'text-slate-400'}`}>{m.time} {m.sender === 'me' && '✓✓'}</span>
+</div>
+)}
+</div>
+))}
+</div>
+<form onSubmit={handleSend} className="p-2.5 bg-[#111625] border-t border-slate-800 flex space-x-2">
+<input type="text" value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Type reply..." className="flex-1 bg-[#1A2338] border border-slate-700 text-white text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-500" />
+<button type="submit" className="bg-emerald-600 text-white px-3 py-2 rounded-lg">
+<i data-lucide="send" className="w-3.5 h-3.5"></i>
+</button>
+</form>
+</div>
+)}
+</div>
+)}
+{currentView === "broadcast" && (
+<div className="bg-[#141B2D] border border-slate-800 rounded-xl p-4 space-y-3">
+<h2 className="text-sm font-bold text-white uppercase">Cloud API Broadcast Campaign</h2>
+{broadcastSuccess && <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs rounded-lg">Broadcast Initiated to 3 recipients!</div>}
+<div>
+<label className="text-[11px] font-semibold text-slate-300 block mb-1">Campaign Title</label>
+<input type="text" value={campaignName} onChange={e => setCampaignName(e.target.value)} placeholder="Festive Offer" className="w-full bg-[#1A2338] border border-slate-700 rounded-lg p-2.5 text-xs text-white" />
+</div>
+<div>
+<label className="text-[11px] font-semibold text-slate-300 block mb-1">Pre-Approved Template</label>
+<select className="w-full bg-[#1A2338] border border-slate-700 rounded-lg p-2.5 text-xs text-white">
+<option>vedashree_promotional_v1 (Marketing)</option>
+<option>order_delivery_status (Utility)</option>
+</select>
+</div>
+<div className="p-3 bg-[#0B0F19] border border-slate-800 rounded-lg">
+<span className="text-[9px] uppercase font-bold text-slate-500">Preview</span>
+<p className="text-xs text-slate-300 mt-1 font-mono">"Namaste &#123;&#123;1&#125;&#125;! Special 15% offer is active today. Reply STOP to opt-out."</p>
+</div>
+<button onClick={handleBroadcast} className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold p-3 rounded-lg text-xs">Launch 1-Click Broadcast</button>
+</div>
+)}
+{currentView === "leads" && (
+<div className="space-y-2">
+{contacts.map(c => (
+<div key={c.id} className="p-3 bg-[#141B2D] border border-slate-800 rounded-xl flex items-center justify-between">
+<div>
+<div className="text-xs font-bold text-white">{c.name}</div>
+<div className="text-[10px] text-slate-400 mono">{c.phone}</div>
+<div className="flex space-x-1.5 mt-1">
+<span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">{c.source}</span>
+<span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-slate-800 text-slate-400">{c.status}</span>
+</div>
+</div>
+<button onClick={() => { setCurrentView("inbox"); setSelectedContact(c); }} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>
+</div>
+))}
+</div>
+)}
+</main>
+</div>
+);
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
 </body>
   </html>
