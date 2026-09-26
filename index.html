@@ -25,7 +25,7 @@
 </head>
 <body class="text-slate-100 flex flex-col h-full select-none">
 
-<!-- Header (Fixed Top) -->
+<!-- Header -->
 <header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between flex-shrink-0">
   <div class="flex items-center space-x-2.5">
     <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/30">⚡</div>
@@ -37,7 +37,7 @@
   <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono font-semibold">● Edge Live</span>
 </header>
 
-<!-- Navigation Tabs -->
+<!-- Tabs -->
 <nav class="bg-slate-900/80 border-b border-slate-800 px-2 py-1.5 flex space-x-1.5 overflow-x-auto flex-shrink-0 text-xs font-medium">
   <button id="tab-btn-inbox" onclick="switchTab('inbox')" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap">
     <span>💬 Live Chat</span>
@@ -51,17 +51,14 @@
   </button>
 </nav>
 
-<!-- Main Container (Responsive Full-Height Flex Area) -->
+<!-- Content Container -->
 <main class="flex-1 min-h-0 relative overflow-hidden flex flex-col">
 
-  <!-- TAB 1: INBOX & CHAT -->
+  <!-- 1. INBOX & CHAT -->
   <div id="view-inbox" class="h-full flex flex-col min-h-0">
-    <!-- Chat List Screen -->
     <div id="chat-list-view" class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-800"></div>
 
-    <!-- Active Chat Conversation Screen -->
     <div id="chat-detail-view" class="h-full flex-col min-h-0 hidden bg-slate-950">
-      <!-- Conversation Header -->
       <div class="h-12 px-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center flex-shrink-0">
         <div class="flex items-center space-x-2">
           <button onclick="closeChat()" class="p-1 text-slate-400 hover:text-white font-bold text-xs">◀ Back</button>
@@ -73,16 +70,14 @@
         <span id="chat-title-badge" class="text-[9px] px-2 py-0.5 rounded border font-mono">Facebook Ad</span>
       </div>
 
-      <!-- Messages Window (Scrollable Area) -->
       <div id="chat-messages-container" class="flex-1 min-h-0 p-3 overflow-y-auto space-y-2.5 bg-slate-950"></div>
 
-      <!-- Media Preview Bar (If attached) -->
       <div id="media-preview-bar" class="hidden px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex justify-between items-center text-xs text-emerald-400 flex-shrink-0">
         <span id="media-filename" class="truncate">📎 Attached File</span>
         <button onclick="removeMedia()" class="text-rose-400 font-bold ml-2">✕</button>
       </div>
 
-      <!-- Chat Bottom Input Bar (Always Anchored at Bottom) -->
+      <!-- Chat Input Form (Always Anchored at Bottom) -->
       <form onsubmit="handleSendChat(event)" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 flex-shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <input type="file" id="media-file-input" onchange="handleMediaSelect(event)" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
         <button type="button" onclick="document.getElementById('media-file-input').click()" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 active:bg-slate-700">📎</button>
@@ -92,7 +87,7 @@
     </div>
   </div>
 
-  <!-- TAB 2: BROADCAST -->
+  <!-- 2. EXCEL BULK BROADCAST -->
   <div id="view-broadcast" class="h-full p-4 overflow-y-auto space-y-4 hidden pb-12">
     <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3.5">
       <h2 class="text-xs font-bold text-white uppercase tracking-wider">Excel / CSV 1-by-1 Broadcaster</h2>
@@ -133,7 +128,7 @@
     </div>
   </div>
 
-  <!-- TAB 3: SOCIAL LEADS -->
+  <!-- 3. SOCIAL LEADS ATTRIBUTION -->
   <div id="view-leads" class="h-full p-4 overflow-y-auto space-y-3 hidden pb-12">
     <div class="flex justify-between items-center">
       <h2 class="text-xs font-bold text-white uppercase tracking-wider">Multi-Source Lead Attribution</h2>
@@ -205,7 +200,7 @@ function switchTab(tab) {
 function renderChatList() {
   const container = document.getElementById("chat-list-view");
   container.innerHTML = leadsData.map(c => 
-    '<div onclick="openChat(\\'' + c.id + '\\')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">' +
+    '<div onclick="openChat(\'' + c.id + '\')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">' +
       '<div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs flex-shrink-0 border border-slate-700">' + c.name.charAt(0) + '</div>' +
       '<div class="flex-1 min-w-0">' +
         '<div class="flex justify-between items-baseline mb-0.5">' +
@@ -404,9 +399,13 @@ function renderLeadsView() {
         '<div class="text-[10px] text-slate-400 font-mono">' + c.phone + '</div>' +
         '<span class="text-[9px] px-2 py-0.5 rounded border mono font-semibold ' + getBadgeStyle(c.source) + '">' + c.source + '</span>' +
       '</div>' +
-      '<button onclick="switchTab(\\'inbox\\'); openChat(\\'' + c.id + '\\')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>' +
+      '<button onclick="switchTab(\'inbox\'); openChat(\'' + c.id + '\')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>' +
     '</div>'
   ).join("");
 }
 
-renderChatL
+renderChatList();
+renderBroadcastTable();
+</script>
+</body>
+                          </html>
