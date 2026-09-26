@@ -1,475 +1,438 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vedashree AI WhatsApp CRM - Pro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vedashree AI WhatsApp CRM</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<!-- SheetJS for Excel Reading -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
 <style>
-body { font-family: 'Plus Jakarta Sans', sans-serif; }
-.mono { font-family: 'JetBrains Mono', monospace; }
+  body { background-color: #0b0f19; font-family: system-ui, -apple-system, sans-serif; }
+  .active-tab { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
 </style>
 </head>
-<body class="bg-[#0B0F19] text-slate-100 antialiased selection:bg-emerald-500/30">
-<div id="root"></div>
+<body class="text-slate-100 flex flex-col h-screen overflow-hidden select-none">
 
-<script type="text/babel">
-const { useState, useEffect, useRef } = React;
-
-const initialLeads = [
-{ id: "1", name: "Rahul Sharma", phone: "+91 98765 43210", source: "Facebook Ad (CTWA)", status: "Active", time: "10:30 AM", lastMsg: "Price details and combo offer?" },
-{ id: "2", name: "Pooja Verma", phone: "+91 91234 56789", source: "Instagram Profile", status: "Converted", time: "09:45 AM", lastMsg: "Payment transferred via UPI" },
-{ id: "3", name: "Amit Patel", phone: "+91 99887 76655", source: "Website Widget", status: "Lead", time: "Yesterday", lastMsg: "Do you deliver to Delhi NCR?" },
-{ id: "4", name: "Suresh Gupta", phone: "+91 88776 65544", source: "Direct WhatsApp", status: "Opted-Out", time: "24 Sep", lastMsg: "STOP" }
-];
-
-const initialChatMessages = {
-"1": [
-{ id: "m1", sender: "customer", text: "Hi, I clicked your Facebook Ad for Vedashree Wellness products.", type: "text", time: "10:28 AM", date: "26 Sep", status: "read" },
-{ id: "m2", sender: "me", text: "Namaste Rahul! We offer 100% natural authentic formulas. Here is our catalogue.", type: "text", time: "10:29 AM", date: "26 Sep", status: "read" },
-{ id: "m3", sender: "customer", text: "Price details and combo offer?", type: "text", time: "10:30 AM", date: "26 Sep", status: "read" }
-],
-"2": [
-{ id: "m4", sender: "customer", text: "Payment transferred via UPI", type: "text", time: "09:45 AM", date: "26 Sep", status: "read" },
-{ id: "m5", sender: "me", text: "Invoice generated successfully.", type: "text", time: "09:46 AM", date: "26 Sep", status: "read" }
-]
-};
-
-function App() {
-const [activeTab, setActiveTab] = useState("inbox"); // inbox, broadcast, leads, analytics
-const [contacts, setContacts] = useState(initialLeads);
-const [selectedContact, setSelectedContact] = useState(initialLeads[0]);
-const [messages, setMessages] = useState(initialChatMessages);
-const [replyText, setReplyText] = useState("");
-const [selectedMedia, setSelectedMedia] = useState(null);
-
-// Broadcast States
-const [broadcastFile, setBroadcastFile] = useState(null);
-const [parsedRecipients, setParsedRecipients] = useState([
-{ name: "Vikram Malhotra", phone: "+919811223344", status: "pending" },
-{ name: "Ananya Iyer", phone: "+919822334455", status: "pending" },
-{ name: "Rohit Deshmukh", phone: "+919833445566", status: "pending" }
-]);
-const [selectedTemplate, setSelectedTemplate] = useState("vedashree_festival_offer");
-const [isBroadcasting, setIsBroadcasting] = useState(false);
-const [broadcastProgress, setBroadcastProgress] = useState(0);
-
-const fileInputRef = useRef(null);
-const mediaInputRef = useRef(null);
-
-useEffect(() => {
-if (window.lucide) window.lucide.createIcons();
-}, [activeTab, selectedContact, messages, parsedRecipients, isBroadcasting]);
-
-// Excel / CSV File Parser
-const handleExcelUpload = (e) => {
-const file = e.target.files[0];
-if (!file) return;
-setBroadcastFile(file.name);
-
-const reader = new FileReader();
-reader.onload = (evt) => {
-try {
-const data = new Uint8Array(evt.target.result);
-const workbook = XLSX.read(data, { type: 'array' });
-const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
-// Expected format: Column 1 = Name, Column 2 = Phone
-const parsed = [];
-for (let i = 1; i < rows.length; i++) {
-if (rows[i][1]) {
-parsed.push({
-name: rows[i][0] || "Customer",
-phone: String(rows[i][1]).replace(/[^0-9+]/g, ''),
-status: "pending"
-});
-}
-}
-if (parsed.length > 0) {
-setParsedRecipients(parsed);
-}
-} catch (err) {
-alert("Failed to parse file. Ensure Column 1 is Name and Column 2 is Phone Number.");
-}
-};
-reader.readAsArrayBuffer(file);
-};
-
-// 1-by-1 Sequential Broadcast Engine
-const launchSequentialBroadcast = () => {
-if (parsedRecipients.length === 0 || isBroadcasting) return;
-setIsBroadcasting(true);
-setBroadcastProgress(0);
-
-let index = 0;
-const total = parsedRecipients.length;
-
-const interval = setInterval(() => {
-if (index >= total) {
-clearInterval(interval);
-setIsBroadcasting(false);
-return;
-}
-
-const currentIdx = index;
-// Simulate Sent -> Delivered -> Read progression
-setParsedRecipients(prev => {
-const updated = [...prev];
-updated[currentIdx].status = "sent";
-return updated;
-});
-
-setTimeout(() => {
-setParsedRecipients(prev => {
-const updated = [...prev];
-updated[currentIdx].status = Math.random() > 0.1 ? "delivered" : "failed";
-return updated;
-});
-}, 800);
-
-setTimeout(() => {
-setParsedRecipients(prev => {
-const updated = [...prev];
-if (updated[currentIdx].status === "delivered") {
-updated[currentIdx].status = "read";
-}
-return updated;
-});
-}, 1800);
-
-index++;
-setBroadcastProgress(Math.round((index / total) * 100));
-}, 1200); // 1.2s delay per contact for Meta safety
-};
-
-// Chat Message Sender (Text or Media)
-const handleSendMessage = (e) => {
-e.preventDefault();
-if (!replyText.trim() && !selectedMedia) return;
-
-const newMsg = {
-id: "m_" + Date.now(),
-sender: "me",
-text: replyText,
-media: selectedMedia ? URL.createObjectURL(selectedMedia) : null,
-mediaType: selectedMedia ? selectedMedia.type.split('/')[0] : null,
-mediaName: selectedMedia ? selectedMedia.name : null,
-time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-date: "Today",
-status: "sent"
-};
-
-setMessages(prev => ({
-...prev,
-[selectedContact.id]: [...(prev[selectedContact.id] || []), newMsg]
-}));
-
-setReplyText("");
-setSelectedMedia(null);
-
-// Simulate status update: Sent -> Delivered -> Read
-setTimeout(() => {
-setMessages(prev => ({
-...prev,
-[selectedContact.id]: prev[selectedContact.id].map(m => m.id === newMsg.id ? { ...m, status: "delivered" } : m)
-}));
-}, 1000);
-
-setTimeout(() => {
-setMessages(prev => ({
-...prev,
-[selectedContact.id]: prev[selectedContact.id].map(m => m.id === newMsg.id ? { ...m, status: "read" } : m)
-}));
-}, 2400);
-};
-
-// Source Badges Styling Helper
-const getSourceBadge = (source) => {
-if (source.includes("Facebook")) return "bg-blue-500/10 text-blue-400 border-blue-500/30";
-if (source.includes("Instagram")) return "bg-pink-500/10 text-pink-400 border-pink-500/30";
-if (source.includes("Website")) return "bg-amber-500/10 text-amber-400 border-amber-500/30";
-return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-};
-
-// Status Indicator Icon Helper
-const renderStatusIcon = (status) => {
-if (status === "sent") return <span className="text-slate-400 font-mono text-[10px]">✓</span>;
-if (status === "delivered") return <span className="text-slate-400 font-mono text-[10px]">✓✓</span>;
-if (status === "read") return <span className="text-sky-400 font-mono text-[10px]">✓✓</span>;
-if (status === "failed") return <span className="text-rose-400 font-mono text-[10px]">❌ Failed</span>;
-return <span className="text-slate-500 font-mono text-[10px]">⏳ Queued</span>;
-};
-
-return (
-<div className="min-h-screen flex flex-col bg-[#0B0F19] text-slate-100">
-{/* Master Header */}
-<header className="h-16 border-b border-slate-800 bg-[#111625] sticky top-0 z-50 px-4 flex items-center justify-between">
-<div className="flex items-center space-x-3">
-<div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 p-[1px] shadow-lg shadow-emerald-500/20">
-<div className="w-full h-full bg-[#111625] rounded-[11px] flex items-center justify-center font-bold text-emerald-400 text-sm">⚡</div>
-</div>
-<div>
-<div className="flex items-center space-x-2">
-<h1 className="text-sm font-extrabold text-white tracking-tight">VEDASHREE WHATSAPP CRM</h1>
-<span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 rounded mono font-semibold">CLOUD API</span>
-</div>
-<p className="text-[10px] text-slate-400">Meta Direct Zero-Subscription Serverless</p>
-</div>
-</div>
-<div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-<span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-<span className="text-[11px] font-semibold text-emerald-400 mono">Edge Active</span>
-</div>
+<!-- Header -->
+<header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between flex-shrink-0">
+  <div class="flex items-center space-x-2.5">
+    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/30">⚡</div>
+    <div>
+      <h1 class="text-xs font-bold text-white tracking-wide">VEDASHREE CRM</h1>
+      <span class="text-[9px] text-emerald-400 font-mono">Meta Direct Cloud API</span>
+    </div>
+  </div>
+  <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono font-semibold">● Edge Live</span>
 </header>
 
-{/* Tab Navigation */}
-<div className="bg-[#111625] border-b border-slate-800 px-3 py-2 flex space-x-1 overflow-x-auto text-xs font-semibold">
-<button onClick={() => { setActiveTab("inbox"); }} className={`px-3.5 py-2 rounded-lg flex items-center space-x-2 whitespace-nowrap transition ${activeTab === 'inbox' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400'}`}>
-<i data-lucide="message-square" className="w-4 h-4"></i>
-<span>Live Inbox & Chat</span>
-</button>
-<button onClick={() => { setActiveTab("broadcast"); }} className={`px-3.5 py-2 rounded-lg flex items-center space-x-2 whitespace-nowrap transition ${activeTab === 'broadcast' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400'}`}>
-<i data-lucide="send" className="w-4 h-4"></i>
-<span>Excel Bulk Broadcast</span>
-</button>
-<button onClick={() => { setActiveTab("leads"); }} className={`px-3.5 py-2 rounded-lg flex items-center space-x-2 whitespace-nowrap transition ${activeTab === 'leads' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400'}`}>
-<i data-lucide="layers" className="w-4 h-4"></i>
-<span>Social Multi-Source Leads</span>
-</button>
-</div>
+<!-- Tabs -->
+<nav class="bg-slate-900/80 border-b border-slate-800 px-2 py-2 flex space-x-1.5 overflow-x-auto flex-shrink-0 text-xs font-medium">
+  <button id="tab-btn-inbox" onclick="switchTab('inbox')" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap">
+    <span>💬 Live Chat</span>
+    <span class="bg-emerald-500 text-black text-[9px] font-bold px-1.5 rounded-full">2</span>
+  </button>
+  <button id="tab-btn-broadcast" onclick="switchTab('broadcast')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap">
+    <span>📢 Excel Broadcast</span>
+  </button>
+  <button id="tab-btn-leads" onclick="switchTab('leads')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap">
+    <span>👥 Social Leads</span>
+  </button>
+</nav>
 
-{/* Main Screen Content */}
-<main className="flex-1 p-3 pb-8">
+<!-- Content Container -->
+<main class="flex-1 overflow-hidden relative">
 
-{/* 1. LIVE INBOX & TWO-WAY CHAT (WITH ATTACHMENT & LIVE TICKS) */}
-{activeTab === "inbox" && (
-<div className="bg-[#141B2D] border border-slate-800 rounded-xl overflow-hidden min-h-[550px] flex flex-col">
-{!selectedContact ? (
-<div>
-<div className="p-3 border-b border-slate-800 bg-[#111625] flex justify-between items-center">
-<span className="text-xs font-bold text-white uppercase">Inbound Conversations ({contacts.length})</span>
-<span className="text-[10px] text-emerald-400 mono">D1 Synced</span>
-</div>
-<div className="divide-y divide-slate-800">
-{contacts.map(c => (
-<div key={c.id} onClick={() => setSelectedContact(c)} className="p-3 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
-<div className="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs flex-shrink-0 border border-slate-700">
-{c.name.charAt(0)}
-</div>
-<div className="flex-1 min-w-0">
-<div className="flex justify-between items-baseline mb-0.5">
-<h4 className="text-xs font-bold text-white truncate">{c.name}</h4>
-<span className="text-[10px] text-slate-500 mono">{c.time}</span>
-</div>
-<p className="text-[11px] text-slate-400 truncate mb-1">{c.lastMsg}</p>
-<span className={`text-[9px] px-1.5 py-0.5 rounded border mono font-medium ${getSourceBadge(c.source)}`}>
-{c.source}
-</span>
-</div>
-</div>
-))}
-</div>
-</div>
-) : (
-<div className="flex flex-col h-[550px]">
-{/* Conversation Header */}
-<div className="p-3 bg-[#111625] border-b border-slate-800 flex justify-between items-center">
-<div className="flex items-center space-x-2.5">
-<button onClick={() => setSelectedContact(null)} className="p-1 rounded bg-slate-800 text-slate-300">
-<i data-lucide="chevron-left" className="w-4 h-4"></i>
-</button>
-<div>
-<div className="text-xs font-bold text-white">{selectedContact.name}</div>
-<div className="text-[10px] text-slate-400 mono">{selectedContact.phone}</div>
-</div>
-</div>
-<span className={`text-[9px] px-2 py-0.5 rounded border mono font-semibold ${getSourceBadge(selectedContact.source)}`}>
-{selectedContact.source}
-</span>
-</div>
+  <!-- TAB 1: INBOX & CHAT -->
+  <div id="view-inbox" class="h-full flex flex-col">
+    <!-- Contact List View -->
+    <div id="chat-list-view" class="flex-1 overflow-y-auto divide-y divide-slate-800">
+      <!-- Injected by JS -->
+    </div>
 
-{/* Messages Window */}
-<div className="flex-1 p-3 overflow-y-auto space-y-3 bg-[#0B0F19]">
-{(messages[selectedContact.id] || []).map(m => (
-<div key={m.id} className={`flex flex-col ${m.sender === 'me' ? 'items-end' : 'items-start'}`}>
-<div className={`max-w-[85%] p-3 rounded-2xl text-xs ${m.sender === 'me' ? 'bg-emerald-600 text-white rounded-br-none shadow-md' : 'bg-[#182032] text-slate-100 rounded-bl-none border border-slate-700'}`}>
-{/* Media Preview if attached */}
-{m.media && (
-<div className="mb-2 rounded-lg overflow-hidden border border-emerald-400/20 bg-slate-900/50">
-{m.mediaType === "image" ? (
-<img src={m.media} alt="Attached Media" className="max-h-48 w-full object-cover" />
-) : (
-<div className="p-2.5 flex items-center space-x-2 text-xs">
-<i data-lucide="file" className="w-4 h-4 text-emerald-300"></i>
-<span className="truncate">{m.mediaName || "Attachment File"}</span>
-</div>
-)}
-</div>
-)}
-<p className="leading-relaxed">{m.text}</p>
-<div className={`flex justify-end items-center space-x-1.5 mt-1 text-[9px] mono ${m.sender === 'me' ? 'text-emerald-200' : 'text-slate-400'}`}>
-<span>{m.date}, {m.time}</span>
-{m.sender === 'me' && renderStatusIcon(m.status)}
-</div>
-</div>
-</div>
-))}
-</div>
+    <!-- Active Chat Conversation View (Hidden by default) -->
+    <div id="chat-detail-view" class="h-full flex-col justify-between hidden bg-slate-950">
+      <!-- Conversation Header -->
+      <div class="h-13 p-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <button onclick="closeChat()" class="p-1 text-slate-400 hover:text-white font-bold text-sm">◀ Back</button>
+          <div>
+            <div id="chat-title-name" class="text-xs font-bold text-white">Rahul Sharma</div>
+            <div id="chat-title-phone" class="text-[10px] text-slate-400 font-mono">+91 98765 43210</div>
+          </div>
+        </div>
+        <span id="chat-title-badge" class="text-[9px] px-2 py-0.5 rounded border font-mono">Facebook Ad</span>
+      </div>
 
-{/* Media Attachment Notification Chip */}
-{selectedMedia && (
-<div className="px-3 py-1.5 bg-[#141B2D] border-t border-slate-800 flex items-center justify-between text-xs text-emerald-400">
-<span className="truncate flex items-center gap-1.5">
-<i data-lucide="paperclip" className="w-3.5 h-3.5"></i>
-{selectedMedia.name}
-</span>
-<button onClick={() => setSelectedMedia(null)} className="text-rose-400 font-bold ml-2">✕</button>
-</div>
-)}
+      <!-- Messages Scroll Area -->
+      <div id="chat-messages-container" class="flex-1 p-3 overflow-y-auto space-y-3">
+        <!-- Injected by JS -->
+      </div>
 
-{/* Reply Input Bar with Media Selector */}
-<form onSubmit={handleSendMessage} className="p-2 bg-[#111625] border-t border-slate-800 flex items-center space-x-2">
-{/* Hidden Media Input */}
-<input 
-type="file" 
-ref={mediaInputRef} 
-onChange={e => setSelectedMedia(e.target.files[0])} 
-className="hidden" 
-accept="image/*,video/*,audio/*,application/pdf"
-/>
-<button 
-type="button" 
-onClick={() => mediaInputRef.current.click()} 
-className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white">
-<i data-lucide="paperclip" className="w-4 h-4"></i>
-</button>
-<input 
-type="text" 
-value={replyText} 
-onChange={e => setReplyText(e.target.value)} 
-placeholder={`Reply to ${selectedContact.name}...`} 
-className="flex-1 bg-[#1A2338] border border-slate-700 text-white text-xs px-3.5 py-2.5 rounded-lg focus:outline-none focus:border-emerald-500"
-/>
-<button type="submit" className="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white px-3.5 py-2.5 rounded-lg font-semibold flex items-center">
-<i data-lucide="send" className="w-3.5 h-3.5"></i>
-</button>
-</form>
-</div>
-)}
-</div>
-)}
+      <!-- Media Preview Bar -->
+      <div id="media-preview-bar" class="hidden px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex justify-between items-center text-xs text-emerald-400">
+        <span id="media-filename" class="truncate">📎 Attached File</span>
+        <button onclick="removeMedia()" class="text-rose-400 font-bold ml-2">✕</button>
+      </div>
 
-{/* 2. EXCEL BULK BROADCAST & LIVE SEQUENTIAL QUEUE */}
-{activeTab === "broadcast" && (
-<div className="space-y-4">
-<div className="bg-[#141B2D] border border-slate-800 rounded-xl p-4 space-y-4">
-<div>
-<h2 className="text-sm font-bold text-white uppercase tracking-wider">Excel / CSV 1-by-1 Broadcast System</h2>
-<p className="text-[11px] text-slate-400 mt-0.5">Upload contact sheets and fire sequential template messages with Meta-compliant rate limits.</p>
-</div>
+      <!-- Input Form -->
+      <form onsubmit="handleSendChat(event)" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2">
+        <input type="file" id="media-file-input" onchange="handleMediaSelect(event)" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
+        <button type="button" onclick="document.getElementById('media-file-input').click()" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">📎</button>
+        <input type="text" id="chat-input-text" placeholder="Type reply..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:border-emerald-500">
+        <button type="submit" class="bg-emerald-600 active:bg-emerald-700 text-white px-3.5 py-2.5 rounded-lg font-bold text-xs">Send</button>
+      </form>
+    </div>
+  </div>
 
-{/* Upload Box */}
-<div className="border-2 border-dashed border-slate-700 hover:border-emerald-500/50 rounded-xl p-4 text-center bg-[#0B0F19]">
-<input 
-type="file" 
-ref={fileInputRef} 
-onChange={handleExcelUpload} 
-accept=".xlsx, .xls, .csv" 
-className="hidden" 
-/>
-<i data-lucide="file-spreadsheet" className="w-8 h-8 text-emerald-400 mx-auto mb-2"></i>
-<p className="text-xs font-semibold text-slate-300 mb-1">
-{broadcastFile ? `Uploaded: ${broadcastFile}` : "Upload Excel Sheet (.xlsx, .csv)"}
-</p>
-<p className="text-[10px] text-slate-500 mb-3">Column 1 = Customer Name | Column 2 = Phone Number with Country Code</p>
-<button 
-type="button" 
-onClick={() => fileInputRef.current.click()} 
-className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-xs font-semibold rounded-lg text-emerald-400 hover:bg-slate-700">
-Choose File from Device
-</button>
-</div>
+  <!-- TAB 2: BROADCAST -->
+  <div id="view-broadcast" class="h-full p-4 overflow-y-auto space-y-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3.5">
+      <h2 class="text-xs font-bold text-white uppercase tracking-wider">Excel / CSV 1-by-1 Broadcaster</h2>
+      
+      <!-- Excel File Uploader -->
+      <div class="border-2 border-dashed border-slate-700 rounded-xl p-4 text-center bg-slate-950">
+        <input type="file" id="excel-file-input" onchange="handleExcelUpload(event)" accept=".xlsx, .xls, .csv" class="hidden">
+        <div class="text-2xl mb-1">📊</div>
+        <p id="excel-filename-text" class="text-xs font-semibold text-slate-300 mb-1">Upload Contacts Excel (.xlsx, .csv)</p>
+        <p class="text-[10px] text-slate-500 mb-2">Column 1 = Name, Column 2 = Phone Number</p>
+        <button type="button" onclick="document.getElementById('excel-file-input').click()" class="px-3 py-1.5 bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-400 rounded-lg">Choose File from Mobile</button>
+      </div>
 
-{/* Meta Template Selector */}
-<div>
-<label className="text-[11px] font-semibold text-slate-300 block mb-1">Select Meta Approved Template</label>
-<select 
-value={selectedTemplate} 
-onChange={e => setSelectedTemplate(e.target.value)} 
-className="w-full bg-[#1A2338] border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none">
-<option value="vedashree_festival_offer">vedashree_festival_offer (Marketing - Flat 20% Off)</option>
-<option value="order_dispatch_update">order_dispatch_update (Utility - Delhivery Tracking Link)</option>
-<option value="abandoned_cart_reminder">abandoned_cart_reminder (Marketing - Complete Checkout)</option>
-</select>
-</div>
+      <!-- Template Select -->
+      <div>
+        <label class="text-[11px] font-semibold text-slate-300 block mb-1">Select Meta Approved Template</label>
+        <select id="template-dropdown" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
+          <option value="vedashree_festive_offer">vedashree_festive_offer (Marketing - Flat 20% Off)</option>
+          <option value="order_dispatch_alert">order_dispatch_alert (Utility - Delhivery Tracking)</option>
+          <option value="cart_recovery">cart_recovery (Marketing - Complete Order)</option>
+        </select>
+      </div>
 
-{/* Dynamic Template Preview */}
-<div className="p-3 bg-[#0B0F19] border border-slate-800 rounded-lg">
-<span className="text-[9px] uppercase font-bold text-slate-500">Live Meta Template Preview</span>
-<p className="text-xs text-slate-300 mt-1 font-mono leading-relaxed">
-"Namaste &#123;&#123;1&#125;&#125;! Special seasonal offer on Vedashree Wellness products is active. Reply STOP to opt-out."
-</p>
-</div>
+      <!-- Template Preview -->
+      <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg">
+        <span class="text-[9px] uppercase font-bold text-slate-500">Live Meta Template Preview</span>
+        <p class="text-xs text-slate-300 mt-1 font-mono">"Namaste {{1}}! Special seasonal offer is active on Vedashree store today. Reply STOP to opt-out."</p>
+      </div>
 
-{/* Broadcast Launch Button with Safe Delay */}
-<button 
-onClick={launchSequentialBroadcast} 
-disabled={isBroadcasting} 
-className={`w-full py-3 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition ${isBroadcasting ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'}`}>
-<i data-lucide="play" className="w-4 h-4"></i>
-<span>{isBroadcasting ? `Sending 1-by-1 (${broadcastProgress}% Complete)...` : `Send Broadcast to ${parsedRecipients.length} Contacts`}</span>
-</button>
-</div>
+      <!-- Launch Button -->
+      <button id="broadcast-launch-btn" onclick="startSequentialBroadcast()" class="w-full bg-emerald-600 active:bg-emerald-700 text-white font-bold p-3 rounded-lg text-xs shadow-lg shadow-emerald-500/20">
+        Send Broadcast to Contacts
+      </button>
+    </div>
 
-{/* Live Broadcast Delivery Audit Table */}
-<div className="bg-[#141B2D] border border-slate-800 rounded-xl overflow-hidden">
-<div className="p-3 border-b border-slate-800 flex justify-between items-center bg-[#111625]">
-<span className="text-xs font-bold text-white uppercase tracking-wider">Live Delivery Status Log</span>
-<span className="text-[10px] text-slate-400 mono">Sequential Queue Active</span>
-</div>
-<div className="divide-y divide-slate-800/80 max-h-60 overflow-y-auto">
-{parsedRecipients.map((rec, i) => (
-<div key={i} className="p-2.5 flex items-center justify-between text-xs">
-<div>
-<div className="font-semibold text-white">{rec.name}</div>
-<div className="text-[10px] text-slate-400 mono">{rec.phone}</div>
-</div>
-<div className="flex items-center space-x-1.5">
-{renderStatusIcon(rec.status)}
-<span className="text-[10px] font-mono capitalize text-slate-300">
-{rec.status}
-</span>
-</div>
-</div>
-))}
-</div>
-</div>
-</div>
-)}
+    <!-- Live Delivery Status Audit Table -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+      <div class="p-3 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+        <span class="text-xs font-bold text-white uppercase tracking-wider">Live Delivery Status Log</span>
+        <span id="queue-status-text" class="text-[10px] text-emerald-400 font-mono">Queue Idle</span>
+      </div>
+      <div id="broadcast-status-list" class="divide-y divide-slate-800 max-h-60 overflow-y-auto">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </div>
 
-{/* 3. MULTI-SOURCE SOCIAL LEADS DIRECTORY */}
-{activeTab === "leads" && (
-<div className="space-y-3">
-<div className="flex justify-between items-center">
-<h2 className="text-xs font-bold text-white uppercase tracking-wider">Inbound Multi-Source Attribution ({contacts.length})</h2>
-<span className="text-[10px] text-slate-400">Meta Referral Trigger Active</span>
-</div>
+  <!-- TAB 3: SOCIAL LEADS -->
+  <div id="view-leads" class="h-full p-4 overflow-y-auto space-y-3 hidden">
+    <div class="flex justify-between items-center">
+      <h2 class="text-xs font-bold text-white uppercase tracking-wider">Multi-Source Lead Attribution</h2>
+      <span class="text-[10px] text-emerald-400 font-mono">Meta Referral Webhook</span>
+    </div>
+    <div id="leads-list-container" class="space-y-2">
+      <!-- Injected by JS -->
+    </div>
+  </div>
 
-<div className="space-y-2">
-{contacts.map(c => (
-<div key={c.id} className="p-3.5 bg-[#141B2D] border border-slate-800 rounded-xl flex items-center justify-between">
-<div className="space-y-1">
-<div className="text-xs font-bold text-white">{c.name}</div>
-<div className="text-[10px] text-slate-400 mono">{c.phone}</div>
-<div className="flex items-center space-x-2">
-<span className={`text-[9px] px-2 py-0.5 rounded border mono font-semibold ${getSourceBadge(c.source)}`}>
-{c.source}
-</s
+</main>
+
+<script>
+// --- State Management ---
+let leadsData = [
+  { id: "1", name: "Rahul Sharma", phone: "+91 98765 43210", source: "Facebook Ad (CTWA)", time: "10:30 AM", lastMsg: "Price details and combo offer?" },
+  { id: "2", name: "Pooja Verma", phone: "+91 91234 56789", source: "Instagram DM", time: "09:45 AM", lastMsg: "Payment transferred via UPI" },
+  { id: "3", name: "Amit Patel", phone: "+91 99887 76655", source: "Website Widget", time: "Yesterday", lastMsg: "Do you deliver to Delhi NCR?" },
+  { id: "4", name: "Suresh Gupta", phone: "+91 88776 65544", source: "Direct WhatsApp", time: "24 Sep", lastMsg: "STOP" }
+];
+
+let chatMessages = {
+  "1": [
+    { id: "m1", sender: "customer", text: "Hi, I clicked your Facebook Ad for Vedashree Wellness products.", time: "10:28 AM", status: "read" },
+    { id: "m2", sender: "me", text: "Namaste Rahul! We offer 100% authentic wellness formulas.", time: "10:29 AM", status: "read" },
+    { id: "m3", sender: "customer", text: "Price details and combo offer?", time: "10:30 AM", status: "read" }
+  ],
+  "2": [
+    { id: "m4", sender: "customer", text: "Payment transferred via UPI", time: "09:45 AM", status: "read" },
+    { id: "m5", sender: "me", text: "Invoice generated successfully.", time: "09:46 AM", status: "read" }
+  ]
+};
+
+let broadcastRecipients = [
+  { name: "Vikram Malhotra", phone: "+919811223344", status: "pending" },
+  { name: "Ananya Iyer", phone: "+919822334455", status: "pending" },
+  { name: "Rohit Deshmukh", phone: "+919833445566", status: "pending" }
+];
+
+let activeContactId = null;
+let currentAttachedMedia = null;
+let isBroadcasting = false;
+
+// --- Helper Functions ---
+function getBadgeStyle(source) {
+  if (source.includes("Facebook")) return "bg-blue-500/10 text-blue-400 border-blue-500/30";
+  if (source.includes("Instagram")) return "bg-pink-500/10 text-pink-400 border-pink-500/30";
+  if (source.includes("Website")) return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+  return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+}
+
+function getStatusTick(status) {
+  if (status === "sent") return `<span class="text-slate-400 font-mono text-[10px]">✓</span>`;
+  if (status === "delivered") return `<span class="text-slate-400 font-mono text-[10px]">✓✓</span>`;
+  if (status === "read") return `<span class="text-sky-400 font-mono text-[10px]">✓✓</span>`;
+  if (status === "failed") return `<span class="text-rose-400 font-mono text-[10px]">❌ Failed</span>`;
+  return `<span class="text-slate-500 font-mono text-[10px]">⏳ Queued</span>`;
+}
+
+// --- Navigation Tabs ---
+function switchTab(tab) {
+  ['inbox', 'broadcast', 'leads'].forEach(t => {
+    document.getElementById(`view-${t}`).classList.add('hidden');
+    document.getElementById(`tab-btn-${t}`).className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap';
+  });
+  document.getElementById(`view-${tab}`).classList.remove('hidden');
+  document.getElementById(`tab-btn-${tab}`).className = 'px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap';
+  
+  if (tab === 'inbox') renderChatList();
+  if (tab === 'broadcast') renderBroadcastTable();
+  if (tab === 'leads') renderLeadsView();
+}
+
+// --- Chat Renderers ---
+function renderChatList() {
+  const container = document.getElementById("chat-list-view");
+  container.innerHTML = leadsData.map(c => `
+    <div onclick="openChat('${c.id}')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
+      <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs flex-shrink-0 border border-slate-700">
+        ${c.name.charAt(0)}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex justify-between items-baseline mb-0.5">
+          <h4 class="text-xs font-bold text-white truncate">${c.name}</h4>
+          <span class="text-[10px] text-slate-500 font-mono">${c.time}</span>
+        </div>
+        <p class="text-[11px] text-slate-400 truncate mb-1">${c.lastMsg}</p>
+        <span class="text-[9px] px-1.5 py-0.5 rounded border mono font-medium ${getBadgeStyle(c.source)}">${c.source}</span>
+      </div>
+    </div>
+  `).join("");
+}
+
+function openChat(id) {
+  activeContactId = id;
+  const contact = leadsData.find(c => c.id === id);
+  document.getElementById("chat-title-name").innerText = contact.name;
+  document.getElementById("chat-title-phone").innerText = contact.phone;
+  document.getElementById("chat-title-badge").innerText = contact.source;
+  document.getElementById("chat-title-badge").className = `text-[9px] px-2 py-0.5 rounded border mono ${getBadgeStyle(contact.source)}`;
+
+  document.getElementById("chat-list-view").classList.add("hidden");
+  document.getElementById("chat-detail-view").classList.remove("hidden");
+  document.getElementById("chat-detail-view").classList.add("flex");
+  renderMessages();
+}
+
+function closeChat() {
+  activeContactId = null;
+  document.getElementById("chat-detail-view").classList.add("hidden");
+  document.getElementById("chat-detail-view").classList.remove("flex");
+  document.getElementById("chat-list-view").classList.remove("hidden");
+}
+
+function renderMessages() {
+  const container = document.getElementById("chat-messages-container");
+  const msgs = chatMessages[activeContactId] || [];
+  container.innerHTML = msgs.map(m => `
+    <div class="flex flex-col ${m.sender === 'me' ? 'items-end' : 'items-start'}">
+      <div class="max-w-[85%] p-3 rounded-2xl text-xs ${m.sender === 'me' ? 'bg-emerald-600 text-white rounded-br-none shadow-md' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}">
+        ${m.media ? `
+          <div class="mb-2 rounded-lg overflow-hidden border border-emerald-400/20 bg-slate-900/50">
+            ${m.mediaType === 'image' ? `<img src="${m.media}" class="max-h-48 w-full object-cover">` : `<div class="p-2 flex items-center space-x-2 text-xs"><span>📎 ${m.mediaName}</span></div>`}
+          </div>
+        ` : ''}
+        <p class="leading-relaxed">${m.text}</p>
+        <div class="flex justify-end items-center space-x-1.5 mt-1 text-[9px] mono opacity-80">
+          <span>${m.time}</span>
+          ${m.sender === 'me' ? getStatusTick(m.status) : ''}
+        </div>
+      </div>
+    </div>
+  `).join("");
+  container.scrollTop = container.scrollHeight;
+}
+
+function handleMediaSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  currentAttachedMedia = {
+    file: file,
+    url: URL.createObjectURL(file),
+    type: file.type.split('/')[0],
+    name: file.name
+  };
+  document.getElementById("media-filename").innerText = "📎 " + file.name;
+  document.getElementById("media-preview-bar").classList.remove("hidden");
+}
+
+function removeMedia() {
+  currentAttachedMedia = null;
+  document.getElementById("media-preview-bar").classList.add("hidden");
+  document.getElementById("media-file-input").value = "";
+}
+
+function handleSendChat(e) {
+  e.preventDefault();
+  const input = document.getElementById("chat-input-text");
+  const text = input.value.trim();
+  if (!text && !currentAttachedMedia) return;
+
+  const msgId = "m_" + Date.now();
+  const newMsg = {
+    id: msgId,
+    sender: "me",
+    text: text,
+    media: currentAttachedMedia ? currentAttachedMedia.url : null,
+    mediaType: currentAttachedMedia ? currentAttachedMedia.type : null,
+    mediaName: currentAttachedMedia ? currentAttachedMedia.name : null,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    status: "sent"
+  };
+
+  if (!chatMessages[activeContactId]) chatMessages[activeContactId] = [];
+  chatMessages[activeContactId].push(newMsg);
+
+  input.value = "";
+  removeMedia();
+  renderMessages();
+
+  // Status updates simulation
+  setTimeout(() => {
+    newMsg.status = "delivered";
+    renderMessages();
+  }, 1000);
+
+  setTimeout(() => {
+    newMsg.status = "read";
+    renderMessages();
+  }, 2200);
+}
+
+// --- Excel Bulk Broadcaster ---
+function handleExcelUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById("excel-filename-text").innerText = "Uploaded: " + file.name;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+      const parsed = [];
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][1]) {
+          parsed.push({
+            name: rows[i][0] || "Customer",
+            phone: String(rows[i][1]).replace(/[^0-9+]/g, ''),
+            status: "pending"
+          });
+        }
+      }
+      if (parsed.length > 0) {
+        broadcastRecipients = parsed;
+        renderBroadcastTable();
+        alert(`Parsed ${parsed.length} contacts successfully!`);
+      }
+    } catch(err) {
+      alert("Error parsing file. Ensure column 1 is Name and column 2 is Phone Number.");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderBroadcastTable() {
+  const container = document.getElementById("broadcast-status-list");
+  container.innerHTML = broadcastRecipients.map(r => `
+    <div class="p-2.5 flex items-center justify-between text-xs">
+      <div>
+        <div class="font-semibold text-white">${r.name}</div>
+        <div class="text-[10px] text-slate-400 font-mono">${r.phone}</div>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        ${getStatusTick(r.status)}
+        <span class="text-[10px] font-mono capitalize text-slate-300">${r.status}</span>
+      </div>
+    </div>
+  `).join("");
+}
+
+function startSequentialBroadcast() {
+  if (broadcastRecipients.length === 0 || isBroadcasting) return;
+  isBroadcasting = true;
+  const launchBtn = document.getElementById("broadcast-launch-btn");
+  const queueStatus = document.getElementById("queue-status-text");
+
+  let idx = 0;
+  const total = broadcastRecipients.length;
+
+  const timer = setInterval(() => {
+    if (idx >= total) {
+      clearInterval(timer);
+      isBroadcasting = false;
+      launchBtn.innerText = "Broadcast Completed!";
+      queueStatus.innerText = "Queue Completed";
+      return;
+    }
+
+    const current = idx;
+    broadcastRecipients[current].status = "sent";
+    renderBroadcastTable();
+
+    setTimeout(() => {
+      broadcastRecipients[current].status = "delivered";
+      renderBroadcastTable();
+    }, 800);
+
+    setTimeout(() => {
+      broadcastRecipients[current].status = "read";
+      renderBroadcastTable();
+    }, 1800);
+
+    idx++;
+    launchBtn.innerText = `Broadcasting 1-by-1 (${idx}/${total})...`;
+    queueStatus.innerText = `Sending: ${idx}/${total}`;
+  }, 1200);
+}
+
+// --- Social Leads View ---
+function renderLeadsView() {
+  const container = document.getElementById("leads-list-container");
+  container.innerHTML = leadsData.map(c => `
+    <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+      <div class="space-y-1">
+        <div class="text-xs font-bold text-white">${c.name}</div>
+        <div class="text-[10px] text-slate-400 font-mono">${c.phone}</div>
+        <span class="text-[9px] px-2 py-0.5 rounded border mono font-semibold ${getBadgeStyle(c.source)}">${c.source}</span>
+      </div>
+      <button onclick="switchTab('inbox'); openChat('${c.id}')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>
+    </div>
+  `).join("");
+}
+
+// Initial Call
+renderChatList();
+renderBroadcastTable();
+</script>
+</body>
+  </html>
