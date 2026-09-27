@@ -3,170 +3,133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Vedashree AI WhatsApp CRM</title>
+<title>Vedashree CRM</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root { --app-h: 100vh; }
   @supports (height: 100dvh) { :root { --app-h: 100dvh; } }
-  html, body {
-    height: var(--app-h);
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background-color: #080c14;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .active-tab {
-    background-color: rgba(16, 185, 129, 0.2) !important;
-    color: #34d399 !important;
-    border-color: rgba(16, 185, 129, 0.4) !important;
-  }
+  html, body { height: var(--app-h); margin: 0; padding: 0; overflow: hidden; background: #080c14; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
+  .active-tab { background: rgba(16, 185, 129, 0.2) !important; color: #34d399 !important; border-color: rgba(16, 185, 129, 0.4) !important; }
 </style>
 </head>
 <body class="text-slate-100 flex flex-col h-full select-none">
 
 <!-- Header -->
-<header class="h-14 bg-[#0f172a] border-b border-slate-800 px-4 flex items-center justify-between shrink-0 z-20">
-  <div class="flex items-center space-x-2.5">
+<header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
+  <div class="flex items-center space-x-2">
     <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/30">⚡</div>
     <div>
       <h1 class="text-xs font-bold text-white tracking-wide">VEDASHREE CRM</h1>
       <span class="text-[9px] text-emerald-400 font-mono">Meta Direct Cloud API</span>
     </div>
   </div>
-  <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono font-semibold">● Edge Live</span>
+  <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">● Edge Live</span>
 </header>
 
-<!-- Navigation Tabs -->
-<nav class="bg-[#0f172a]/95 border-b border-slate-800 px-2 py-2 flex space-x-2 overflow-x-auto shrink-0 text-xs font-medium z-20">
-  <button id="nav-inbox" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap bg-slate-800 border border-slate-700 text-slate-300">
+<!-- Tabs -->
+<nav class="bg-slate-900/90 border-b border-slate-800 px-2 py-2 flex space-x-2 shrink-0 text-xs font-medium">
+  <button id="tab-inbox" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap bg-slate-800 border border-slate-700 text-slate-300">
     <span>💬 Live Chat</span>
     <span class="bg-emerald-500 text-black text-[9px] font-bold px-1.5 rounded-full">2</span>
   </button>
-  <button id="nav-broadcast" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/60 border border-slate-800">
+  <button id="tab-broadcast" class="px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/60 border border-slate-800">
     <span>📢 Excel Broadcast</span>
   </button>
-  <button id="nav-leads" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/60 border border-slate-800">
+  <button id="tab-leads" class="px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/60 border border-slate-800">
     <span>👥 Social Leads</span>
   </button>
 </nav>
 
-<!-- Main Container -->
+<!-- Content -->
 <main class="flex-1 relative overflow-hidden flex flex-col min-h-0 bg-[#080c14]">
 
   <!-- TAB 1: INBOX & CHAT -->
-  <div id="view-inbox" class="flex-1 flex flex-col overflow-hidden min-h-0">
-    
-    <!-- Contact List Screen -->
-    <div id="contact-list" class="flex-1 overflow-y-auto divide-y divide-slate-800/80">
-      <!-- Dynamic Contacts Loaded Via JS -->
-    </div>
+  <div id="v-inbox" class="flex-1 flex flex-col overflow-hidden min-h-0">
+    <div id="contact-list" class="flex-1 overflow-y-auto divide-y divide-slate-800/80"></div>
 
-    <!-- Active Chat Conversation Screen -->
-    <div id="chat-conversation" class="hidden flex-1 flex-col overflow-hidden min-h-0 bg-[#080c14]">
-      
-      <!-- Chat Header -->
-      <div class="h-12 px-3 bg-[#0f172a] border-b border-slate-800 flex justify-between items-center shrink-0">
+    <div id="chat-view" class="hidden flex-1 flex-col overflow-hidden min-h-0 bg-[#080c14]">
+      <div class="h-12 px-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
         <div class="flex items-center space-x-2">
-          <button id="btn-back-contacts" class="p-1.5 text-slate-400 hover:text-white font-bold text-xs bg-slate-800 rounded-lg">◀ Back</button>
+          <button id="btn-back" class="p-1.5 text-slate-400 font-bold text-xs bg-slate-800 rounded-lg">◀ Back</button>
           <div>
-            <div id="chat-name" class="text-xs font-bold text-white leading-tight">Name</div>
-            <div id="chat-phone" class="text-[9px] text-slate-400 font-mono leading-tight">Phone</div>
+            <div id="c-name" class="text-xs font-bold text-white"></div>
+            <div id="c-phone" class="text-[9px] text-slate-400 font-mono"></div>
           </div>
         </div>
-        <span id="chat-badge" class="text-[9px] px-2 py-0.5 rounded border font-mono">Source</span>
+        <span id="c-badge" class="text-[9px] px-2 py-0.5 rounded border font-mono"></span>
       </div>
 
-      <!-- Messages Window -->
-      <div id="chat-box" class="flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0">
-        <!-- Messages Loaded Here -->
+      <div id="chat-box" class="flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0"></div>
+
+      <div id="media-bar" class="hidden px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex justify-between items-center text-xs text-emerald-400 shrink-0">
+        <span id="media-txt" class="truncate">📎 File Attached</span>
+        <button id="btn-del-media" class="text-rose-400 font-bold ml-2">✕</button>
       </div>
 
-      <!-- Media Preview Bar -->
-      <div id="media-bar" class="hidden px-3 py-1.5 bg-[#0f172a] border-t border-slate-800 flex justify-between items-center text-xs text-emerald-400 shrink-0">
-        <span id="media-title" class="truncate">📎 Attached File</span>
-        <button id="btn-remove-media" class="text-rose-400 font-bold ml-2">✕</button>
-      </div>
-
-      <!-- Chat Bottom Input Bar -->
-      <form id="chat-form" class="p-2 bg-[#0f172a] border-t border-slate-800 flex items-center space-x-2 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <input type="file" id="media-upload" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
-        <button type="button" id="btn-attach" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 active:bg-slate-700">📎</button>
-        <input type="text" id="chat-input" placeholder="Type reply..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:border-emerald-500">
-        <button type="submit" class="bg-emerald-600 active:bg-emerald-700 text-white px-3.5 py-2.5 rounded-lg font-bold text-xs">Send</button>
+      <form id="chat-form" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <input type="file" id="media-input" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
+        <button type="button" id="btn-attach" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">📎</button>
+        <input type="text" id="chat-txt" placeholder="Type reply..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:border-emerald-500">
+        <button type="submit" class="bg-emerald-600 text-white px-3.5 py-2.5 rounded-lg font-bold text-xs">Send</button>
       </form>
-
     </div>
   </div>
 
-  <!-- TAB 2: EXCEL BROADCAST -->
-  <div id="view-broadcast" class="hidden flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
-    <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 space-y-3.5">
+  <!-- TAB 2: BROADCAST -->
+  <div id="v-broadcast" class="hidden flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
       <h2 class="text-xs font-bold text-white uppercase tracking-wider">Excel / CSV 1-by-1 Broadcaster</h2>
-      
       <div class="border-2 border-dashed border-slate-700 rounded-xl p-4 text-center bg-[#080c14]">
-        <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv" class="hidden">
+        <input type="file" id="excel-input" accept=".xlsx, .xls, .csv" class="hidden">
         <div class="text-2xl mb-1">📊</div>
-        <p id="excel-status" class="text-xs font-semibold text-slate-300 mb-1">Upload Contacts Excel (.xlsx, .csv)</p>
+        <p id="excel-txt" class="text-xs font-semibold text-slate-300 mb-1">Upload Contacts Excel (.xlsx, .csv)</p>
         <p class="text-[10px] text-slate-500 mb-2">Col 1 = Name, Col 2 = Phone Number</p>
-        <button type="button" id="btn-select-excel" class="px-3 py-1.5 bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-400 rounded-lg">Choose File from Device</button>
+        <button type="button" id="btn-excel" class="px-3 py-1.5 bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-400 rounded-lg">Choose File from Device</button>
       </div>
 
       <div>
         <label class="text-[11px] font-semibold text-slate-300 block mb-1">Select Meta Approved Template</label>
-        <select class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
+        <select class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white">
           <option>vedashree_festive_offer (Marketing - Flat 20% Off)</option>
           <option>order_dispatch_alert (Utility - Delhivery Tracking)</option>
           <option>cart_recovery (Marketing - Complete Order)</option>
         </select>
       </div>
 
-      <div class="p-3 bg-[#080c14] border border-slate-800 rounded-lg">
+      <div class="p-2.5 bg-[#080c14] border border-slate-800 rounded-lg">
         <span class="text-[9px] uppercase font-bold text-slate-500">Live Meta Template Preview</span>
-        <p class="text-xs text-slate-300 mt-1 font-mono leading-relaxed">"Namaste {{1}}! Special seasonal offer is active on Vedashree store today. Reply STOP to opt-out."</p>
+        <p class="text-xs text-slate-300 mt-1 font-mono">"Namaste {{1}}! Special seasonal offer is active on Vedashree store today. Reply STOP to opt-out."</p>
       </div>
 
-      <button id="btn-start-broadcast" class="w-full bg-emerald-600 active:bg-emerald-700 text-white font-bold p-3 rounded-lg text-xs shadow-lg shadow-emerald-500/20">
-        Send Broadcast to Contacts
-      </button>
+      <button id="btn-broadcast" class="w-full bg-emerald-600 text-white font-bold p-3 rounded-lg text-xs">Send Broadcast to Contacts</button>
     </div>
 
-    <!-- Live Status Log -->
-    <div class="bg-[#0f172a] border border-slate-800 rounded-xl overflow-hidden mb-8">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden mb-8">
       <div class="p-3 border-b border-slate-800 flex justify-between items-center bg-[#080c14]">
-        <span class="text-xs font-bold text-white uppercase tracking-wider">Live Delivery Status Log</span>
-        <span id="queue-log" class="text-[10px] text-emerald-400 font-mono">Queue Idle</span>
+        <span class="text-xs font-bold text-white uppercase">Live Delivery Status Log</span>
+        <span id="queue-txt" class="text-[10px] text-emerald-400 font-mono">Queue Idle</span>
       </div>
-      <div id="broadcast-rows" class="divide-y divide-slate-800 max-h-60 overflow-y-auto">
-        <!-- Rendered Rows -->
-      </div>
+      <div id="broadcast-rows" class="divide-y divide-slate-800 max-h-60 overflow-y-auto"></div>
     </div>
   </div>
 
   <!-- TAB 3: SOCIAL LEADS -->
-  <div id="view-leads" class="hidden flex-1 p-4 overflow-y-auto space-y-3 min-h-0">
+  <div id="v-leads" class="hidden flex-1 p-4 overflow-y-auto space-y-3 min-h-0">
     <div class="flex justify-between items-center">
       <h2 class="text-xs font-bold text-white uppercase tracking-wider">Multi-Source Lead Attribution</h2>
       <span class="text-[10px] text-emerald-400 font-mono">Meta Referral Webhook</span>
     </div>
-    <div id="leads-container" class="space-y-2 mb-8">
-      <!-- Leads rendered dynamically -->
-    </div>
+    <div id="leads-rows" class="space-y-2 mb-8"></div>
   </div>
 
 </main>
 
 <script>
-// Viewport Height Auto-Fix for Mobile Keyboards
-function setAppHeight() {
-  document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
-}
-window.addEventListener('resize', setAppHeight);
-setAppHeight();
+function resize() { document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px'); }
+window.addEventListener('resize', resize);
+resize();
 
-// Data Store
 const leads = [
   { id: "1", name: "Rahul Sharma", phone: "+91 98765 43210", source: "Facebook Ad (CTWA)", time: "10:30 AM", msg: "Price details and combo offer?" },
   { id: "2", name: "Pooja Verma", phone: "+91 91234 56789", source: "Instagram DM", time: "09:45 AM", msg: "Payment transferred via UPI" },
@@ -174,10 +137,10 @@ const leads = [
   { id: "4", name: "Suresh Gupta", phone: "+91 88776 65544", source: "Direct WhatsApp", time: "24 Sep", msg: "STOP" }
 ];
 
-const messages = {
+const msgs = {
   "1": [
-    { sender: "customer", text: "Hi, I clicked your Facebook Ad for Vedashree Wellness products.", time: "10:28 AM" },
-    { sender: "me", text: "Namaste Rahul! We offer 100% authentic wellness formulas.", time: "10:29 AM", status: "read" },
+    { sender: "customer", text: "Hi, I clicked your Facebook Ad for Vedashree products.", time: "10:28 AM" },
+    { sender: "me", text: "Namaste Rahul! We offer 100% authentic formulas.", time: "10:29 AM", status: "read" },
     { sender: "customer", text: "Price details and combo offer?", time: "10:30 AM" }
   ],
   "2": [
@@ -186,194 +149,164 @@ const messages = {
   ]
 };
 
-let broadcastRecipients = [
+let bRecipients = [
   { name: "Vikram Malhotra", phone: "+919811223344", status: "pending" },
   { name: "Ananya Iyer", phone: "+919822334455", status: "pending" },
   { name: "Rohit Deshmukh", phone: "+919833445566", status: "pending" }
 ];
 
-let activeContact = null;
-let currentMedia = null;
+let curContact = null;
+let curMedia = null;
 
-function getBadge(source) {
-  if (source.includes("Facebook")) return "bg-blue-500/10 text-blue-400 border-blue-500/30";
-  if (source.includes("Instagram")) return "bg-pink-500/10 text-pink-400 border-pink-500/30";
-  if (source.includes("Website")) return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+function badgeClass(s) {
+  if (s.includes("Facebook")) return "bg-blue-500/10 text-blue-400 border-blue-500/30";
+  if (s.includes("Instagram")) return "bg-pink-500/10 text-pink-400 border-pink-500/30";
+  if (s.includes("Website")) return "bg-amber-500/10 text-amber-400 border-amber-500/30";
   return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
 }
 
-// Navigation Handler
-function activateTab(tab) {
+function switchTab(tab) {
   ['inbox', 'broadcast', 'leads'].forEach(t => {
-    document.getElementById('view-' + t).classList.add('hidden');
-    document.getElementById('nav-' + t).classList.remove('active-tab');
+    document.getElementById('v-' + t).classList.add('hidden');
+    document.getElementById('tab-' + t).classList.remove('active-tab');
   });
-  document.getElementById('view-' + tab).classList.remove('hidden');
-  document.getElementById('nav-' + tab).classList.add('active-tab');
+  document.getElementById('v-' + tab).classList.remove('hidden');
+  document.getElementById('tab-' + tab).classList.add('active-tab');
+  if (tab === 'broadcast') renderBList();
+  if (tab === 'leads') renderLeads();
 }
 
-document.getElementById('nav-inbox').addEventListener('click', () => activateTab('inbox'));
-document.getElementById('nav-broadcast').addEventListener('click', () => { activateTab('broadcast'); renderBroadcasts(); });
-document.getElementById('nav-leads').addEventListener('click', () => { activateTab('leads'); renderLeads(); });
+document.getElementById('tab-inbox').onclick = () => switchTab('inbox');
+document.getElementById('tab-broadcast').onclick = () => switchTab('broadcast');
+document.getElementById('tab-leads').onclick = () => switchTab('leads');
 
-// Contact List Rendering with Direct Event Binding
-function renderContactList() {
-  const container = document.getElementById('contact-list');
-  container.innerHTML = '';
-  leads.forEach(c => {
-    const item = document.createElement('div');
-    item.className = 'p-3.5 flex items-start space-x-3 active:bg-slate-800/80 transition cursor-pointer';
-    item.innerHTML = `
-      <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700">${c.name.charAt(0)}</div>
-      <div class="flex-1 min-w-0 pointer-events-none">
+function renderContacts() {
+  const cList = document.getElementById('contact-list');
+  cList.innerHTML = leads.map(c => `
+    <div onclick="openC('${c.id}')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
+      <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700">${c.name[0]}</div>
+      <div class="flex-1 min-w-0">
         <div class="flex justify-between items-baseline mb-0.5">
           <h4 class="text-xs font-bold text-white truncate">${c.name}</h4>
           <span class="text-[10px] text-slate-500 font-mono">${c.time}</span>
         </div>
         <p class="text-[11px] text-slate-400 truncate mb-1">${c.msg}</p>
-        <span class="text-[9px] px-1.5 py-0.5 rounded border mono font-medium ${getBadge(c.source)}">${c.source}</span>
+        <span class="text-[9px] px-1.5 py-0.5 rounded border font-mono ${badgeClass(c.source)}">${c.source}</span>
       </div>
-    `;
-    item.addEventListener('click', () => openChat(c));
-    container.appendChild(item);
-  });
+    </div>
+  `).join("");
 }
 
-function openChat(contact) {
-  activeContact = contact;
-  document.getElementById('chat-name').innerText = contact.name;
-  document.getElementById('chat-phone').innerText = contact.phone;
-  document.getElementById('chat-badge').innerText = contact.source;
-  document.getElementById('chat-badge').className = "text-[9px] px-2 py-0.5 rounded border font-mono " + getBadge(contact.source);
-
+window.openC = function(id) {
+  curContact = leads.find(l => l.id === id);
+  document.getElementById('c-name').innerText = curContact.name;
+  document.getElementById('c-phone').innerText = curContact.phone;
+  document.getElementById('c-badge').innerText = curContact.source;
+  document.getElementById('c-badge').className = "text-[9px] px-2 py-0.5 rounded border font-mono " + badgeClass(curContact.source);
   document.getElementById('contact-list').classList.add('hidden');
-  document.getElementById('chat-conversation').classList.remove('hidden');
-  document.getElementById('chat-conversation').classList.add('flex');
-  renderMessages();
-}
+  document.getElementById('chat-view').classList.remove('hidden');
+  document.getElementById('chat-view').classList.add('flex');
+  renderChatBox();
+};
 
-document.getElementById('btn-back-contacts').addEventListener('click', () => {
-  activeContact = null;
-  document.getElementById('chat-conversation').classList.add('hidden');
-  document.getElementById('chat-conversation').classList.remove('flex');
+document.getElementById('btn-back').onclick = () => {
+  curContact = null;
+  document.getElementById('chat-view').classList.add('hidden');
+  document.getElementById('chat-view').classList.remove('flex');
   document.getElementById('contact-list').classList.remove('hidden');
-});
+};
 
-function renderMessages() {
+function renderChatBox() {
   const box = document.getElementById('chat-box');
-  box.innerHTML = '';
-  const list = messages[activeContact.id] || [];
-  list.forEach(m => {
+  const arr = msgs[curContact.id] || [];
+  box.innerHTML = arr.map(m => {
     const isMe = m.sender === 'me';
-    const wrap = document.createElement('div');
-    wrap.className = 'flex flex-col ' + (isMe ? 'items-end' : 'items-start');
-    
-    let mediaSnippet = '';
+    let mediaH = '';
     if (m.media) {
-      mediaSnippet = m.isImage ? 
-        `<div class="mb-2 rounded-lg overflow-hidden border border-emerald-400/20"><img src="${m.media}" class="max-h-48 w-full object-cover"></div>` :
-        `<div class="p-2 mb-2 bg-slate-900/60 rounded flex items-center space-x-2 text-xs"><span>📎 ${m.mediaName}</span></div>`;
+      mediaH = m.isImg ? `<img src="${m.media}" class="mb-2 max-h-48 rounded w-full object-cover">` : `<div class="p-2 mb-2 bg-slate-900 rounded text-xs">📎 ${m.mediaName}</div>`;
     }
-
-    wrap.innerHTML = `
-      <div class="max-w-[85%] p-3 rounded-2xl text-xs ${isMe ? 'bg-emerald-600 text-white rounded-br-none shadow-md' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}">
-        ${mediaSnippet}
-        <p>${m.text}</p>
-        <div class="flex justify-end items-center space-x-1 mt-1 text-[9px] mono ${isMe ? 'text-emerald-200' : 'text-slate-400'}">
-          <span>${m.time}</span>
-          ${isMe ? `<span class="font-bold ${m.status === 'read' ? 'text-sky-300' : 'text-slate-300'}">✓✓</span>` : ''}
+    return `
+      <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+        <div class="max-w-[85%] p-3 rounded-2xl text-xs ${isMe ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}">
+          ${mediaH}
+          <p>${m.text}</p>
+          <div class="flex justify-end items-center space-x-1 mt-1 text-[9px] font-mono ${isMe ? 'text-emerald-200' : 'text-slate-400'}">
+            <span>${m.time}</span>
+            ${isMe ? `<span class="${m.status === 'read' ? 'text-sky-300 font-bold' : 'text-slate-300'}">✓✓</span>` : ''}
+          </div>
         </div>
       </div>
     `;
-    box.appendChild(wrap);
-  });
+  }).join("");
   box.scrollTop = box.scrollHeight;
 }
 
-// Media Selection Attach
-document.getElementById('btn-attach').addEventListener('click', () => {
-  document.getElementById('media-upload').click();
-});
+document.getElementById('btn-attach').onclick = () => document.getElementById('media-input').click();
 
-document.getElementById('media-upload').addEventListener('change', (e) => {
+document.getElementById('media-input').onchange = (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  currentMedia = { file: file, name: file.name, url: URL.createObjectURL(file), isImage: file.type.startsWith('image/') };
-  document.getElementById('media-title').innerText = "📎 " + file.name;
+  curMedia = { file: file, name: file.name, url: URL.createObjectURL(file), isImg: file.type.startsWith('image/') };
+  document.getElementById('media-txt').innerText = "📎 " + file.name;
   document.getElementById('media-bar').classList.remove('hidden');
-});
+};
 
-document.getElementById('btn-remove-media').addEventListener('click', () => {
-  currentMedia = null;
+document.getElementById('btn-del-media').onclick = () => {
+  curMedia = null;
   document.getElementById('media-bar').classList.add('hidden');
-  document.getElementById('media-upload').value = '';
-});
+  document.getElementById('media-input').value = '';
+};
 
-// Chat Send Form
-document.getElementById('chat-form').addEventListener('submit', (e) => {
+document.getElementById('chat-form').onsubmit = (e) => {
   e.preventDefault();
-  const input = document.getElementById('chat-input');
+  const input = document.getElementById('chat-txt');
   const txt = input.value.trim();
-  if (!txt && !currentMedia) return;
+  if (!txt && !curMedia) return;
 
-  if (!messages[activeContact.id]) messages[activeContact.id] = [];
-  const newMsg = {
+  if (!msgs[curContact.id]) msgs[curContact.id] = [];
+  const newM = {
     sender: "me",
     text: txt,
-    media: currentMedia ? currentMedia.url : null,
-    isImage: currentMedia ? currentMedia.isImage : false,
-    mediaName: currentMedia ? currentMedia.name : null,
+    media: curMedia ? curMedia.url : null,
+    isImg: curMedia ? curMedia.isImg : false,
+    mediaName: curMedia ? curMedia.name : null,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     status: "sent"
   };
-
-  messages[activeContact.id].push(newMsg);
+  msgs[curContact.id].push(newM);
   input.value = '';
-  currentMedia = null;
+  curMedia = null;
   document.getElementById('media-bar').classList.add('hidden');
-  document.getElementById('media-upload').value = '';
-  renderMessages();
+  document.getElementById('media-input').value = '';
+  renderChatBox();
 
-  setTimeout(() => { newMsg.status = "delivered"; renderMessages(); }, 900);
-  setTimeout(() => { newMsg.status = "read"; renderMessages(); }, 2000);
-});
+  setTimeout(() => { newM.status = "delivered"; renderChatBox(); }, 800);
+  setTimeout(() => { newM.status = "read"; renderChatBox(); }, 1800);
+};
 
-// Excel Broadcast Handlers
-document.getElementById('btn-select-excel').addEventListener('click', () => {
-  document.getElementById('excel-upload').click();
-});
+document.getElementById('btn-excel').onclick = () => document.getElementById('excel-input').click();
 
-document.getElementById('excel-upload').addEventListener('change', (e) => {
+document.getElementById('excel-input').onchange = (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  document.getElementById('excel-status').innerText = "Uploaded: " + file.name;
+  document.getElementById('excel-txt').innerText = "Uploaded: " + file.name;
   const reader = new FileReader();
   reader.onload = (evt) => {
     try {
-      const data = new Uint8Array(evt.target.result);
-      const wb = XLSX.read(data, { type: 'array' });
+      const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
       const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
       const parsed = [];
       for (let i = 1; i < rows.length; i++) {
-        if (rows[i][1]) {
-          parsed.push({ name: rows[i][0] || "Customer", phone: String(rows[i][1]).replace(/[^0-9+]/g, ''), status: "pending" });
-        }
+        if (rows[i][1]) parsed.push({ name: rows[i][0] || "Customer", phone: String(rows[i][1]).replace(/[^0-9+]/g, ''), status: "pending" });
       }
-      if (parsed.length > 0) {
-        broadcastRecipients = parsed;
-        renderBroadcasts();
-        alert(`Parsed ${parsed.length} contacts successfully!`);
-      }
-    } catch(err) {
-      alert("Error parsing file format.");
-    }
+      if (parsed.length) { bRecipients = parsed; renderBList(); alert("Loaded " + parsed.length + " contacts!"); }
+    } catch(err) { alert("File error"); }
   };
   reader.readAsArrayBuffer(file);
-});
+};
 
-function renderBroadcasts() {
-  const container = document.getElementById('broadcast-rows');
-  container.innerHTML = broadcastRecipients.map(r => `
+function renderBList() {
+  document.getElementById('broadcast-rows').innerHTML = bRecipients.map(r => `
     <div class="p-2.5 flex items-center justify-between text-xs">
       <div><div class="font-semibold text-white">${r.name}</div><div class="text-[10px] text-slate-400 font-mono">${r.phone}</div></div>
       <span class="text-[10px] font-mono text-slate-400">${r.status === 'sent' ? '✓ Sent' : r.status === 'delivered' ? '✓✓ Delivered' : r.status === 'read' ? '<span class="text-sky-400 font-bold">✓✓ Read</span>' : '⏳ Queued'}</span>
@@ -381,45 +314,46 @@ function renderBroadcasts() {
   `).join("");
 }
 
-document.getElementById('btn-start-broadcast').addEventListener('click', () => {
-  if (broadcastRecipients.length === 0) return;
-  const btn = document.getElementById('btn-start-broadcast');
-  const log = document.getElementById('queue-log');
+document.getElementById('btn-broadcast').onclick = () => {
+  if (!bRecipients.length) return;
+  const btn = document.getElementById('btn-broadcast');
+  const log = document.getElementById('queue-txt');
   btn.disabled = true;
-
   let i = 0;
   const timer = setInterval(() => {
-    if (i >= broadcastRecipients.length) {
+    if (i >= bRecipients.length) {
       clearInterval(timer);
       btn.disabled = false;
       btn.innerText = "Broadcast Finished!";
-      log.innerText = "Queue Completed";
+      log.innerText = "Queue Finished";
       return;
     }
     const idx = i;
-    broadcastRecipients[idx].status = "sent";
-    renderBroadcasts();
-    setTimeout(() => { broadcastRecipients[idx].status = "delivered"; renderBroadcasts(); }, 700);
-    setTimeout(() => { broadcastRecipients[idx].status = "read"; renderBroadcasts(); }, 1600);
+    bRecipients[idx].status = "sent";
+    renderBList();
+    setTimeout(() => { bRecipients[idx].status = "delivered"; renderBList(); }, 600);
+    setTimeout(() => { bRecipients[idx].status = "read"; renderBList(); }, 1400);
     i++;
-    btn.innerText = `Sending 1-by-1 (${i}/${broadcastRecipients.length})...`;
-    log.innerText = `Progress: ${i}/${broadcastRecipients.length}`;
-  }, 1200);
-});
+    btn.innerText = `Sending (${i}/${bRecipients.length})...`;
+    log.innerText = `Progress: ${i}/${bRecipients.length}`;
+  }, 1000);
+};
 
-// Social Leads Render
 function renderLeads() {
-  const container = document.getElementById('leads-container');
-  container.innerHTML = '';
-  leads.forEach(c => {
-    const row = document.createElement('div');
-    row.className = 'p-3.5 bg-[#0f172a] border border-slate-800 rounded-xl flex items-center justify-between';
-    row.innerHTML = `
+  document.getElementById('leads-rows').innerHTML = leads.map(c => `
+    <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
       <div class="space-y-1">
         <div class="text-xs font-bold text-white">${c.name}</div>
         <div class="text-[10px] text-slate-400 font-mono">${c.phone}</div>
-        <span class="text-[9px] px-2 py-0.5 rounded border mono font-semibold ${getBadge(c.source)}">${c.source}</span>
+        <span class="text-[9px] px-2 py-0.5 rounded border font-mono ${badgeClass(c.source)}">${c.source}</span>
       </div>
-      <button class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg active:bg-emerald-500/30">Chat</button>
-    `;
-    row.querySelector('button').addEventListener('click', () => {
+      <button onclick="switchTab('inbox'); openC('${c.id}')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>
+    </div>
+  `).join("");
+}
+
+renderContacts();
+renderBList();
+</script>
+</body>
+        </html>
