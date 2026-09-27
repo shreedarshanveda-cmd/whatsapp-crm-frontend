@@ -7,353 +7,431 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-  :root { --app-h: 100vh; }
-  @supports (height: 100dvh) { :root { --app-h: 100dvh; } }
-  html, body { height: var(--app-h); margin: 0; padding: 0; overflow: hidden; background: #080c14; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
-  .active-tab { background: rgba(16, 185, 129, 0.2) !important; color: #34d399 !important; border-color: rgba(16, 185, 129, 0.4) !important; }
+:root{--app-h:100vh;}@supports(height:100dvh){:root{--app-h:100dvh;}}
+html,body{height:var(--app-h);margin:0;padding:0;overflow:hidden;background:#080c14;font-family:system-ui,sans-serif;-webkit-tap-highlight-color:transparent;}
+.active-tab{background:rgba(16,185,129,0.2)!important;color:#34d399!important;border-color:rgba(16,185,129,0.4)!important;}
+.flt-on{background:#10b981!important;color:#000!important;font-weight:700!important;}
 </style>
 </head>
 <body class="text-slate-100 flex flex-col h-full select-none">
 
-<!-- Header -->
+<!-- AUTH MODAL -->
+<div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080c14]/95 backdrop-blur-md">
+  <div class="w-full max-w-xs bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl text-center">
+    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center mx-auto text-lg mb-2 border border-emerald-500/30">⚡</div>
+    <h2 class="text-sm font-bold text-white">VEDASHREE CRM AUTH</h2>
+    <p class="text-[11px] text-slate-400 mb-4">Enterprise Protected</p>
+    <form id="f-login" class="space-y-2.5">
+      <input type="password" id="p-input" placeholder="Password..." class="w-full bg-slate-950 border border-slate-700 text-white text-xs px-3 py-2 rounded-lg text-center focus:outline-none focus:border-emerald-500">
+      <p id="p-err" class="text-[10px] text-rose-400 hidden">Wrong password!</p>
+      <button type="submit" class="w-full bg-emerald-600 font-bold py-2 rounded-lg text-xs">Unlock CRM</button>
+      <p class="text-[9px] text-slate-500">Default: <span class="font-mono text-emerald-400">admin</span></p>
+    </form>
+  </div>
+</div>
+
+<!-- HEADER -->
 <header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
   <div class="flex items-center space-x-2">
     <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/30">⚡</div>
     <div>
-      <h1 class="text-xs font-bold text-white tracking-wide">VEDASHREE CRM</h1>
-      <span class="text-[9px] text-emerald-400 font-mono">Meta Direct Cloud API</span>
+      <h1 class="text-xs font-bold text-white">VEDASHREE PRO</h1>
+      <span class="text-[9px] text-emerald-400 font-mono">Meta Cloud API</span>
     </div>
   </div>
-  <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">● Edge Live</span>
+  <div class="flex items-center space-x-2">
+    <button id="b-set" class="p-1.5 rounded-lg bg-slate-800 text-xs text-slate-300" title="Change Password">⚙️</button>
+    <button id="b-out" class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-bold">🔒</button>
+  </div>
 </header>
 
-<!-- Tabs -->
-<nav class="bg-slate-900/90 border-b border-slate-800 px-2 py-2 flex space-x-2 shrink-0 text-xs font-medium">
-  <button id="tab-inbox" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap bg-slate-800 border border-slate-700 text-slate-300">
+<!-- TABS -->
+<nav class="bg-slate-900/90 border-b border-slate-800 px-2 py-1.5 flex space-x-1.5 shrink-0 text-xs font-medium overflow-x-auto">
+  <button id="t-inbox" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap bg-slate-800 border border-slate-700 text-slate-300">
     <span>💬 Live Chat</span>
-    <span class="bg-emerald-500 text-black text-[9px] font-bold px-1.5 rounded-full">2</span>
+    <span class="bg-emerald-500 text-black text-[9px] font-bold px-1.5 rounded-full">3</span>
   </button>
-  <button id="tab-broadcast" class="px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/60 border border-slate-800">
+  <button id="t-broadcast" class="px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/60 border border-slate-800">
     <span>📢 Excel Broadcast</span>
   </button>
-  <button id="tab-leads" class="px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/60 border border-slate-800">
-    <span>👥 Social Leads</span>
+  <button id="t-leads" class="px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/60 border border-slate-800">
+    <span>👥 Pipeline</span>
   </button>
 </nav>
 
-<!-- Content -->
+<!-- MAIN -->
 <main class="flex-1 relative overflow-hidden flex flex-col min-h-0 bg-[#080c14]">
 
-  <!-- TAB 1: INBOX & CHAT -->
+  <!-- TAB 1: INBOX -->
   <div id="v-inbox" class="flex-1 flex flex-col overflow-hidden min-h-0">
-    <div id="contact-list" class="flex-1 overflow-y-auto divide-y divide-slate-800/80"></div>
+    <div id="box-contacts" class="flex-1 overflow-y-auto divide-y divide-slate-800/80"></div>
 
-    <div id="chat-view" class="hidden flex-1 flex-col overflow-hidden min-h-0 bg-[#080c14]">
+    <div id="box-chat" class="hidden flex-1 flex-col overflow-hidden min-h-0 bg-[#080c14]">
+      <!-- Chat Head -->
       <div class="h-12 px-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
         <div class="flex items-center space-x-2">
-          <button id="btn-back" class="p-1.5 text-slate-400 font-bold text-xs bg-slate-800 rounded-lg">◀ Back</button>
+          <button id="b-back" class="p-1.5 text-slate-400 font-bold text-xs bg-slate-800 rounded-lg">◀ Back</button>
           <div>
-            <div id="c-name" class="text-xs font-bold text-white"></div>
-            <div id="c-phone" class="text-[9px] text-slate-400 font-mono"></div>
+            <div id="head-name" class="text-xs font-bold text-white"></div>
+            <div id="head-phone" class="text-[9px] text-slate-400 font-mono"></div>
           </div>
         </div>
-        <span id="c-badge" class="text-[9px] px-2 py-0.5 rounded border font-mono"></span>
+        <div class="flex items-center space-x-1.5">
+          <span class="text-[9px] px-1.5 py-0.5 rounded font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">⏳ 21h left</span>
+          <span id="head-badge" class="text-[9px] px-1.5 py-0.5 rounded border font-mono"></span>
+        </div>
       </div>
 
-      <div id="chat-box" class="flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0"></div>
-
-      <div id="media-bar" class="hidden px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex justify-between items-center text-xs text-emerald-400 shrink-0">
-        <span id="media-txt" class="truncate">📎 File Attached</span>
-        <button id="btn-del-media" class="text-rose-400 font-bold ml-2">✕</button>
+      <!-- Ad Attribution -->
+      <div class="px-3 py-1.5 bg-blue-950/40 border-b border-blue-900/40 flex items-center justify-between text-[10px] shrink-0">
+        <span class="text-blue-400 font-bold">🎯 Meta Ad: <span id="head-ad" class="text-slate-300 font-normal">Diwali Flat 25% Off</span></span>
+        <span class="text-[9px] text-blue-400 font-mono">ID: 89421</span>
       </div>
 
-      <form id="chat-form" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <input type="file" id="media-input" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
-        <button type="button" id="btn-attach" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">📎</button>
-        <input type="text" id="chat-txt" placeholder="Type reply..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:border-emerald-500">
+      <!-- Messages -->
+      <div id="msg-container" class="flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0"></div>
+
+      <!-- Attached File Chip -->
+      <div id="chip-media" class="hidden px-3 py-1 bg-slate-900 border-t border-slate-800 flex justify-between items-center text-xs text-emerald-400 shrink-0">
+        <span id="chip-txt" class="truncate">📎 File Ready</span>
+        <button id="b-del-med" class="text-rose-400 font-bold ml-2">✕</button>
+      </div>
+
+      <!-- Quick Canned -->
+      <div class="px-2 py-1 bg-slate-900/90 border-t border-slate-800/80 flex space-x-1 overflow-x-auto shrink-0 text-[10px]">
+        <button onclick="setReply('catalog')" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 whitespace-nowrap">📄 Catalog PDF</button>
+        <button onclick="setReply('upi')" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 whitespace-nowrap">💳 UPI Details</button>
+        <button onclick="setReply('dispatch')" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 whitespace-nowrap">🚚 Track Order</button>
+        <button id="b-ai" class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap font-bold">✨ AI Draft</button>
+      </div>
+
+      <!-- Input Bar -->
+      <form id="f-chat" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <input type="file" id="in-file" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
+        <button type="button" id="b-pick-file" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">📎</button>
+        <input type="text" id="in-msg" placeholder="Type reply..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:border-emerald-500">
         <button type="submit" class="bg-emerald-600 text-white px-3.5 py-2.5 rounded-lg font-bold text-xs">Send</button>
       </form>
     </div>
   </div>
 
   <!-- TAB 2: BROADCAST -->
-  <div id="v-broadcast" class="hidden flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-      <h2 class="text-xs font-bold text-white uppercase tracking-wider">Excel / CSV 1-by-1 Broadcaster</h2>
-      <div class="border-2 border-dashed border-slate-700 rounded-xl p-4 text-center bg-[#080c14]">
-        <input type="file" id="excel-input" accept=".xlsx, .xls, .csv" class="hidden">
-        <div class="text-2xl mb-1">📊</div>
-        <p id="excel-txt" class="text-xs font-semibold text-slate-300 mb-1">Upload Contacts Excel (.xlsx, .csv)</p>
-        <p class="text-[10px] text-slate-500 mb-2">Col 1 = Name, Col 2 = Phone Number</p>
-        <button type="button" id="btn-excel" class="px-3 py-1.5 bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-400 rounded-lg">Choose File from Device</button>
+  <div id="v-broadcast" class="hidden flex-1 p-3 overflow-y-auto space-y-3 min-h-0">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 space-y-3">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xs font-bold text-white uppercase tracking-wider">Excel / CSV 1-by-1 Queue</h2>
+        <span class="text-[10px] text-emerald-400 font-mono">1.2s Anti-Ban</span>
+      </div>
+      <div class="border-2 border-dashed border-slate-700 rounded-xl p-3.5 text-center bg-[#080c14]">
+        <input type="file" id="in-excel" accept=".xlsx, .xls, .csv" class="hidden">
+        <div class="text-xl mb-1">📊</div>
+        <p id="lbl-excel" class="text-xs font-semibold text-slate-300 mb-0.5">Upload Contacts Sheet (.xlsx, .csv)</p>
+        <p class="text-[9px] text-slate-500 mb-2">Col 1 = Name, Col 2 = Phone</p>
+        <button type="button" id="b-pick-excel" class="px-3 py-1 bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-400 rounded-lg">Choose File</button>
       </div>
 
-      <div>
-        <label class="text-[11px] font-semibold text-slate-300 block mb-1">Select Meta Approved Template</label>
-        <select class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white">
-          <option>vedashree_festive_offer (Marketing - Flat 20% Off)</option>
-          <option>order_dispatch_alert (Utility - Delhivery Tracking)</option>
-          <option>cart_recovery (Marketing - Complete Order)</option>
-        </select>
-      </div>
+      <select class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white">
+        <option>vedashree_festive_offer (Marketing - Flat 20% Off)</option>
+        <option>order_dispatch_alert (Utility - Delhivery Tracking)</option>
+      </select>
 
-      <div class="p-2.5 bg-[#080c14] border border-slate-800 rounded-lg">
-        <span class="text-[9px] uppercase font-bold text-slate-500">Live Meta Template Preview</span>
-        <p class="text-xs text-slate-300 mt-1 font-mono">"Namaste {{1}}! Special seasonal offer is active on Vedashree store today. Reply STOP to opt-out."</p>
-      </div>
-
-      <button id="btn-broadcast" class="w-full bg-emerald-600 text-white font-bold p-3 rounded-lg text-xs">Send Broadcast to Contacts</button>
+      <button id="b-send-all" class="w-full bg-emerald-600 text-white font-bold p-2.5 rounded-lg text-xs">Send 1-by-1 Broadcast</button>
     </div>
 
-    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden mb-8">
-      <div class="p-3 border-b border-slate-800 flex justify-between items-center bg-[#080c14]">
-        <span class="text-xs font-bold text-white uppercase">Live Delivery Status Log</span>
-        <span id="queue-txt" class="text-[10px] text-emerald-400 font-mono">Queue Idle</span>
+    <!-- Status Audit Log -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden mb-6">
+      <div class="p-2.5 border-b border-slate-800 flex justify-between items-center bg-[#080c14]">
+        <span class="text-xs font-bold text-white uppercase">Live Delivery Log</span>
+        <div class="flex items-center space-x-1.5">
+          <span id="log-status" class="text-[10px] text-emerald-400 font-mono">Idle</span>
+          <button id="b-csv" class="px-2 py-0.5 rounded bg-slate-800 text-[9px] text-slate-300 border border-slate-700">📥 CSV</button>
+        </div>
       </div>
-      <div id="broadcast-rows" class="divide-y divide-slate-800 max-h-60 overflow-y-auto"></div>
+      <div id="log-rows" class="divide-y divide-slate-800 max-h-56 overflow-y-auto"></div>
     </div>
   </div>
 
-  <!-- TAB 3: SOCIAL LEADS -->
-  <div id="v-leads" class="hidden flex-1 p-4 overflow-y-auto space-y-3 min-h-0">
+  <!-- TAB 3: PIPELINE -->
+  <div id="v-leads" class="hidden flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0">
     <div class="flex justify-between items-center">
-      <h2 class="text-xs font-bold text-white uppercase tracking-wider">Multi-Source Lead Attribution</h2>
-      <span class="text-[10px] text-emerald-400 font-mono">Meta Referral Webhook</span>
+      <h2 class="text-xs font-bold text-white uppercase">Lead Attribution Pipeline</h2>
+      <span class="text-[10px] text-emerald-400 font-mono">Webhook Auto-Sync</span>
     </div>
-    <div id="leads-rows" class="space-y-2 mb-8"></div>
+    <div class="flex space-x-1 overflow-x-auto text-[10px] font-semibold py-0.5">
+      <button onclick="flt('all')" id="f-all" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 flt-on whitespace-nowrap">All (4)</button>
+      <button onclick="flt('hot')" id="f-hot" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 whitespace-nowrap">🔥 Hot</button>
+      <button onclick="flt('converted')" id="f-converted" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 whitespace-nowrap">💰 Converted</button>
+      <button onclick="flt('optout')" id="f-optout" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 whitespace-nowrap">🛑 Opt-Out</button>
+    </div>
+    <div id="leads-container" class="space-y-2 mb-6"></div>
   </div>
 
 </main>
 
 <script>
-function resize() { document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px'); }
-window.addEventListener('resize', resize);
-resize();
+function fitH(){document.documentElement.style.setProperty('--app-h',window.innerHeight+'px');}
+window.addEventListener('resize',fitH);fitH();
 
-const leads = [
-  { id: "1", name: "Rahul Sharma", phone: "+91 98765 43210", source: "Facebook Ad (CTWA)", time: "10:30 AM", msg: "Price details and combo offer?" },
-  { id: "2", name: "Pooja Verma", phone: "+91 91234 56789", source: "Instagram DM", time: "09:45 AM", msg: "Payment transferred via UPI" },
-  { id: "3", name: "Amit Patel", phone: "+91 99887 76655", source: "Website Widget", time: "Yesterday", msg: "Do you deliver to Delhi NCR?" },
-  { id: "4", name: "Suresh Gupta", phone: "+91 88776 65544", source: "Direct WhatsApp", time: "24 Sep", msg: "STOP" }
+let pwd=localStorage.getItem('crm_p')||'admin';
+if(localStorage.getItem('crm_ok')==='1')document.getElementById('login-modal').classList.add('hidden');
+
+document.getElementById('f-login').onsubmit=(e)=>{
+  e.preventDefault();
+  if(document.getElementById('p-input').value===pwd){
+    localStorage.setItem('crm_ok','1');
+    document.getElementById('login-modal').classList.add('hidden');
+  } else {
+    document.getElementById('p-err').classList.remove('hidden');
+  }
+};
+
+document.getElementById('b-out').onclick=()=>{localStorage.removeItem('crm_ok');location.reload();};
+document.getElementById('b-set').onclick=()=>{
+  const o=prompt("Current Password:");
+  if(o===pwd){
+    const n=prompt("New Password (min 4 chars):");
+    if(n&&n.length>=4){pwd=n;localStorage.setItem('crm_p',n);alert("Password changed successfully!");}
+  } else alert("Wrong password.");
+};
+
+const leads=[
+  {id:"1",name:"Rahul Sharma",phone:"+91 98765 43210",src:"Facebook Ad (CTWA)",ad:"Diwali Combo 25% Off",st:"hot",t:"10:30 AM",msg:"Price details and offer?"},
+  {id:"2",name:"Pooja Verma",phone:"+91 91234 56789",src:"Instagram DM",ad:"Organic Reel",st:"converted",t:"09:45 AM",msg:"Payment done via UPI"},
+  {id:"3",name:"Amit Patel",phone:"+91 99887 76655",src:"Website Widget",ad:"Store Product Page",st:"hot",t:"Yesterday",msg:"Can you deliver to Delhi?"},
+  {id:"4",name:"Suresh Gupta",phone:"+91 88776 65544",src:"Direct WhatsApp",ad:"Old Broadcast",st:"optout",t:"24 Sep",msg:"STOP"}
 ];
 
-const msgs = {
-  "1": [
-    { sender: "customer", text: "Hi, I clicked your Facebook Ad for Vedashree products.", time: "10:28 AM" },
-    { sender: "me", text: "Namaste Rahul! We offer 100% authentic formulas.", time: "10:29 AM", status: "read" },
-    { sender: "customer", text: "Price details and combo offer?", time: "10:30 AM" }
+const chatDB={
+  "1":[
+    {s:"c",txt:"Hi, I clicked your Facebook Ad for Vedashree products.",t:"10:28 AM"},
+    {s:"m",txt:"Namaste Rahul! We offer 100% authentic wellness formulas.",t:"10:29 AM",r:true},
+    {s:"c",txt:"Price details and combo offer?",t:"10:30 AM"}
   ],
-  "2": [
-    { sender: "customer", text: "Payment transferred via UPI", time: "09:45 AM" },
-    { sender: "me", text: "Invoice generated successfully.", time: "09:46 AM", status: "read" }
+  "2":[
+    {s:"c",txt:"Payment transferred via UPI",t:"09:45 AM"},
+    {s:"m",txt:"Invoice generated successfully.",t:"09:46 AM",r:true}
   ]
 };
 
-let bRecipients = [
-  { name: "Vikram Malhotra", phone: "+919811223344", status: "pending" },
-  { name: "Ananya Iyer", phone: "+919822334455", status: "pending" },
-  { name: "Rohit Deshmukh", phone: "+919833445566", status: "pending" }
+let bList=[
+  {name:"Vikram Malhotra",phone:"+919811223344",st:"pending"},
+  {name:"Ananya Iyer",phone:"+919822334455",st:"pending"},
+  {name:"Rohit Deshmukh",phone:"+919833445566",st:"pending"}
 ];
 
-let curContact = null;
-let curMedia = null;
+let curLead=null,curMed=null,curFlt='all';
 
-function badgeClass(s) {
-  if (s.includes("Facebook")) return "bg-blue-500/10 text-blue-400 border-blue-500/30";
-  if (s.includes("Instagram")) return "bg-pink-500/10 text-pink-400 border-pink-500/30";
-  if (s.includes("Website")) return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+function bStyle(s){
+  if(s.includes("Facebook"))return "bg-blue-500/10 text-blue-400 border-blue-500/30";
+  if(s.includes("Instagram"))return "bg-pink-500/10 text-pink-400 border-pink-500/30";
+  if(s.includes("Website"))return "bg-amber-500/10 text-amber-400 border-amber-500/30";
   return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
 }
 
-function switchTab(tab) {
-  ['inbox', 'broadcast', 'leads'].forEach(t => {
-    document.getElementById('v-' + t).classList.add('hidden');
-    document.getElementById('tab-' + t).classList.remove('active-tab');
-  });
-  document.getElementById('v-' + tab).classList.remove('hidden');
-  document.getElementById('tab-' + tab).classList.add('active-tab');
-  if (tab === 'broadcast') renderBList();
-  if (tab === 'leads') renderLeads();
+function stBadge(st){
+  if(st==="hot")return `<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">🔥 Hot</span>`;
+  if(st==="converted")return `<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">💰 Converted</span>`;
+  return `<span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">🛑 Blacklisted</span>`;
 }
 
-document.getElementById('tab-inbox').onclick = () => switchTab('inbox');
-document.getElementById('tab-broadcast').onclick = () => switchTab('broadcast');
-document.getElementById('tab-leads').onclick = () => switchTab('leads');
+function nav(tab){
+  ['inbox','broadcast','leads'].forEach(t=>{
+    document.getElementById('v-'+t).classList.add('hidden');
+    document.getElementById('t-'+t).classList.remove('active-tab');
+  });
+  document.getElementById('v-'+tab).classList.remove('hidden');
+  document.getElementById('t-'+tab).classList.add('active-tab');
+  if(tab==='broadcast')renderBLog();
+  if(tab==='leads')renderPipeline();
+}
 
-function renderContacts() {
-  const cList = document.getElementById('contact-list');
-  cList.innerHTML = leads.map(c => `
-    <div onclick="openC('${c.id}')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
+document.getElementById('t-inbox').onclick=()=>nav('inbox');
+document.getElementById('t-broadcast').onclick=()=>nav('broadcast');
+document.getElementById('t-leads').onclick=()=>nav('leads');
+
+function renderInboxList(){
+  document.getElementById('box-contacts').innerHTML=leads.map(c=>`
+    <div onclick="openChat('${c.id}')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
       <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700">${c.name[0]}</div>
       <div class="flex-1 min-w-0">
         <div class="flex justify-between items-baseline mb-0.5">
           <h4 class="text-xs font-bold text-white truncate">${c.name}</h4>
-          <span class="text-[10px] text-slate-500 font-mono">${c.time}</span>
+          <span class="text-[10px] text-slate-500 font-mono">${c.t}</span>
         </div>
         <p class="text-[11px] text-slate-400 truncate mb-1">${c.msg}</p>
-        <span class="text-[9px] px-1.5 py-0.5 rounded border font-mono ${badgeClass(c.source)}">${c.source}</span>
+        <div class="flex items-center space-x-1.5">
+          <span class="text-[9px] px-1.5 py-0.5 rounded border font-mono ${bStyle(c.src)}">${c.src}</span>
+          ${stBadge(c.st)}
+        </div>
       </div>
     </div>
   `).join("");
 }
 
-window.openC = function(id) {
-  curContact = leads.find(l => l.id === id);
-  document.getElementById('c-name').innerText = curContact.name;
-  document.getElementById('c-phone').innerText = curContact.phone;
-  document.getElementById('c-badge').innerText = curContact.source;
-  document.getElementById('c-badge').className = "text-[9px] px-2 py-0.5 rounded border font-mono " + badgeClass(curContact.source);
-  document.getElementById('contact-list').classList.add('hidden');
-  document.getElementById('chat-view').classList.remove('hidden');
-  document.getElementById('chat-view').classList.add('flex');
-  renderChatBox();
+window.openChat=function(id){
+  curLead=leads.find(l=>l.id===id);
+  document.getElementById('head-name').innerText=curLead.name;
+  document.getElementById('head-phone').innerText=curLead.phone;
+  document.getElementById('head-badge').innerText=curLead.src;
+  document.getElementById('head-badge').className="text-[9px] px-1.5 py-0.5 rounded border font-mono "+bStyle(curLead.src);
+  document.getElementById('head-ad').innerText=curLead.ad;
+  document.getElementById('box-contacts').classList.add('hidden');
+  document.getElementById('box-chat').classList.remove('hidden');
+  document.getElementById('box-chat').classList.add('flex');
+  renderMessages();
 };
 
-document.getElementById('btn-back').onclick = () => {
-  curContact = null;
-  document.getElementById('chat-view').classList.add('hidden');
-  document.getElementById('chat-view').classList.remove('flex');
-  document.getElementById('contact-list').classList.remove('hidden');
+document.getElementById('b-back').onclick=()=>{
+  curLead=null;
+  document.getElementById('box-chat').classList.add('hidden');
+  document.getElementById('box-chat').classList.remove('flex');
+  document.getElementById('box-contacts').classList.remove('hidden');
 };
 
-function renderChatBox() {
-  const box = document.getElementById('chat-box');
-  const arr = msgs[curContact.id] || [];
-  box.innerHTML = arr.map(m => {
-    const isMe = m.sender === 'me';
-    let mediaH = '';
-    if (m.media) {
-      mediaH = m.isImg ? `<img src="${m.media}" class="mb-2 max-h-48 rounded w-full object-cover">` : `<div class="p-2 mb-2 bg-slate-900 rounded text-xs">📎 ${m.mediaName}</div>`;
+function renderMessages(){
+  const box=document.getElementById('msg-container');
+  const arr=chatDB[curLead.id]||[];
+  box.innerHTML=arr.map(m=>{
+    const me=m.s==='m';
+    let med='';
+    if(m.media){
+      med=m.isImg?`<img src="${m.media}" class="mb-1.5 max-h-48 rounded w-full object-cover">`:`<div class="p-2 mb-1.5 bg-slate-900 rounded text-xs">📎 ${m.mName}</div>`;
     }
     return `
-      <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-        <div class="max-w-[85%] p-3 rounded-2xl text-xs ${isMe ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}">
-          ${mediaH}
-          <p>${m.text}</p>
-          <div class="flex justify-end items-center space-x-1 mt-1 text-[9px] font-mono ${isMe ? 'text-emerald-200' : 'text-slate-400'}">
-            <span>${m.time}</span>
-            ${isMe ? `<span class="${m.status === 'read' ? 'text-sky-300 font-bold' : 'text-slate-300'}">✓✓</span>` : ''}
+      <div class="flex flex-col ${me?'items-end':'items-start'}">
+        <div class="max-w-[85%] p-2.5 rounded-2xl text-xs ${me?'bg-emerald-600 text-white rounded-br-none':'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}">
+          ${med}<p>${m.txt}</p>
+          <div class="flex justify-end items-center space-x-1 mt-1 text-[9px] font-mono ${me?'text-emerald-200':'text-slate-400'}">
+            <span>${m.t}</span>${me?`<span class="${m.r?'text-sky-300 font-bold':'text-slate-300'}">✓✓</span>`:''}
           </div>
         </div>
       </div>
     `;
   }).join("");
-  box.scrollTop = box.scrollHeight;
+  box.scrollTop=box.scrollHeight;
 }
 
-document.getElementById('btn-attach').onclick = () => document.getElementById('media-input').click();
-
-document.getElementById('media-input').onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  curMedia = { file: file, name: file.name, url: URL.createObjectURL(file), isImg: file.type.startsWith('image/') };
-  document.getElementById('media-txt').innerText = "📎 " + file.name;
-  document.getElementById('media-bar').classList.remove('hidden');
+window.setReply=function(t){
+  const i=document.getElementById('in-msg');
+  if(t==='catalog')i.value="Namaste! Here is our authentic Product Catalogue: https://vedashree.in/catalog.pdf";
+  if(t==='upi')i.value="Please pay via UPI to: vedashree@icici. Share payment screenshot once done!";
+  if(t==='dispatch')i.value="Your order has been dispatched via Delhivery. Track here: https://delhivery.com/track/10294";
+  i.focus();
 };
 
-document.getElementById('btn-del-media').onclick = () => {
-  curMedia = null;
-  document.getElementById('media-bar').classList.add('hidden');
-  document.getElementById('media-input').value = '';
+document.getElementById('b-ai').onclick=()=>{
+  const i=document.getElementById('in-msg');
+  i.value=`Namaste ${curLead.name}! Yes, we have this wellness combo in stock with flat 20% discount & free shipping today!`;
+  i.focus();
 };
 
-document.getElementById('chat-form').onsubmit = (e) => {
+document.getElementById('b-pick-file').onclick=()=>document.getElementById('in-file').click();
+document.getElementById('in-file').onchange=(e)=>{
+  const f=e.target.files[0];if(!f)return;
+  curMed={f:f,name:f.name,url:URL.createObjectURL(f),isImg:f.type.startsWith('image/')};
+  document.getElementById('chip-txt').innerText="📎 "+f.name;
+  document.getElementById('chip-media').classList.remove('hidden');
+};
+
+document.getElementById('b-del-med').onclick=()=>{
+  curMed=null;document.getElementById('chip-media').classList.add('hidden');document.getElementById('in-file').value='';
+};
+
+document.getElementById('f-chat').onsubmit=(e)=>{
   e.preventDefault();
-  const input = document.getElementById('chat-txt');
-  const txt = input.value.trim();
-  if (!txt && !curMedia) return;
-
-  if (!msgs[curContact.id]) msgs[curContact.id] = [];
-  const newM = {
-    sender: "me",
-    text: txt,
-    media: curMedia ? curMedia.url : null,
-    isImg: curMedia ? curMedia.isImg : false,
-    mediaName: curMedia ? curMedia.name : null,
-    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    status: "sent"
-  };
-  msgs[curContact.id].push(newM);
-  input.value = '';
-  curMedia = null;
-  document.getElementById('media-bar').classList.add('hidden');
-  document.getElementById('media-input').value = '';
-  renderChatBox();
-
-  setTimeout(() => { newM.status = "delivered"; renderChatBox(); }, 800);
-  setTimeout(() => { newM.status = "read"; renderChatBox(); }, 1800);
+  const i=document.getElementById('in-msg');
+  const txt=i.value.trim();if(!txt&&!curMed)return;
+  if(!chatDB[curLead.id])chatDB[curLead.id]=[];
+  const m={s:"m",txt:txt,media:curMed?curMed.url:null,isImg:curMed?curMed.isImg:false,mName:curMed?curMed.name:null,t:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),r:false};
+  chatDB[curLead.id].push(m);
+  i.value='';curMed=null;document.getElementById('chip-media').classList.add('hidden');document.getElementById('in-file').value='';
+  renderMessages();
+  setTimeout(()=>{m.r=true;renderMessages();},1200);
 };
 
-document.getElementById('btn-excel').onclick = () => document.getElementById('excel-input').click();
-
-document.getElementById('excel-input').onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  document.getElementById('excel-txt').innerText = "Uploaded: " + file.name;
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    try {
-      const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
-      const parsed = [];
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i][1]) parsed.push({ name: rows[i][0] || "Customer", phone: String(rows[i][1]).replace(/[^0-9+]/g, ''), status: "pending" });
+document.getElementById('b-pick-excel').onclick=()=>document.getElementById('in-excel').click();
+document.getElementById('in-excel').onchange=(e)=>{
+  const f=e.target.files[0];if(!f)return;
+  document.getElementById('lbl-excel').innerText="File: "+f.name;
+  const reader=new FileReader();
+  reader.onload=(evt)=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array'});
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});
+      const parsed=[];
+      for(let i=1;i<rows.length;i++){
+        if(rows[i][1]){
+          const ph=String(rows[i][1]).replace(/[^0-9+]/g,'');
+          const isStop=leads.some(l=>l.phone.includes(ph)&&l.st==='optout');
+          parsed.push({name:rows[i][0]||"Customer",phone:ph,st:isStop?"optout":"pending"});
+        }
       }
-      if (parsed.length) { bRecipients = parsed; renderBList(); alert("Loaded " + parsed.length + " contacts!"); }
-    } catch(err) { alert("File error"); }
+      d "+parsed.length+" contacts!");}
+    }catch(err){alert("Excel read error");}
   };
-  reader.readAsArrayBuffer(file);
+  reader.readAsArrayBuffer(f);
 };
 
-function renderBList() {
-  document.getElementById('broadcast-rows').innerHTML = bRecipients.map(r => `
-    <div class="p-2.5 flex items-center justify-between text-xs">
+function renderBLog(){
+  document.getElementById('log-rows').innerHTML=bList.map(r=>`
+    <div class="p-2 flex items-center justify-between text-xs">
       <div><div class="font-semibold text-white">${r.name}</div><div class="text-[10px] text-slate-400 font-mono">${r.phone}</div></div>
-      <span class="text-[10px] font-mono text-slate-400">${r.status === 'sent' ? '✓ Sent' : r.status === 'delivered' ? '✓✓ Delivered' : r.status === 'read' ? '<span class="text-sky-400 font-bold">✓✓ Read</span>' : '⏳ Queued'}</span>
+      <span class="text-[10px] font-mono text-slate-400">${r.st==='sent'?'✓ Sent':r.st==='del'?'✓✓ Delivered':r.st==='read'?'<span class="text-sky-400 font-bold">✓✓ Read</span>':r.st==='optout'?'<span class="text-rose-400">🛑 Opt-Out</span>':'⏳ Queued'}</span>
     </div>
   `).join("");
 }
 
-document.getElementById('btn-broadcast').onclick = () => {
-  if (!bRecipients.length) return;
-  const btn = document.getElementById('btn-broadcast');
-  const log = document.getElementById('queue-txt');
-  btn.disabled = true;
-  let i = 0;
-  const timer = setInterval(() => {
-    if (i >= bRecipients.length) {
-      clearInterval(timer);
-      btn.disabled = false;
-      btn.innerText = "Broadcast Finished!";
-      log.innerText = "Queue Finished";
-      return;
+document.getElementById('b-send-all').onclick=()=>{
+  if(!bList.length)return;
+  const btn=document.getElementById('b-send-all');
+  const log=document.getElementById('log-status');
+  btn.disabled=true;let idx=0;
+  const timer=setInterval(()=>{
+    if(idx>=bList.length){clearInterval(timer);btn.disabled=false;btn.innerText="Broadcast Finished!";log.innerText="Completed";return;}
+    const cur=idx;
+    if(bList[cur].st!=='optout'){
+      bList[cur].st='sent';renderBLog();
+      setTimeout(()=>{bList[cur].st='del';renderBLog();},500);
+      setTimeout(()=>{bList[cur].st='read';renderBLog();},1200);
     }
-    const idx = i;
-    bRecipients[idx].status = "sent";
-    renderBList();
-    setTimeout(() => { bRecipients[idx].status = "delivered"; renderBList(); }, 600);
-    setTimeout(() => { bRecipients[idx].status = "read"; renderBList(); }, 1400);
-    i++;
-    btn.innerText = `Sending (${i}/${bRecipients.length})...`;
-    log.innerText = `Progress: ${i}/${bRecipients.length}`;
-  }, 1000);
+    idx++;
+    btn.innerText=`Sending (${idx}/${bList.length})...`;
+    log.innerText=`Queue: ${idx}/${bList.length}`;
+  },1000);
 };
 
-function renderLeads() {
-  document.getElementById('leads-rows').innerHTML = leads.map(c => `
-    <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+document.getElementById('b-csv').onclick=()=>{
+  let c="Name,Phone,Status\n";bList.forEach(r=>{c+=`"${r.name}","${r.phone}","${r.st}"\n`;});
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));
+  a.download="broadcast_report.csv";a.click();
+};
+
+window.flt=function(t){
+  curFlt=t;
+  ['all','hot','converted','optout'].forEach(f=>document.getElementById('f-'+f).classList.remove('flt-on'));
+  document.getElementById('f-'+t).classList.add('flt-on');
+  renderPipeline();
+};
+
+function renderPipeline(){
+  const f=curFlt==='all'?leads:leads.filter(l=>l.st===curFlt);
+  document.getElementById('leads-container').innerHTML=f.map(c=>`
+    <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
       <div class="space-y-1">
         <div class="text-xs font-bold text-white">${c.name}</div>
         <div class="text-[10px] text-slate-400 font-mono">${c.phone}</div>
-        <span class="text-[9px] px-2 py-0.5 rounded border font-mono ${badgeClass(c.source)}">${c.source}</span>
+        <div class="flex items-center space-x-1.5">
+          <span class="text-[9px] px-1.5 py-0.5 rounded border font-mono ${bStyle(c.src)}">${c.src}</span>
+          ${stBadge(c.st)}
+        </div>
       </div>
-      <button onclick="switchTab('inbox'); openC('${c.id}')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>
+      <button onclick="nav('inbox');openChat('${c.id}')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>
     </div>
   `).join("");
 }
 
-renderContacts();
-renderBList();
+renderInboxList();
+renderBLog();
 </script>
 </body>
-        </html>
+</html>
