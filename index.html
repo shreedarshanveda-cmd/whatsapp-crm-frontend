@@ -82,7 +82,6 @@
     <div id="box-contacts" class="flex-1 overflow-y-auto divide-y divide-slate-800/80"></div>
 
     <div id="box-chat" class="hidden flex-1 flex-col overflow-hidden min-h-0 bg-[#080c14]">
-      <!-- Chat Head -->
       <div class="h-12 px-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
         <div class="flex items-center space-x-2">
           <button id="b-back" class="p-1.5 text-slate-400 font-bold text-xs bg-slate-800 rounded-lg">◀ Back</button>
@@ -97,22 +96,18 @@
         </div>
       </div>
 
-      <!-- Ad Attribution Card -->
       <div class="px-3 py-1.5 bg-blue-950/40 border-b border-blue-900/40 flex items-center justify-between text-[10px] shrink-0">
         <span class="text-blue-400 font-bold">🎯 Meta Ad: <span id="head-ad" class="text-slate-300 font-normal">Diwali Flat 25% Off</span></span>
         <span class="text-[9px] text-blue-400 font-mono">ID: 89421</span>
       </div>
 
-      <!-- Messages Window -->
       <div id="msg-container" class="flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0"></div>
 
-      <!-- Attached File Chip -->
       <div id="chip-media" class="hidden px-3 py-1 bg-slate-900 border-t border-slate-800 flex justify-between items-center text-xs text-emerald-400 shrink-0">
         <span id="chip-txt" class="truncate">📎 File Ready</span>
         <button id="b-del-med" class="text-rose-400 font-bold ml-2">✕</button>
       </div>
 
-      <!-- Quick Canned Bar -->
       <div class="px-2 py-1 bg-slate-900/90 border-t border-slate-800/80 flex space-x-1 overflow-x-auto shrink-0 text-[10px]">
         <button onclick="setReply('catalog')" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 whitespace-nowrap">📄 Catalog PDF</button>
         <button onclick="setReply('upi')" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 whitespace-nowrap">💳 UPI Details</button>
@@ -120,7 +115,6 @@
         <button id="b-ai" class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap font-bold">✨ AI Draft</button>
       </div>
 
-      <!-- Chat Input Bar -->
       <form id="f-chat" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <input type="file" id="in-file" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
         <button type="button" id="b-pick-file" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">📎</button>
@@ -153,7 +147,6 @@
       <button id="b-send-all" class="w-full bg-emerald-600 text-white font-bold p-2.5 rounded-lg text-xs">Send 1-by-1 Broadcast</button>
     </div>
 
-    <!-- Status Audit Log -->
     <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden mb-6">
       <div class="p-2.5 border-b border-slate-800 flex justify-between items-center bg-[#080c14]">
         <span class="text-xs font-bold text-white uppercase">Live Delivery Log</span>
@@ -186,7 +179,6 @@
 function fitH(){document.documentElement.style.setProperty('--app-h',window.innerHeight+'px');}
 window.addEventListener('resize',fitH);fitH();
 
-// Passcode Logic with Trim & Case Fix
 let pwd = (localStorage.getItem('crm_p') || 'admin').trim();
 if(localStorage.getItem('crm_ok')==='1') {
   document.getElementById('login-modal').classList.add('hidden');
@@ -209,7 +201,6 @@ document.getElementById('p-input').addEventListener('keypress', (e)=>{ if(e.key 
 
 document.getElementById('b-out').onclick = () => { localStorage.removeItem('crm_ok'); location.reload(); };
 
-// Password Change Modal Handlers
 document.getElementById('b-set').onclick = () => {
   document.getElementById('old-pwd').value = '';
   document.getElementById('new-pwd').value = '';
