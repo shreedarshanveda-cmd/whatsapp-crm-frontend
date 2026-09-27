@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -17,16 +17,16 @@
     font-family: system-ui, -apple-system, sans-serif;
   }
   .active-tab {
-    background-color: rgba(16, 185, 129, 0.15);
-    color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
   }
 </style>
 </head>
 <body class="text-slate-100 flex flex-col h-full select-none">
 
 <!-- Header -->
-<header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between flex-shrink-0">
+<header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
   <div class="flex items-center space-x-2.5">
     <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center border border-emerald-500/30">⚡</div>
     <div>
@@ -37,75 +37,157 @@
   <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono font-semibold">● Edge Live</span>
 </header>
 
-<!-- Tabs -->
-<nav class="bg-slate-900/80 border-b border-slate-800 px-2 py-1.5 flex space-x-1.5 overflow-x-auto flex-shrink-0 text-xs font-medium">
-  <button id="tab-btn-inbox" onclick="switchTab('inbox')" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap">
+<!-- Tabs Navigation -->
+<nav class="bg-slate-900/80 border-b border-slate-800 px-2 py-1.5 flex space-x-1.5 overflow-x-auto shrink-0 text-xs font-medium">
+  <button id="tab-btn-inbox" onclick="showTab('inbox')" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap bg-slate-800 text-slate-300">
     <span>💬 Live Chat</span>
     <span class="bg-emerald-500 text-black text-[9px] font-bold px-1.5 rounded-full">2</span>
   </button>
-  <button id="tab-btn-broadcast" onclick="switchTab('broadcast')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap">
+  <button id="tab-btn-broadcast" onclick="showTab('broadcast')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/50">
     <span>📢 Excel Broadcast</span>
   </button>
-  <button id="tab-btn-leads" onclick="switchTab('leads')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap">
+  <button id="tab-btn-leads" onclick="showTab('leads')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap bg-slate-800/50">
     <span>👥 Social Leads</span>
   </button>
 </nav>
 
 <!-- Content Container -->
-<main class="flex-1 min-h-0 relative overflow-hidden flex flex-col">
+<main class="flex-1 relative overflow-hidden flex flex-col">
 
-  <!-- 1. INBOX & CHAT -->
-  <div id="view-inbox" class="h-full flex flex-col min-h-0">
-    <div id="chat-list-view" class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-800"></div>
+  <!-- TAB 1: INBOX & CHAT -->
+  <div id="view-inbox" class="flex-1 flex flex-col overflow-hidden">
+    
+    <!-- Contact List Screen -->
+    <div id="contact-list" class="flex-1 overflow-y-auto divide-y divide-slate-800">
+      
+      <div onclick="openDirectChat('Rahul Sharma', '+91 98765 43210', 'Facebook Ad (CTWA)')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
+        <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700">R</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-baseline mb-0.5">
+            <h4 class="text-xs font-bold text-white truncate">Rahul Sharma</h4>
+            <span class="text-[10px] text-slate-500 font-mono">10:30 AM</span>
+          </div>
+          <p class="text-[11px] text-slate-400 truncate mb-1">Price details and combo offer?</p>
+          <span class="text-[9px] px-1.5 py-0.5 rounded border mono font-medium bg-blue-500/10 text-blue-400 border-blue-500/30">Facebook Ad (CTWA)</span>
+        </div>
+      </div>
 
-    <div id="chat-detail-view" class="h-full flex-col min-h-0 hidden bg-slate-950">
-      <div class="h-12 px-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center flex-shrink-0">
+      <div onclick="openDirectChat('Pooja Verma', '+91 91234 56789', 'Instagram DM')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
+        <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700">P</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-baseline mb-0.5">
+            <h4 class="text-xs font-bold text-white truncate">Pooja Verma</h4>
+            <span class="text-[10px] text-slate-500 font-mono">09:45 AM</span>
+          </div>
+          <p class="text-[11px] text-slate-400 truncate mb-1">Payment transferred via UPI</p>
+          <span class="text-[9px] px-1.5 py-0.5 rounded border mono font-medium bg-pink-500/10 text-pink-400 border-pink-500/30">Instagram DM</span>
+        </div>
+      </div>
+
+      <div onclick="openDirectChat('Amit Patel', '+91 99887 76655', 'Website Widget')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
+        <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700">A</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-baseline mb-0.5">
+            <h4 class="text-xs font-bold text-white truncate">Amit Patel</h4>
+            <span class="text-[10px] text-slate-500 font-mono">Yesterday</span>
+          </div>
+          <p class="text-[11px] text-slate-400 truncate mb-1">Do you deliver to Delhi NCR?</p>
+          <span class="text-[9px] px-1.5 py-0.5 rounded border mono font-medium bg-amber-500/10 text-amber-400 border-amber-500/30">Website Widget</span>
+        </div>
+      </div>
+
+      <div onclick="openDirectChat('Suresh Gupta', '+91 88776 65544', 'Direct WhatsApp')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
+        <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0 border border-slate-700">S</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-baseline mb-0.5">
+            <h4 class="text-xs font-bold text-white truncate">Suresh Gupta</h4>
+            <span class="text-[10px] text-slate-500 font-mono">24 Sep</span>
+          </div>
+          <p class="text-[11px] text-slate-400 truncate mb-1">STOP</p>
+          <span class="text-[9px] px-1.5 py-0.5 rounded border mono font-medium bg-emerald-500/10 text-emerald-400 border-emerald-500/30">Direct WhatsApp</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Active Chat Conversation Screen -->
+    <div id="chat-conversation" class="hidden flex-1 flex-col overflow-hidden bg-slate-950">
+      
+      <!-- Chat Header -->
+      <div class="h-12 px-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
         <div class="flex items-center space-x-2">
-          <button onclick="closeChat()" class="p-1 text-slate-400 hover:text-white font-bold text-xs">◀ Back</button>
+          <button onclick="backToContacts()" class="p-1 text-slate-400 hover:text-white font-bold text-xs">◀ Back</button>
           <div>
-            <div id="chat-title-name" class="text-xs font-bold text-white leading-tight">Rahul Sharma</div>
-            <div id="chat-title-phone" class="text-[9px] text-slate-400 font-mono leading-tight">+91 98765 43210</div>
+            <div id="c-name" class="text-xs font-bold text-white leading-tight">Rahul Sharma</div>
+            <div id="c-phone" class="text-[9px] text-slate-400 font-mono leading-tight">+91 98765 43210</div>
           </div>
         </div>
-        <span id="chat-title-badge" class="text-[9px] px-2 py-0.5 rounded border font-mono">Facebook Ad</span>
+        <span id="c-badge" class="text-[9px] px-2 py-0.5 rounded border font-mono bg-blue-500/10 text-blue-400 border-blue-500/30">Facebook Ad</span>
       </div>
 
-      <div id="chat-messages-container" class="flex-1 min-h-0 p-3 overflow-y-auto space-y-2.5 bg-slate-950"></div>
+      <!-- Messages Scroll Area -->
+      <div id="messages-box" class="flex-1 p-3 overflow-y-auto space-y-2.5 bg-slate-950">
+        <div class="flex flex-col items-start">
+          <div class="max-w-[85%] p-3 rounded-2xl text-xs bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700">
+            <p>Hi, I clicked your Facebook Ad for Vedashree Wellness products.</p>
+            <div class="flex justify-end mt-1 text-[9px] mono text-slate-400">10:28 AM</div>
+          </div>
+        </div>
 
-      <div id="media-preview-bar" class="hidden px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex justify-between items-center text-xs text-emerald-400 flex-shrink-0">
-        <span id="media-filename" class="truncate">📎 Attached File</span>
-        <button onclick="removeMedia()" class="text-rose-400 font-bold ml-2">✕</button>
+        <div class="flex flex-col items-end">
+          <div class="max-w-[85%] p-3 rounded-2xl text-xs bg-emerald-600 text-white rounded-br-none shadow-md">
+            <p>Namaste Rahul! We offer 100% authentic wellness formulas.</p>
+            <div class="flex justify-end items-center space-x-1 mt-1 text-[9px] mono text-emerald-200">
+              <span>10:29 AM</span>
+              <span class="text-sky-300 font-bold">✓✓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-start">
+          <div class="max-w-[85%] p-3 rounded-2xl text-xs bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700">
+            <p>Price details and combo offer?</p>
+            <div class="flex justify-end mt-1 text-[9px] mono text-slate-400">10:30 AM</div>
+          </div>
+        </div>
       </div>
 
-      <!-- Chat Input Form (Always Anchored at Bottom) -->
-      <form onsubmit="handleSendChat(event)" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 flex-shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <input type="file" id="media-file-input" onchange="handleMediaSelect(event)" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
-        <button type="button" onclick="document.getElementById('media-file-input').click()" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 active:bg-slate-700">📎</button>
-        <input type="text" id="chat-input-text" placeholder="Type reply..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:border-emerald-500">
+      <!-- Media Selected Info Bar -->
+      <div id="media-info" class="hidden px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex justify-between items-center text-xs text-emerald-400 shrink-0">
+        <span id="media-name" class="truncate">📎 File Ready</span>
+        <button onclick="clearMedia()" class="text-rose-400 font-bold ml-2">✕</button>
+      </div>
+
+      <!-- Chat Bottom Input Bar (Fixed at bottom) -->
+      <form onsubmit="sendChatMessage(event)" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 shrink-0">
+        <input type="file" id="media-picker" onchange="onMediaPicked(event)" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
+        <button type="button" onclick="document.getElementById('media-picker').click()" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 active:bg-slate-700">📎</button>
+        <input type="text" id="chat-text" placeholder="Type reply..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2.5 rounded-lg focus:outline-none focus:border-emerald-500">
         <button type="submit" class="bg-emerald-600 active:bg-emerald-700 text-white px-3.5 py-2.5 rounded-lg font-bold text-xs">Send</button>
       </form>
+
     </div>
   </div>
 
-  <!-- 2. EXCEL BULK BROADCAST -->
-  <div id="view-broadcast" class="h-full p-4 overflow-y-auto space-y-4 hidden pb-12">
+  <!-- TAB 2: EXCEL BROADCAST -->
+  <div id="view-broadcast" class="hidden flex-1 p-4 overflow-y-auto space-y-4">
     <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3.5">
       <h2 class="text-xs font-bold text-white uppercase tracking-wider">Excel / CSV 1-by-1 Broadcaster</h2>
       
       <div class="border-2 border-dashed border-slate-700 rounded-xl p-4 text-center bg-slate-950">
-        <input type="file" id="excel-file-input" onchange="handleExcelUpload(event)" accept=".xlsx, .xls, .csv" class="hidden">
+        <input type="file" id="excel-file" onchange="onExcelSelected(event)" accept=".xlsx, .xls, .csv" class="hidden">
         <div class="text-2xl mb-1">📊</div>
-        <p id="excel-filename-text" class="text-xs font-semibold text-slate-300 mb-1">Upload Contacts Excel (.xlsx, .csv)</p>
+        <p id="excel-label" class="text-xs font-semibold text-slate-300 mb-1">Upload Contacts Excel (.xlsx, .csv)</p>
         <p class="text-[10px] text-slate-500 mb-2">Col 1 = Name, Col 2 = Phone Number</p>
-        <button type="button" onclick="document.getElementById('excel-file-input').click()" class="px-3 py-1.5 bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-400 rounded-lg">Choose File from Device</button>
+        <button type="button" onclick="document.getElementById('excel-file').click()" class="px-3 py-1.5 bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-400 rounded-lg">Choose File from Device</button>
       </div>
 
       <div>
         <label class="text-[11px] font-semibold text-slate-300 block mb-1">Select Meta Approved Template</label>
-        <select id="template-dropdown" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
-          <option value="vedashree_festive_offer">vedashree_festive_offer (Marketing - Flat 20% Off)</option>
-          <option value="order_dispatch_alert">order_dispatch_alert (Utility - Delhivery Tracking)</option>
-          <option value="cart_recovery">cart_recovery (Marketing - Complete Order)</option>
+        <select class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
+          <option>vedashree_festive_offer (Marketing - Flat 20% Off)</option>
+          <option>order_dispatch_alert (Utility - Delhivery Tracking)</option>
+          <option>cart_recovery (Marketing - Complete Order)</option>
         </select>
       </div>
 
@@ -114,298 +196,181 @@
         <p class="text-xs text-slate-300 mt-1 font-mono leading-relaxed">"Namaste {{1}}! Special seasonal offer is active on Vedashree store today. Reply STOP to opt-out."</p>
       </div>
 
-      <button id="broadcast-launch-btn" onclick="startSequentialBroadcast()" class="w-full bg-emerald-600 active:bg-emerald-700 text-white font-bold p-3 rounded-lg text-xs shadow-lg shadow-emerald-500/20">
+      <button id="broadcast-btn" onclick="startBroadcastQueue()" class="w-full bg-emerald-600 active:bg-emerald-700 text-white font-bold p-3 rounded-lg text-xs shadow-lg shadow-emerald-500/20">
         Send Broadcast to Contacts
       </button>
     </div>
 
+    <!-- Live Status Log -->
     <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
       <div class="p-3 border-b border-slate-800 flex justify-between items-center bg-slate-950">
         <span class="text-xs font-bold text-white uppercase tracking-wider">Live Delivery Status Log</span>
-        <span id="queue-status-text" class="text-[10px] text-emerald-400 font-mono">Queue Idle</span>
+        <span id="queue-status" class="text-[10px] text-emerald-400 font-mono">Queue Idle</span>
       </div>
-      <div id="broadcast-status-list" class="divide-y divide-slate-800 max-h-60 overflow-y-auto"></div>
+      <div id="broadcast-table" class="divide-y divide-slate-800 max-h-60 overflow-y-auto">
+        <div class="p-2.5 flex items-center justify-between text-xs">
+          <div><div class="font-semibold text-white">Vikram Malhotra</div><div class="text-[10px] text-slate-400 font-mono">+919811223344</div></div>
+          <span class="text-[10px] font-mono text-slate-400">⏳ Queued</span>
+        </div>
+        <div class="p-2.5 flex items-center justify-between text-xs">
+          <div><div class="font-semibold text-white">Ananya Iyer</div><div class="text-[10px] text-slate-400 font-mono">+919822334455</div></div>
+          <span class="text-[10px] font-mono text-slate-400">⏳ Queued</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- 3. SOCIAL LEADS ATTRIBUTION -->
-  <div id="view-leads" class="h-full p-4 overflow-y-auto space-y-3 hidden pb-12">
+  <!-- TAB 3: SOCIAL LEADS -->
+  <div id="view-leads" class="hidden flex-1 p-4 overflow-y-auto space-y-3">
     <div class="flex justify-between items-center">
       <h2 class="text-xs font-bold text-white uppercase tracking-wider">Multi-Source Lead Attribution</h2>
       <span class="text-[10px] text-emerald-400 font-mono">Meta Referral Webhook</span>
     </div>
-    <div id="leads-list-container" class="space-y-2"></div>
+    
+    <div class="space-y-2">
+      <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+        <div class="space-y-1">
+          <div class="text-xs font-bold text-white">Rahul Sharma</div>
+          <div class="text-[10px] text-slate-400 font-mono">+91 98765 43210</div>
+          <span class="text-[9px] px-2 py-0.5 rounded border mono font-semibold bg-blue-500/10 text-blue-400 border-blue-500/30">Facebook Ad (CTWA)</span>
+        </div>
+        <button onclick="showTab('inbox'); openDirectChat('Rahul Sharma', '+91 98765 43210', 'Facebook Ad (CTWA)')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>
+      </div>
+
+      <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+        <div class="space-y-1">
+          <div class="text-xs font-bold text-white">Pooja Verma</div>
+          <div class="text-[10px] text-slate-400 font-mono">+91 91234 56789</div>
+          <span class="text-[9px] px-2 py-0.5 rounded border mono font-semibold bg-pink-500/10 text-pink-400 border-pink-500/30">Instagram DM</span>
+        </div>
+        <button onclick="showTab('inbox'); openDirectChat('Pooja Verma', '+91 91234 56789', 'Instagram DM')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>
+      </div>
+    </div>
   </div>
 
 </main>
 
 <script>
-let leadsData = [
-  { id: "1", name: "Rahul Sharma", phone: "+91 98765 43210", source: "Facebook Ad (CTWA)", time: "10:30 AM", lastMsg: "Price details and combo offer?" },
-  { id: "2", name: "Pooja Verma", phone: "+91 91234 56789", source: "Instagram DM", time: "09:45 AM", lastMsg: "Payment transferred via UPI" },
-  { id: "3", name: "Amit Patel", phone: "+91 99887 76655", source: "Website Widget", time: "Yesterday", lastMsg: "Do you deliver to Delhi NCR?" },
-  { id: "4", name: "Suresh Gupta", phone: "+91 88776 65544", source: "Direct WhatsApp", time: "24 Sep", lastMsg: "STOP" }
-];
-
-let chatMessages = {
-  "1": [
-    { id: "m1", sender: "customer", text: "Hi, I clicked your Facebook Ad for Vedashree Wellness products.", time: "10:28 AM", status: "read" },
-    { id: "m2", sender: "me", text: "Namaste Rahul! We offer 100% authentic wellness formulas.", time: "10:29 AM", status: "read" },
-    { id: "m3", sender: "customer", text: "Price details and combo offer?", time: "10:30 AM", status: "read" }
-  ],
-  "2": [
-    { id: "m4", sender: "customer", text: "Payment transferred via UPI", time: "09:45 AM", status: "read" },
-    { id: "m5", sender: "me", text: "Invoice generated successfully.", time: "09:46 AM", status: "read" }
-  ]
-};
-
-let broadcastRecipients = [
+let currentMedia = null;
+let broadcastList = [
   { name: "Vikram Malhotra", phone: "+919811223344", status: "pending" },
   { name: "Ananya Iyer", phone: "+919822334455", status: "pending" },
   { name: "Rohit Deshmukh", phone: "+919833445566", status: "pending" }
 ];
 
-let activeContactId = null;
-let currentAttachedMedia = null;
-let isBroadcasting = false;
-
-function getBadgeStyle(source) {
-  if (source.includes("Facebook")) return "bg-blue-500/10 text-blue-400 border-blue-500/30";
-  if (source.includes("Instagram")) return "bg-pink-500/10 text-pink-400 border-pink-500/30";
-  if (source.includes("Website")) return "bg-amber-500/10 text-amber-400 border-amber-500/30";
-  return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-}
-
-function getStatusTick(status) {
-  if (status === "sent") return '<span class="text-slate-400 font-mono text-[10px]">✓</span>';
-  if (status === "delivered") return '<span class="text-slate-400 font-mono text-[10px]">✓✓</span>';
-  if (status === "read") return '<span class="text-sky-400 font-mono text-[10px]">✓✓</span>';
-  if (status === "failed") return '<span class="text-rose-400 font-mono text-[10px]">❌ Failed</span>';
-  return '<span class="text-slate-500 font-mono text-[10px]">⏳ Queued</span>';
-}
-
-function switchTab(tab) {
+function showTab(tab) {
   ['inbox', 'broadcast', 'leads'].forEach(t => {
     document.getElementById('view-' + t).classList.add('hidden');
-    document.getElementById('tab-btn-' + t).className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5 whitespace-nowrap';
+    document.getElementById('tab-btn-' + t).classList.remove('active-tab');
   });
   document.getElementById('view-' + tab).classList.remove('hidden');
-  document.getElementById('tab-btn-' + tab).className = 'px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap';
-  
-  if (tab === 'inbox') renderChatList();
-  if (tab === 'broadcast') renderBroadcastTable();
-  if (tab === 'leads') renderLeadsView();
+  document.getElementById('tab-btn-' + tab).classList.add('active-tab');
 }
 
-function renderChatList() {
-  const container = document.getElementById("chat-list-view");
-  container.innerHTML = leadsData.map(c => 
-    '<div onclick="openChat(\'' + c.id + '\')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">' +
-      '<div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs flex-shrink-0 border border-slate-700">' + c.name.charAt(0) + '</div>' +
-      '<div class="flex-1 min-w-0">' +
-        '<div class="flex justify-between items-baseline mb-0.5">' +
-          '<h4 class="text-xs font-bold text-white truncate">' + c.name + '</h4>' +
-          '<span class="text-[10px] text-slate-500 font-mono">' + c.time + '</span>' +
-        '</div>' +
-        '<p class="text-[11px] text-slate-400 truncate mb-1">' + c.lastMsg + '</p>' +
-        '<span class="text-[9px] px-1.5 py-0.5 rounded border mono font-medium ' + getBadgeStyle(c.source) + '">' + c.source + '</span>' +
-      '</div>' +
-    '</div>'
-  ).join("");
+function openDirectChat(name, phone, source) {
+  document.getElementById('c-name').innerText = name;
+  document.getElementById('c-phone').innerText = phone;
+  document.getElementById('c-badge').innerText = source;
+  document.getElementById('contact-list').classList.add('hidden');
+  document.getElementById('chat-conversation').classList.remove('hidden');
+  document.getElementById('chat-conversation').classList.add('flex');
 }
 
-function openChat(id) {
-  activeContactId = id;
-  const contact = leadsData.find(c => c.id === id);
-  document.getElementById("chat-title-name").innerText = contact.name;
-  document.getElementById("chat-title-phone").innerText = contact.phone;
-  document.getElementById("chat-title-badge").innerText = contact.source;
-  document.getElementById("chat-title-badge").className = "text-[9px] px-2 py-0.5 rounded border mono " + getBadgeStyle(contact.source);
-
-  document.getElementById("chat-list-view").classList.add("hidden");
-  document.getElementById("chat-detail-view").classList.remove("hidden");
-  document.getElementById("chat-detail-view").classList.add("flex");
-  renderMessages();
+function backToContacts() {
+  document.getElementById('chat-conversation').classList.add('hidden');
+  document.getElementById('chat-conversation').classList.remove('flex');
+  document.getElementById('contact-list').classList.remove('hidden');
 }
 
-function closeChat() {
-  activeContactId = null;
-  document.getElementById("chat-detail-view").classList.add("hidden");
-  document.getElementById("chat-detail-view").classList.remove("flex");
-  document.getElementById("chat-list-view").classList.remove("hidden");
-}
-
-function renderMessages() {
-  const container = document.getElementById("chat-messages-container");
-  const msgs = chatMessages[activeContactId] || [];
-  container.innerHTML = msgs.map(m => 
-    '<div class="flex flex-col ' + (m.sender === 'me' ? 'items-end' : 'items-start') + '">' +
-      '<div class="max-w-[85%] p-3 rounded-2xl text-xs ' + (m.sender === 'me' ? 'bg-emerald-600 text-white rounded-br-none shadow-md' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700') + '">' +
-        (m.media ? ('<div class="mb-2 rounded-lg overflow-hidden border border-emerald-400/20 bg-slate-900/50">' + (m.mediaType === 'image' ? '<img src="' + m.media + '" class="max-h-48 w-full object-cover">' : '<div class="p-2 flex items-center space-x-2 text-xs"><span>📎 ' + m.mediaName + '</span></div>') + '</div>') : '') +
-        '<p class="leading-relaxed">' + m.text + '</p>' +
-        '<div class="flex justify-end items-center space-x-1.5 mt-1 text-[9px] mono opacity-80">' +
-          '<span>' + m.time + '</span>' +
-          (m.sender === 'me' ? getStatusTick(m.status) : '') +
-        '</div>' +
-      '</div>' +
-    '</div>'
-  ).join("");
-  container.scrollTop = container.scrollHeight;
-}
-
-function handleMediaSelect(e) {
+function onMediaPicked(e) {
   const file = e.target.files[0];
   if (!file) return;
-  currentAttachedMedia = {
-    file: file,
-    url: URL.createObjectURL(file),
-    type: file.type.split('/')[0],
-    name: file.name
-  };
-  document.getElementById("media-filename").innerText = "📎 " + file.name;
-  document.getElementById("media-preview-bar").classList.remove("hidden");
+  currentMedia = { file: file, name: file.name, url: URL.createObjectURL(file), isImage: file.type.startsWith('image/') };
+  document.getElementById('media-name').innerText = "📎 " + file.name;
+  document.getElementById('media-info').classList.remove('hidden');
 }
 
-function removeMedia() {
-  currentAttachedMedia = null;
-  document.getElementById("media-preview-bar").classList.add("hidden");
-  document.getElementById("media-file-input").value = "";
+function clearMedia() {
+  currentMedia = null;
+  document.getElementById('media-info').classList.add('hidden');
+  document.getElementById('media-picker').value = "";
 }
 
-function handleSendChat(e) {
+function sendChatMessage(e) {
   e.preventDefault();
-  const input = document.getElementById("chat-input-text");
+  const input = document.getElementById('chat-text');
   const text = input.value.trim();
-  if (!text && !currentAttachedMedia) return;
+  if (!text && !currentMedia) return;
 
-  const msgId = "m_" + Date.now();
-  const newMsg = {
-    id: msgId,
-    sender: "me",
-    text: text,
-    media: currentAttachedMedia ? currentAttachedMedia.url : null,
-    mediaType: currentAttachedMedia ? currentAttachedMedia.type : null,
-    mediaName: currentAttachedMedia ? currentAttachedMedia.name : null,
-    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    status: "sent"
-  };
+  const box = document.getElementById('messages-box');
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  if (!chatMessages[activeContactId]) chatMessages[activeContactId] = [];
-  chatMessages[activeContactId].push(newMsg);
+  let mediaHtml = '';
+  if (currentMedia) {
+    if (currentMedia.isImage) {
+      mediaHtml = '<div class="mb-2 rounded-lg overflow-hidden border border-emerald-400/20"><img src="' + currentMedia.url + '" class="max-h-48 w-full object-cover"></div>';
+    } else {
+      mediaHtml = '<div class="p-2 mb-2 bg-slate-900/60 rounded flex items-center space-x-2 text-xs"><span>📎 ' + currentMedia.name + '</span></div>';
+    }
+  }
 
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'flex flex-col items-end';
+  msgDiv.innerHTML = '<div class="max-w-[85%] p-3 rounded-2xl text-xs bg-emerald-600 text-white rounded-br-none shadow-md">' +
+    mediaHtml +
+    '<p>' + text + '</p>' +
+    '<div class="flex justify-end items-center space-x-1 mt-1 text-[9px] mono text-emerald-200">' +
+      '<span>' + time + '</span><span class="status-tick text-slate-300">✓</span>' +
+    '</div></div>';
+
+  box.appendChild(msgDiv);
+  box.scrollTop = box.scrollHeight;
   input.value = "";
-  removeMedia();
-  renderMessages();
+  clearMedia();
 
-  setTimeout(() => { newMsg.status = "delivered"; renderMessages(); }, 1000);
-  setTimeout(() => { newMsg.status = "read"; renderMessages(); }, 2200);
+  // Simulate Delivered -> Read
+  setTimeout(() => {
+    const tick = msgDiv.querySelector('.status-tick');
+    if (tick) tick.innerText = '✓✓';
+  }, 1000);
+  setTimeout(() => {
+    const tick = msgDiv.querySelector('.status-tick');
+    if (tick) { tick.innerText = '✓✓'; tick.className = 'status-tick text-sky-300 font-bold'; }
+  }, 2200);
 }
 
-function handleExcelUpload(e) {
+function onExcelSelected(e) {
   const file = e.target.files[0];
   if (!file) return;
-  document.getElementById("excel-filename-text").innerText = "Uploaded: " + file.name;
-
+  document.getElementById('excel-label').innerText = "Uploaded: " + file.name;
+  
   const reader = new FileReader();
   reader.onload = function(evt) {
     try {
       const data = new Uint8Array(evt.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
+      const wb = XLSX.read(data, { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
       const parsed = [];
       for (let i = 1; i < rows.length; i++) {
         if (rows[i][1]) {
-          parsed.push({
-            name: rows[i][0] || "Customer",
-            phone: String(rows[i][1]).replace(/[^0-9+]/g, ''),
-            status: "pending"
-          });
+          parsed.push({ name: rows[i][0] || "Customer", phone: String(rows[i][1]).replace(/[^0-9+]/g, ''), status: "pending" });
         }
       }
       if (parsed.length > 0) {
-        broadcastRecipients = parsed;
-        renderBroadcastTable();
-        alert("Parsed " + parsed.length + " contacts successfully!");
+        broadcastList = parsed;
+        renderBroadcastList();
+        alert("Parsed " + parsed.length + " contacts!");
       }
     } catch(err) {
-      alert("Error parsing Excel. Check format.");
+      alert("Error parsing Excel.");
     }
   };
   reader.readAsArrayBuffer(file);
 }
 
-function renderBroadcastTable() {
-  const container = document.getElementById("broadcast-status-list");
-  container.innerHTML = broadcastRecipients.map(r => 
-    '<div class="p-2.5 flex items-center justify-between text-xs">' +
-      '<div>' +
-        '<div class="font-semibold text-white">' + r.name + '</div>' +
-        '<div class="text-[10px] text-slate-400 font-mono">' + r.phone + '</div>' +
-      '</div>' +
-      '<div class="flex items-center space-x-1.5">' +
-        getStatusTick(r.status) +
-        '<span class="text-[10px] font-mono capitalize text-slate-300">' + r.status + '</span>' +
-      '</div>' +
-    '</div>'
-  ).join("");
-}
-
-function startSequentialBroadcast() {
-  if (broadcastRecipients.length === 0 || isBroadcasting) return;
-  isBroadcasting = true;
-  const launchBtn = document.getElementById("broadcast-launch-btn");
-  const queueStatus = document.getElementById("queue-status-text");
-
-  let idx = 0;
-  const total = broadcastRecipients.length;
-
-  const timer = setInterval(() => {
-    if (idx >= total) {
-      clearInterval(timer);
-      isBroadcasting = false;
-      launchBtn.innerText = "Broadcast Completed!";
-      queueStatus.innerText = "Queue Completed";
-      return;
-    }
-
-    const current = idx;
-    broadcastRecipients[current].status = "sent";
-    renderBroadcastTable();
-
-    setTimeout(() => {
-      broadcastRecipients[current].status = "delivered";
-      renderBroadcastTable();
-    }, 800);
-
-    setTimeout(() => {
-      broadcastRecipients[current].status = "read";
-      renderBroadcastTable();
-    }, 1800);
-
-    idx++;
-    launchBtn.innerText = "Broadcasting 1-by-1 (" + idx + "/" + total + ")...";
-    queueStatus.innerText = "Sending: " + idx + "/" + total;
-  }, 1200);
-}
-
-function renderLeadsView() {
-  const container = document.getElementById("leads-list-container");
-  container.innerHTML = leadsData.map(c => 
-    '<div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">' +
-      '<div class="space-y-1">' +
-        '<div class="text-xs font-bold text-white">' + c.name + '</div>' +
-        '<div class="text-[10px] text-slate-400 font-mono">' + c.phone + '</div>' +
-        '<span class="text-[9px] px-2 py-0.5 rounded border mono font-semibold ' + getBadgeStyle(c.source) + '">' + c.source + '</span>' +
-      '</div>' +
-      '<button onclick="switchTab(\'inbox\'); openChat(\'' + c.id + '\')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-lg">Chat</button>' +
-    '</div>'
-  ).join("");
-}
-
-renderChatList();
-renderBroadcastTable();
-</script>
-</body>
-                          </html>
+function renderBroadcastList() {
+  const table = document.getElementById('broadcast-table');
+  table.innerHTML = broadcastList.map(r => `
+    <div class="p-2.5 flex items-center justify-between text-xs">
+      <div><div class="font-semibold text-white">${r.name}</div><div class="text-[10px] text-slate-400 font-mono">${r.phone}</div></div>
+      <span class="text-[10px] font-mono text-slate-400">${r.status === 'sent' ? '✓ Sent' : r.status === 'delivered' ? '✓✓ Delivered' : r.status === 'read' ? '✓✓ Read' : '⏳ Queued'}</span>
