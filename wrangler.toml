@@ -1,8 +1,1 @@
-name = "whatsapp-crm-frontend"
-main = "worker.js"
-compatibility_date = "2026-09-26"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "whatsapp_crm_db"
-database_id = "whatsapp_crm_db"
+database_id = "93ec6de2-3b2b-4488-9cb0-d6ebae10021e"
