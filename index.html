@@ -6,19 +6,6 @@
   <title>Vedashree AI WhatsApp CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  
-  <!-- ONESIGNAL BACKGROUND WEB PUSH (Phone lock/closed background alerts) -->
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-  <script>
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({
-        appId: "YOUR_ONESIGNAL_APP_ID", // Yahan baad me OneSignal ka free App ID aayega
-        notifyButton: { enable: false }
-      });
-    });
-  </script>
-
   <style>
     :root { --app-h: 100vh; }
     @supports (height: 100dvh) { :root { --app-h: 100dvh; } }
@@ -29,16 +16,16 @@
 </head>
 <body class="text-slate-100 flex flex-col h-full select-none">
 
-  <!-- 1. LOGIN SCREEN MODAL (HAR DEVICE KE LIYE MANDATORY) -->
+  <!-- 1. UNIVERSAL LOGIN SCREEN MODAL -->
   <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080c14]/95 backdrop-blur-md">
     <div class="w-full max-w-xs bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl text-center">
-      <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center mx-auto mb-3">V</div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center mx-auto mb-3 border border-emerald-500/30">V</div>
       <h2 class="text-sm font-bold text-white tracking-wide">VEDASHREE CRM AUTH</h2>
       <p class="text-[11px] text-slate-400 mb-4">Enterprise Protected</p>
       <div class="space-y-3">
-        <input type="password" id="p-input" placeholder="Enter Password..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+        <input type="password" id="p-input" placeholder="Enter Password..." onkeydown="if(event.key==='Enter') doLogin()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
         <p id="p-err" class="text-[11px] text-rose-400 font-semibold hidden">❌ Galat Password! Dobara check karein.</p>
-        <button type="button" id="b-login" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Login to CRM</button>
+        <button type="button" onclick="doLogin()" id="b-login" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Login to CRM</button>
         <p class="text-[10px] text-slate-500">Default Password: <span class="font-mono text-emerald-400">admin</span></p>
       </div>
     </div>
@@ -48,8 +35,8 @@
   <div id="pwd-change-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080c14]/90 backdrop-blur-sm">
     <div class="w-full max-w-xs bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl text-center space-y-3">
       <h3 class="text-xs font-bold text-white uppercase tracking-wider">Change Dashboard Password</h3>
-      <input type="password" id="old-pwd" placeholder="Old Password..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-      <input type="password" id="new-pwd" placeholder="New Password (min 4 chars)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+      <input type="password" id="old-pwd" placeholder="Old Password..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+      <input type="password" id="new-pwd" placeholder="New Password (min 4 chars)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
       <p id="pwd-modal-err" class="text-[10px] text-rose-400 hidden"></p>
       <div class="flex space-x-2">
         <button type="button" id="b-save-pwd" class="flex-1 bg-emerald-600 font-bold py-2 rounded-lg text-xs text-white">Save</button>
@@ -65,13 +52,13 @@
       <div>
         <h1 class="text-xs font-bold text-white">VEDASHREE CRM</h1>
         <span class="text-[9px] text-emerald-400 font-mono flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Meta Live Cloud API
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Meta Cloud API Active
         </span>
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      <button id="b-set" class="px-2 py-1 rounded-lg bg-slate-800 text-[10px] text-slate-300 border border-slate-700">⚙ Settings</button>
-      <button id="b-out" class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs">🚪 Logout</button>
+      <button id="b-set" class="px-2 py-1 rounded-lg bg-slate-800 text-[10px] text-slate-300 border border-slate-700 active:bg-slate-700">⚙ Settings</button>
+      <button id="b-out" class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs active:bg-rose-500/20">🚪 Logout</button>
     </div>
   </header>
 
@@ -116,7 +103,7 @@
 
         <div id="msg-container" class="flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0"></div>
 
-        <!-- Quick Reply Bar -->
+        <!-- Quick Reply Options -->
         <div class="px-2 py-1 bg-slate-900/80 border-t border-slate-800/80 flex space-x-1 overflow-x-auto text-[10px]">
           <button onclick="setReply('catalog')" class="px-2 py-0.5 rounded bg-slate-800 text-slate-100 whitespace-nowrap border border-slate-700">📦 Catalog</button>
           <button onclick="setReply('upi')" class="px-2 py-0.5 rounded bg-slate-800 text-slate-100 whitespace-nowrap border border-slate-700">💳 UPI</button>
@@ -124,7 +111,7 @@
         </div>
 
         <form id="f-chat" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 shrink-0">
-          <input type="text" id="in-msg" placeholder="Type reply..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-500" autocomplete="off">
+          <input type="text" id="in-msg" placeholder="Type WhatsApp reply..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-500" autocomplete="off">
           <button type="submit" id="b-send" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2 rounded-lg text-xs">Send</button>
         </form>
       </div>
@@ -140,7 +127,7 @@
           <p class="text-[9px] text-slate-500 mb-2">Col 1 = Name, Col 2 = Phone</p>
           <button type="button" id="b-pick-excel" class="px-3 py-1 bg-slate-800 border border-slate-700 text-xs font-bold rounded-lg text-white">Select File</button>
         </div>
-        <button id="b-send-all" class="w-full bg-emerald-600 text-white font-bold p-2.5 rounded-lg text-xs">Send 1-by-1 Excel Broadcast</button>
+        <button id="b-send-all" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2.5 rounded-lg text-xs transition">Send 1-by-1 Excel Broadcast</button>
       </div>
 
       <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
@@ -156,7 +143,7 @@
     <div id="v-leads" class="hidden flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0">
       <div class="flex items-center justify-between">
         <h2 class="text-xs font-bold text-white uppercase tracking-wider">Lead Attribution Pipeline</h2>
-        <span class="text-[10px] text-emerald-400 font-mono">D1 Synced</span>
+        <span class="text-[10px] text-emerald-400 font-mono">D1 Database Synced</span>
       </div>
       <div class="flex space-x-1 overflow-x-auto text-[10px] font-semibold py-0.5">
         <button onclick="flt('all')" id="f-all" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 flt-on whitespace-nowrap">All</button>
@@ -170,24 +157,31 @@
   </main>
 
   <script>
-    // --- 1. HAR DEVICE AUTHENTICATION ---
-    const savedPassword = localStorage.getItem('crm_p') || 'admin';
-    const isSessionActive = sessionStorage.getItem('crm_active') === 'true';
+    // --- 1. HAR DEVICE AUTHENTICATION LOGIC ---
+    function doLogin() {
+      const pInp = document.getElementById('p-input');
+      const input = pInp ? pInp.value.trim() : '';
+      const savedPass = localStorage.getItem('crm_p') || 'admin';
 
-    if (!isSessionActive) {
-      document.getElementById('login-modal').classList.remove('hidden');
+      if (input === savedPass) {
+        sessionStorage.setItem('crm_active', 'true');
+        const modal = document.getElementById('login-modal');
+        if (modal) {
+          modal.style.setProperty('display', 'none', 'important');
+        }
+        requestNativeNotification();
+        loadLiveCRMData();
+      } else {
+        const err = document.getElementById('p-err');
+        if (err) err.classList.remove('hidden');
+      }
     }
 
-    document.getElementById('b-login').onclick = function() {
-      const input = document.getElementById('p-input').value.trim();
-      if (input === savedPassword) {
-        sessionStorage.setItem('crm_active', 'true');
-        document.getElementById('login-modal').classList.add('hidden');
-        requestNativeNotification();
-      } else {
-        document.getElementById('p-err').classList.remove('hidden');
-      }
-    };
+    // Auto-check session on refresh
+    if (sessionStorage.getItem('crm_active') === 'true') {
+      const modal = document.getElementById('login-modal');
+      if (modal) modal.style.setProperty('display', 'none', 'important');
+    }
 
     document.getElementById('b-out').onclick = function() {
       sessionStorage.removeItem('crm_active');
@@ -204,13 +198,15 @@
       const oldP = document.getElementById('old-pwd').value.trim();
       const newP = document.getElementById('new-pwd').value.trim();
       const err = document.getElementById('pwd-modal-err');
-      if (oldP !== (localStorage.getItem('crm_p') || 'admin')) {
+      const current = localStorage.getItem('crm_p') || 'admin';
+
+      if (oldP !== current) {
         err.innerText = "Purana password galat hai!";
         err.classList.remove('hidden');
         return;
       }
       if (newP.length < 4) {
-        err.innerText = "Naya password kam se kam 4 akshar ka ho!";
+        err.innerText = "Naya password kam se kam 4 akshar ka hona chahiye!";
         err.classList.remove('hidden');
         return;
       }
@@ -387,6 +383,4 @@
       e.preventDefault();
       const inp = document.getElementById('in-msg');
       const txt = inp.value.trim();
-      if (!txt || !curLead) return;
-
-  
+      if (!txt || !curLead) ret
