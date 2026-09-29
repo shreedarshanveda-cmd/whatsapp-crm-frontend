@@ -22,12 +22,12 @@ export default {
             const name = (v.contacts && v.contacts[0] && v.contacts[0].profile) ? v.contacts[0].profile.name : "Customer";
             const txt = (m.text && m.text.body) ? m.text.body : "Media/Attachment";
 
-            // Insert or Ignore Lead
+            // Insert or update lead in D1
             await env.DB.prepare(
               "INSERT INTO leads (phone, name, status) VALUES (?, ?, 'New') ON CONFLICT(phone) DO UPDATE SET name = excluded.name"
             ).bind(p, name).run();
 
-            // Insert Message
+            // Insert incoming message in D1
             await env.DB.prepare(
               "INSERT INTO messages (phone, sender, message) VALUES (?, 'customer', ?)"
             ).bind(p, txt).run();
@@ -83,9 +83,17 @@ export default {
       }
     }
 
-    // 4. CRM Frontend View Fallback
-    const r = await fetch("https://raw.githubusercontent.com/shreedarshanveda-cmd/whatsapp-crm-frontend/main/index.html");
+    // 4. CRM Frontend View (Fresh Real-Time Fetch - No Cache)
+    const cacheBuster = Date.now();
+    const r = await fetch("https://raw.githubusercontent.com/shreedarshanveda-cmd/whatsapp-crm-frontend/main/index.html?t=" + cacheBuster, {
+      cf: { cacheTtl: 0, cacheEverything: false }
+    });
     const h = await r.text();
-    return new Response(h, { headers: { "content-type": "text/html;charset=UTF-8", "cache-control": "no-store" } });
+    return new Response(h, {
+      headers: {
+        "content-type": "text/html;charset=UTF-8",
+        "cache-control": "no-store, no-cache, must-revalidate, max-age=0"
+      }
+    });
   }
 };
