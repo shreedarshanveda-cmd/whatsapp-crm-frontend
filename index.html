@@ -16,27 +16,27 @@
 </head>
 <body class="text-slate-100 flex flex-col h-full select-none">
 
-  <!-- 1. UNIVERSAL LOGIN SCREEN MODAL -->
+  <!-- LOGIN SCREEN MODAL -->
   <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080c14]/95 backdrop-blur-md">
     <div class="w-full max-w-xs bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl text-center">
-      <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center mx-auto mb-3 border border-emerald-500/30">V</div>
+      <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center mx-auto mb-3">V</div>
       <h2 class="text-sm font-bold text-white tracking-wide">VEDASHREE CRM AUTH</h2>
       <p class="text-[11px] text-slate-400 mb-4">Enterprise Protected</p>
       <div class="space-y-3">
-        <input type="password" id="p-input" placeholder="Enter Password..." onkeydown="if(event.key==='Enter') doLogin()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+        <input type="password" id="p-input" placeholder="Enter Password..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
         <p id="p-err" class="text-[11px] text-rose-400 font-semibold hidden">❌ Galat Password! Dobara check karein.</p>
-        <button type="button" onclick="doLogin()" id="b-login" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Login to CRM</button>
+        <button type="button" id="b-login" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Login to CRM</button>
         <p class="text-[10px] text-slate-500">Default Password: <span class="font-mono text-emerald-400">admin</span></p>
       </div>
     </div>
   </div>
 
-  <!-- 2. CHANGE PASSWORD MODAL -->
+  <!-- CHANGE PASSWORD MODAL -->
   <div id="pwd-change-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080c14]/90 backdrop-blur-sm">
     <div class="w-full max-w-xs bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl text-center space-y-3">
       <h3 class="text-xs font-bold text-white uppercase tracking-wider">Change Dashboard Password</h3>
-      <input type="password" id="old-pwd" placeholder="Old Password..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
-      <input type="password" id="new-pwd" placeholder="New Password (min 4 chars)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+      <input type="password" id="old-pwd" placeholder="Old Password..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+      <input type="password" id="new-pwd" placeholder="New Password (min 4 chars)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
       <p id="pwd-modal-err" class="text-[10px] text-rose-400 hidden"></p>
       <div class="flex space-x-2">
         <button type="button" id="b-save-pwd" class="flex-1 bg-emerald-600 font-bold py-2 rounded-lg text-xs text-white">Save</button>
@@ -52,17 +52,17 @@
       <div>
         <h1 class="text-xs font-bold text-white">VEDASHREE CRM</h1>
         <span class="text-[9px] text-emerald-400 font-mono flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Meta Cloud API Active
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Meta Cloud API
         </span>
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      <button id="b-set" class="px-2 py-1 rounded-lg bg-slate-800 text-[10px] text-slate-300 border border-slate-700 active:bg-slate-700">⚙ Settings</button>
-      <button id="b-out" class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs active:bg-rose-500/20">🚪 Logout</button>
+      <button id="b-set" class="px-2 py-1 rounded-lg bg-slate-800 text-[10px] text-slate-300 border border-slate-700">⚙ Settings</button>
+      <button id="b-out" class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs">🚪 Logout</button>
     </div>
   </header>
 
-  <!-- NAVIGATION TABS -->
+  <!-- TABS NAVIGATION -->
   <nav class="bg-slate-900/90 border-b border-slate-800 px-2 py-1.5 flex space-x-1.5 shrink-0 text-xs font-medium overflow-x-auto">
     <button id="t-inbox" onclick="nav('inbox')" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap">
       <span>Live Chat</span>
@@ -83,10 +83,10 @@
     <div id="v-inbox" class="flex-1 flex flex-col overflow-hidden min-h-0">
       <!-- Contact List View -->
       <div id="box-contacts" class="flex-1 overflow-y-auto divide-y divide-slate-800/80">
-        <div class="p-6 text-center text-xs text-slate-500">Checking for live customer messages...</div>
+        <div class="p-6 text-center text-xs text-slate-500">Checking for live messages...</div>
       </div>
 
-      <!-- Single Chat View -->
+      <!-- Chat Conversation View -->
       <div id="box-chat" class="hidden flex-1 flex-col overflow-hidden min-h-0 bg-[#080c14]">
         <div class="h-12 px-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
           <div class="flex items-center space-x-2">
@@ -97,7 +97,7 @@
             </div>
           </div>
           <div class="flex items-center space-x-1.5">
-            <span id="head-badge" class="text-[9px] px-1.5 py-0.5 rounded border font-mono bg-emerald-500/10 text-emerald-400 border-emerald-500/30">Direct</span>
+            <span id="head-badge" class="text-[9px] px-1.5 py-0.5 rounded border font-mono"></span>
           </div>
         </div>
 
@@ -117,7 +117,7 @@
       </div>
     </div>
 
-    <!-- TAB 2: EXCEL BROADCAST -->
+    <!-- TAB 2: BROADCAST -->
     <div id="v-broadcast" class="hidden flex-1 p-3 overflow-y-auto space-y-3 min-h-0">
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 space-y-3">
         <h2 class="text-xs font-bold text-white uppercase tracking-wider">Excel / CSV 1-by-1 Queue</h2>
@@ -127,7 +127,7 @@
           <p class="text-[9px] text-slate-500 mb-2">Col 1 = Name, Col 2 = Phone</p>
           <button type="button" id="b-pick-excel" class="px-3 py-1 bg-slate-800 border border-slate-700 text-xs font-bold rounded-lg text-white">Select File</button>
         </div>
-        <button id="b-send-all" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2.5 rounded-lg text-xs transition">Send 1-by-1 Excel Broadcast</button>
+        <button id="b-send-all" class="w-full bg-emerald-600 text-white font-bold p-2.5 rounded-lg text-xs">Send 1-by-1 Excel Broadcast</button>
       </div>
 
       <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
@@ -143,7 +143,7 @@
     <div id="v-leads" class="hidden flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0">
       <div class="flex items-center justify-between">
         <h2 class="text-xs font-bold text-white uppercase tracking-wider">Lead Attribution Pipeline</h2>
-        <span class="text-[10px] text-emerald-400 font-mono">D1 Database Synced</span>
+        <span class="text-[10px] text-emerald-400 font-mono">D1 Synced</span>
       </div>
       <div class="flex space-x-1 overflow-x-auto text-[10px] font-semibold py-0.5">
         <button onclick="flt('all')" id="f-all" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 flt-on whitespace-nowrap">All</button>
@@ -157,97 +157,65 @@
   </main>
 
   <script>
-    // --- 1. HAR DEVICE AUTHENTICATION LOGIC ---
-    function doLogin() {
-      const pInp = document.getElementById('p-input');
-      const input = pInp ? pInp.value.trim() : '';
-      const savedPass = localStorage.getItem('crm_p') || 'admin';
+    // --- 1. AAPKA PURANA LOGIN CODE (100% WORKING) ---
+    function fitH(){document.documentElement.style.setProperty('--app-h',window.innerHeight+'px');}
+    window.addEventListener('resize',fitH);fitH();
 
-      if (input === savedPass) {
-        sessionStorage.setItem('crm_active', 'true');
-        const modal = document.getElementById('login-modal');
-        if (modal) {
-          modal.style.setProperty('display', 'none', 'important');
-        }
-        requestNativeNotification();
+    let pwd = (localStorage.getItem('crm_p') || 'admin').trim();
+    if(localStorage.getItem('crm_ok')==='1') {
+      document.getElementById('login-modal').classList.add('hidden');
+    }
+
+    function tryLogin() {
+      const input = document.getElementById('p-input').value.trim();
+      if(input === pwd) {
+        localStorage.setItem('crm_ok','1');
+        document.getElementById('p-err').classList.add('hidden');
+        document.getElementById('login-modal').classList.add('hidden');
         loadLiveCRMData();
       } else {
-        const err = document.getElementById('p-err');
-        if (err) err.classList.remove('hidden');
+        document.getElementById('p-err').classList.remove('hidden');
       }
     }
 
-    // Auto-check session on refresh
-    if (sessionStorage.getItem('crm_active') === 'true') {
-      const modal = document.getElementById('login-modal');
-      if (modal) modal.style.setProperty('display', 'none', 'important');
-    }
+    document.getElementById('b-login').onclick = tryLogin;
+    document.getElementById('p-input').addEventListener('keypress', (e)=>{ if(e.key === 'Enter') tryLogin(); });
 
-    document.getElementById('b-out').onclick = function() {
-      sessionStorage.removeItem('crm_active');
-      location.reload();
-    };
+    document.getElementById('b-out').onclick = () => { localStorage.removeItem('crm_ok'); location.reload(); };
 
-    document.getElementById('b-set').onclick = function() {
+    document.getElementById('b-set').onclick = () => {
+      document.getElementById('old-pwd').value = '';
+      document.getElementById('new-pwd').value = '';
+      document.getElementById('pwd-modal-err').classList.add('hidden');
       document.getElementById('pwd-change-modal').classList.remove('hidden');
     };
-    document.getElementById('b-cancel-pwd').onclick = function() {
-      document.getElementById('pwd-change-modal').classList.add('hidden');
-    };
-    document.getElementById('b-save-pwd').onclick = function() {
-      const oldP = document.getElementById('old-pwd').value.trim();
-      const newP = document.getElementById('new-pwd').value.trim();
-      const err = document.getElementById('pwd-modal-err');
-      const current = localStorage.getItem('crm_p') || 'admin';
 
-      if (oldP !== current) {
-        err.innerText = "Purana password galat hai!";
-        err.classList.remove('hidden');
-        return;
-      }
-      if (newP.length < 4) {
-        err.innerText = "Naya password kam se kam 4 akshar ka hona chahiye!";
-        err.classList.remove('hidden');
-        return;
-      }
-      localStorage.setItem('crm_p', newP);
-      alert("Password successfully update ho gaya!");
+    document.getElementById('b-cancel-pwd').onclick = () => {
       document.getElementById('pwd-change-modal').classList.add('hidden');
     };
 
-    // --- 2. SOUND & NATIVE NOTIFICATION ALERT ---
-    function playBeep() {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.3);
-      } catch(e) {}
-    }
+    document.getElementById('b-save-pwd').onclick = () => {
+      const oldVal = document.getElementById('old-pwd').value.trim();
+      const newVal = document.getElementById('new-pwd').value.trim();
+      const errBox = document.getElementById('pwd-modal-err');
 
-    function requestNativeNotification() {
-      if ("Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission();
+      if (oldVal !== pwd) {
+        errBox.innerText = "❌ Purana password galat hai!";
+        errBox.classList.remove('hidden');
+        return;
       }
-    }
-
-    function notifyIncomingMessage(senderPhone, text) {
-      playBeep();
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("New WhatsApp: " + senderPhone, {
-          body: text,
-          icon: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-        });
+      if (!newVal || newVal.length < 4) {
+        errBox.innerText = "❌ Naya password kam se kam 4 akshar ka ho!";
+        errBox.classList.remove('hidden');
+        return;
       }
-    }
+      pwd = newVal;
+      localStorage.setItem('crm_p', newVal);
+      alert("✅ Password safaltapoorvak badal gaya hai!");
+      document.getElementById('pwd-change-modal').classList.add('hidden');
+    };
 
-    // --- 3. D1 DATABASE SYNC & CHAT ENGINE ---
+    // --- 2. LIVE DATA ENGINE (Hardcoded Fake Data Hataya, Real D1 Database Lagaya) ---
     let leads = [];
     let chatDB = {};
     let curLead = null;
@@ -280,8 +248,8 @@
             id: l.phone,
             name: l.name || 'Customer',
             phone: l.phone,
-            src: 'WhatsApp Direct',
-            st: l.status || l.stage || 'hot',
+            src: 'Direct WhatsApp',
+            st: l.stage || l.status || 'hot',
             t: l.created_at ? l.created_at.split(' ')[1] || 'Live' : 'Live'
           }));
           document.getElementById('badge-count').innerText = leads.length;
@@ -296,20 +264,11 @@
         const res = await fetch('/api/messages?phone=' + phone);
         if (res.ok) {
           const data = await res.json();
-          const prevLen = (chatDB[phone] || []).length;
           chatDB[phone] = data.map(m => ({
             s: (m.sender === 'agent' || m.sender === 'me') ? 'm' : 'c',
             txt: m.message || m.text,
             t: m.created_at ? m.created_at.split(' ')[1] || 'Live' : 'Live'
           }));
-
-          // Naya incoming message aane par notify karein
-          if (chatDB[phone].length > prevLen && prevLen > 0) {
-            const latest = chatDB[phone][chatDB[phone].length - 1];
-            if (latest.s === 'c') {
-              notifyIncomingMessage(phone, latest.txt);
-            }
-          }
           renderMessages();
         }
       } catch (err) {}
@@ -319,7 +278,7 @@
       const container = document.getElementById('box-contacts');
       if (!container) return;
       if (leads.length === 0) {
-        container.innerHTML = '<div class="p-6 text-center text-xs text-slate-500">Koi live customer chat nahi hai abhi tak</div>';
+        container.innerHTML = '<div class="p-6 text-center text-xs text-slate-500">Koi live chat nahi mili</div>';
         return;
       }
       container.innerHTML = leads.map(c => `
@@ -373,9 +332,9 @@
 
     window.setReply = function(type) {
       const inp = document.getElementById('in-msg');
-      if (type === 'catalog') inp.value = "Namaste! Yeh raha hamara complete ayurvedic product catalogue: https://vedashree.in";
+      if (type === 'catalog') inp.value = "Namaste! Yeh raha hamara complete catalogue: https://vedashree.in";
       if (type === 'upi') inp.value = "Kripya diye gaye UPI ID par payment karein aur screenshot share karein.";
-      if (type === 'dispatch') inp.value = "Aapka order Delhivery se dispatch kar diya gaya hai. Tracking link jald hi update hoga.";
+      if (type === 'dispatch') inp.value = "Aapka order Delhivery se dispatch kar diya gaya hai. Tracking link jald update hoga.";
       inp.focus();
     };
 
@@ -383,4 +342,46 @@
       e.preventDefault();
       const inp = document.getElementById('in-msg');
       const txt = inp.value.trim();
-      if (!txt || !curLead) ret
+      if (!txt || !curLead) return;
+
+      inp.value = '';
+      if (!chatDB[curLead.phone]) chatDB[curLead.phone] = [];
+      chatDB[curLead.phone].push({ s: 'm', txt: txt, t: 'Sending...' });
+      renderMessages();
+
+      try {
+        await fetch('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ toPhone: curLead.phone, text: txt })
+        });
+        loadChatMessages(curLead.phone);
+      } catch (err) {}
+    };
+
+    // --- 3. EXCEL BROADCAST (AAPKA ORIGINAL CODE) ---
+    document.getElementById('b-pick-excel').onclick = () => document.getElementById('in-excel').click();
+    document.getElementById('in-excel').onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      document.getElementById('lbl-excel').innerText = "File: " + file.name;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+          bList = [];
+          for (let i = 1; i < rows.length; i++) {
+            if (rows[i][1]) {
+              const ph = String(rows[i][1]).replace(/[^0-9]/g, '');
+              bList.push({ name: rows[i][0] || 'Customer', phone: ph, st: 'pending' });
+            }
+          }
+          renderBLog();
+          alert("Loaded " + bList.length + " contacts!");
+        } catch(err) { alert("Excel file read error"); }
+      };
+      reader.readAsArrayBuffer(file);
+    };
+
+    function renderBLo
