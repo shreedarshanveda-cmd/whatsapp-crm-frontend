@@ -18,24 +18,28 @@ export default {
 
           if (v && v.messages && v.messages[0]) {
             const m = v.messages[0];
-            const p = m.from;
+            const p = String(m.from || "").replace(/[^0-9]/g, "");
             const name = (v.contacts && v.contacts[0] && v.contacts[0].profile) ? v.contacts[0].profile.name : "Customer";
             const txt = (m.text && m.text.body) ? m.text.body : "Media/Attachment";
 
-            // Pehle message database me save karein
-            await env.DB.prepare(
-              "INSERT INTO messages (phone, sender, message) VALUES (?, 'customer', ?)"
-            ).bind(p, txt).run();
+            if (p) {
+              try {
+                await env.DB.prepare(
+                  "INSERT INTO messages (phone, sender, message) VALUES (?, 'customer', ?)"
+                ).bind(p, txt).run();
+              } catch (eMsg) {}
 
-            // Lead table update karein
-            try {
-              await env.DB.prepare(
-                "INSERT INTO leads (phone, name, stage) VALUES (?, ?, 'hot') ON CONFLICT(phone) DO UPDATE SET name = excluded.name"
-              ).bind(p, name).run();
-            } catch (errLeads) {
-              await env.DB.prepare(
-                "INSERT INTO leads (phone, name) VALUES (?, ?)"
-              ).bind(p, name).run();
+              try {
+                await env.DB.prepare(
+                  "INSERT INTO leads (phone, name, stage) VALUES (?, ?, 'hot') ON CONFLICT(phone) DO UPDATE SET name = excluded.name"
+                ).bind(p, name).run();
+              } catch (errLeads) {
+                try {
+                  await env.DB.prepare(
+                    "INSERT INTO leads (phone, name) VALUES (?, ?)"
+                  ).bind(p, name).run();
+                } catch (eL) {}
+              }
             }
           }
           return new Response("EVENT_RECEIVED", { status: 200 });
@@ -45,25 +49,43 @@ export default {
       }
     }
 
-    // 3. CRM APIs (rowid fix to avoid column error)
+    // 3. CRM Leads API (Safe fetch)
     if (u.pathname === "/api/leads") {
-      const q = await env.DB.prepare("SELECT * FROM leads ORDER BY rowid DESC").all();
-      return Response.json(q.results || []);
+      try {
+        const q = await env.DB.prepare("SELECT * FROM leads ORDER BY rowid DESC").all();
+        return Response.json(q.results || []);
+      } catch (err) {
+        return Response.json([]);
+      }
     }
 
+    // 4. CRM Messages API (Error 1101 Fix: Safe Parameter Binding & Handling)
     if (u.pathname === "/api/messages") {
-      const phone = u.searchParams.get("phone");
-      const q = await env.DB.prepare("SELECT * FROM messages WHERE phone = ? ORDER BY rowid ASC").bind(phone).all();
-      return Response.json(q.results || []);
+      try {
+        const rawPhone = u.searchParams.get("phone") || "";
+        const cleanPhone = String(rawPhone).replace(/[^0-9]/g, "");
+
+        if (!cleanPhone) {
+          return Response.json([]);
+        }
+
+        // Query dono formats (with and without country code) ko handle karegi
+        const q = await env.DB.prepare(
+          "SELECT * FROM messages WHERE phone = ? OR phone LIKE ? ORDER BY rowid ASC"
+        ).bind(cleanPhone, "%" + cleanPhone.slice(-10)).all();
+
+        return Response.json(q.results || []);
+      } catch (err) {
+        return Response.json([]);
+      }
     }
 
-    // 4. Send Message API (Outgoing Message Save)
+    // 5. Send Message API (Outgoing Message Save)
     if (u.pathname === "/api/send" && req.method === "POST") {
       try {
         const body = await req.json();
-        const cleanPhone = body.toPhone.replace(/[^0-9]/g, "");
+        const cleanPhone = String(body.toPhone || "").replace(/[^0-9]/g, "");
 
-        // Meta WhatsApp Cloud API call
         const metaRes = await fetch("https://graph.facebook.com/v20.0/" + env.PHONE_NUMBER_ID + "/messages", {
           method: "POST",
           headers: {
@@ -78,10 +100,11 @@ export default {
           })
         });
 
-        // D1 database me message save
-        await env.DB.prepare(
-          "INSERT INTO messages (phone, sender, message) VALUES (?, 'agent', ?)"
-        ).bind(cleanPhone, body.text).run();
+        try {
+          await env.DB.prepare(
+            "INSERT INTO messages (phone, sender, message) VALUES (?, 'agent', ?)"
+          ).bind(cleanPhone, body.text).run();
+        } catch (eSave) {}
 
         return Response.json({ success: true });
       } catch (err) {
@@ -89,7 +112,7 @@ export default {
       }
     }
 
-    // 5. Frontend index.html load
+    // 6. Fetch frontend index.html
     const r = await fetch("https://raw.githubusercontent.com/shreedarshanveda-cmd/whatsapp-crm-frontend/main/index.html?t=" + Date.now(), {
       cf: { cacheTtl: 0, cacheEverything: false }
     });
