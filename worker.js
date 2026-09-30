@@ -2,6 +2,15 @@ export default {
   async fetch(req, env) {
     const u = new URL(req.url);
 
+    // Auto-create messages table if missing (Fixes Error 1101 "no such table")
+    const ensureMessagesTable = async () => {
+      try {
+        await env.DB.prepare(
+          "CREATE TABLE IF NOT EXISTS messages (phone TEXT, sender TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
+        ).run();
+      } catch (e) {}
+    };
+
     // 1. Meta Webhook Verification
     if (u.pathname === "/webhook") {
       if (req.method === "GET") {
@@ -13,6 +22,7 @@ export default {
       // 2. Inbound Webhook Listener (Incoming Messages)
       if (req.method === "POST") {
         try {
+          await ensureMessagesTable();
           const b = await req.json();
           const v = b && b.entry && b.entry[0] && b.entry[0].changes && b.entry[0].changes[0] ? b.entry[0].changes[0].value : null;
 
@@ -49,7 +59,7 @@ export default {
       }
     }
 
-    // 3. CRM Leads API (Safe fetch)
+    // 3. CRM Leads API
     if (u.pathname === "/api/leads") {
       try {
         const q = await env.DB.prepare("SELECT * FROM leads ORDER BY rowid DESC").all();
@@ -59,9 +69,10 @@ export default {
       }
     }
 
-    // 4. CRM Messages API (Error 1101 Fix: Safe Parameter Binding & Handling)
+    // 4. CRM Messages API (Auto-init & Safe Query)
     if (u.pathname === "/api/messages") {
       try {
+        await ensureMessagesTable();
         const rawPhone = u.searchParams.get("phone") || "";
         const cleanPhone = String(rawPhone).replace(/[^0-9]/g, "");
 
@@ -69,7 +80,6 @@ export default {
           return Response.json([]);
         }
 
-        // Query dono formats (with and without country code) ko handle karegi
         const q = await env.DB.prepare(
           "SELECT * FROM messages WHERE phone = ? OR phone LIKE ? ORDER BY rowid ASC"
         ).bind(cleanPhone, "%" + cleanPhone.slice(-10)).all();
@@ -83,6 +93,7 @@ export default {
     // 5. Send Message API (Outgoing Message Save)
     if (u.pathname === "/api/send" && req.method === "POST") {
       try {
+        await ensureMessagesTable();
         const body = await req.json();
         const cleanPhone = String(body.toPhone || "").replace(/[^0-9]/g, "");
 
