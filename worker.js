@@ -19,42 +19,58 @@ export default {
     // 2. Incoming WhatsApp Message Webhook (POST)
     if (request.method === "POST" && url.pathname === "/webhook") {
       try {
-        const data = await request.json();
+        const bodyText = await request.text();
+        if (!bodyText) return new Response("OK", { status: 200 });
 
-        const entry = data?.entry?.[0];
-        const change = entry?.changes?.[0];
-        const value = change?.value;
+        const data = JSON.parse(bodyText);
 
-        let message = null;
-        let contact = null;
-
-        if (value?.messages && value.messages.length > 0) {
-          message = value.messages[0];
-          contact = value?.contacts?.[0];
-        } else if (data?.messages && data.messages.length > 0) {
-          message = data.messages[0];
-          contact = data?.contacts?.[0];
+        // Teeno Meta payload structures ko handle karne ka solid check:
+        let val = null;
+        if (data?.entry?.[0]?.changes?.[0]?.value) {
+          val = data.entry[0].changes[0].value;
+        } else if (data?.value) {
+          val = data.value;
+        } else {
+          val = data;
         }
 
-        if (message && message.type === "text") {
-          let rawPhone = String(message.from || "").replace(/[^0-9]/g, "");
-          const textBody = message.text?.body || "";
-          const customerName = contact?.profile?.name || rawPhone;
-          const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        const msgObj = val?.messages?.[0] || null;
+        let customerName = val?.contacts?.[0]?.profile?.name || "Customer";
 
-          await env.DB.prepare(`
-            INSERT INTO leads (phone, name, last_message, updated_at)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(phone) DO UPDATE SET
-              name = CASE WHEN leads.name IS NULL OR leads.name = '' OR leads.name = 'Customer' THEN excluded.name ELSE leads.name END,
-              last_message = excluded.last_message,
-              updated_at = excluded.updated_at
-          `).bind(rawPhone, customerName, textBody, timestamp).run();
+        if (msgObj) {
+          const rawPhone = String(msgObj.from || "").replace(/[^0-9]/g, "");
+          const textBody = msgObj.text?.body || msgObj.body || (msgObj.type ? `[${msgObj.type}]` : "Message");
+          const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-          await env.DB.prepare(`
-            INSERT INTO messages (phone, text, direction, timestamp)
-            VALUES (?, ?, 'inbound', ?)
-          `).bind(rawPhone, textBody, timestamp).run();
+          if (customerName === "Customer" && rawPhone) {
+            customerName = "+" + rawPhone;
+          }
+
+          if (rawPhone) {
+            // Messages table
+            await env.DB.prepare(`
+              INSERT INTO messages (phone, text, direction, timestamp)
+              VALUES (?, ?, 'inbound', ?)
+            `).bind(rawPhone, textBody, now).run();
+
+            // Leads table
+            const existing = await env.DB.prepare(`
+              SELECT phone FROM leads WHERE phone = ?
+            `).bind(rawPhone).first();
+
+            if (existing) {
+              await env.DB.prepare(`
+                UPDATE leads 
+                SET last_message = ?, updated_at = ?, name = CASE WHEN name IS NULL OR name = 'Customer' OR name LIKE '+%' THEN ? ELSE name END
+                WHERE phone = ?
+              `).bind(textBody, now, customerName, rawPhone).run();
+            } else {
+              await env.DB.prepare(`
+                INSERT INTO leads (phone, name, last_message, updated_at)
+                VALUES (?, ?, ?, ?)
+              `).bind(rawPhone, customerName, textBody, now).run();
+            }
+          }
         }
 
         return new Response("EVENT_RECEIVED", { status: 200 });
@@ -136,7 +152,7 @@ export default {
       try {
         const { phone, text } = await request.json();
         const cleanPhone = String(phone || "").replace(/[^0-9]/g, "");
-        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
         if (env.WHATSAPP_TOKEN) {
           await fetch("https://graph.facebook.com/v20.0/119627664023608/messages", {
@@ -157,15 +173,14 @@ export default {
         await env.DB.prepare(`
           INSERT INTO messages (phone, text, direction, timestamp)
           VALUES (?, ?, 'outbound', ?)
-        `).bind(cleanPhone, text, timestamp).run();
+        `).bind(cleanPhone, text, now).run();
 
-        await env.DB.prepare(`
-          INSERT INTO leads (phone, name, last_message, updated_at)
-          VALUES (?, 'Customer', ?, ?)
-          ON CONFLICT(phone) DO UPDATE SET
-            last_message = excluded.last_message,
-            updated_at = excluded.updated_at
-        `).bind(cleanPhone, text, timestamp).run();
+        const existing = await env.DB.prepare(`SELECT phone FROM leads WHERE phone = ?`).bind(cleanPhone).first();
+        if (existing) {
+          await env.DB.prepare(`UPDATE leads SET last_message = ?, updated_at = ? WHERE phone = ?`).bind(text, now, cleanPhone).run();
+        } else {
+          await env.DB.prepare(`INSERT INTO leads (phone, name, last_message, updated_at) VALUES (?, 'Customer', ?, ?)`).bind(cleanPhone, text, now).run();
+        }
 
         return new Response(JSON.stringify({ success: true }), {
           headers: { "Content-Type": "application/json" }
