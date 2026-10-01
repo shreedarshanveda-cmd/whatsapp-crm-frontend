@@ -42,8 +42,7 @@ export default {
           const customerName = contact?.profile?.name || rawPhone;
           const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-          // Leads table: ensure fields align with frontend expectations
-          await env.whatsapp_crm_db.prepare(`
+          await env.DB.prepare(`
             INSERT INTO leads (phone, name, last_message, updated_at)
             VALUES (?, ?, ?, ?)
             ON CONFLICT(phone) DO UPDATE SET
@@ -52,8 +51,7 @@ export default {
               updated_at = excluded.updated_at
           `).bind(rawPhone, customerName, textBody, timestamp).run();
 
-          // Messages table: inbound message
-          await env.whatsapp_crm_db.prepare(`
+          await env.DB.prepare(`
             INSERT INTO messages (phone, text, direction, timestamp)
             VALUES (?, ?, 'inbound', ?)
           `).bind(rawPhone, textBody, timestamp).run();
@@ -65,10 +63,10 @@ export default {
       }
     }
 
-    // 3. API: Get Leads List (Exact contract for loadLiveCRMData)
+    // 3. API: Get Leads List
     if (request.method === "GET" && url.pathname === "/api/leads") {
       try {
-        const { results } = await env.whatsapp_crm_db.prepare(`
+        const { results } = await env.DB.prepare(`
           SELECT 
             phone AS id,
             name,
@@ -94,10 +92,9 @@ export default {
       }
     }
 
-    // 4. API: Get Chat Messages (Exact contract for loadChatMessages)
+    // 4. API: Get Chat Messages
     if (request.method === "GET" && url.pathname === "/api/messages") {
       const rawParam = url.searchParams.get("phone") || "";
-      // Clean phone: strips +, spaces, and any non-numeric characters
       const cleanPhone = rawParam.replace(/[^0-9]/g, "");
 
       if (!cleanPhone) {
@@ -107,7 +104,7 @@ export default {
       }
 
       try {
-        const { results } = await env.whatsapp_crm_db.prepare(`
+        const { results } = await env.DB.prepare(`
           SELECT 
             id, 
             phone, 
@@ -157,12 +154,12 @@ export default {
           });
         }
 
-        await env.whatsapp_crm_db.prepare(`
+        await env.DB.prepare(`
           INSERT INTO messages (phone, text, direction, timestamp)
           VALUES (?, ?, 'outbound', ?)
         `).bind(cleanPhone, text, timestamp).run();
 
-        await env.whatsapp_crm_db.prepare(`
+        await env.DB.prepare(`
           INSERT INTO leads (phone, name, last_message, updated_at)
           VALUES (?, 'Customer', ?, ?)
           ON CONFLICT(phone) DO UPDATE SET
