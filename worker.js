@@ -37,13 +37,12 @@ export default {
         }
 
         if (message && message.type === "text") {
-          // Normalize phone: sirf digits rakhein (+ nikal kar)
           let rawPhone = String(message.from || "").replace(/[^0-9]/g, "");
           const textBody = message.text?.body || "";
           const customerName = contact?.profile?.name || rawPhone;
-          const timestamp = new Date().toISOString();
+          const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-          // Leads table insert / update
+          // Leads table: ensure fields align with frontend expectations
           await env.whatsapp_crm_db.prepare(`
             INSERT INTO leads (phone, name, last_message, updated_at)
             VALUES (?, ?, ?, ?)
@@ -53,7 +52,7 @@ export default {
               updated_at = excluded.updated_at
           `).bind(rawPhone, customerName, textBody, timestamp).run();
 
-          // Messages table me insert
+          // Messages table: inbound message
           await env.whatsapp_crm_db.prepare(`
             INSERT INTO messages (phone, text, direction, timestamp)
             VALUES (?, ?, 'inbound', ?)
@@ -66,12 +65,22 @@ export default {
       }
     }
 
-    // 3. API: Get Leads List
+    // 3. API: Get Leads List (Exact contract for loadLiveCRMData)
     if (request.method === "GET" && url.pathname === "/api/leads") {
       try {
         const { results } = await env.whatsapp_crm_db.prepare(`
-          SELECT * FROM leads ORDER BY updated_at DESC
+          SELECT 
+            phone AS id,
+            name,
+            phone,
+            'Direct WhatsApp' AS source,
+            'hot' AS status,
+            COALESCE(updated_at, datetime('now')) AS created_at,
+            last_message
+          FROM leads 
+          ORDER BY updated_at DESC
         `).all();
+
         return new Response(JSON.stringify(results || []), {
           headers: { 
             "Content-Type": "application/json",
@@ -79,13 +88,16 @@ export default {
           }
         });
       } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        return new Response(JSON.stringify([]), {
+          headers: { "Content-Type": "application/json" }
+        });
       }
     }
 
-    // 4. API: Get Chat Messages for a Phone Number (Cleaned Phone matching & sender mapping)
+    // 4. API: Get Chat Messages (Exact contract for loadChatMessages)
     if (request.method === "GET" && url.pathname === "/api/messages") {
       const rawParam = url.searchParams.get("phone") || "";
+      // Clean phone: strips +, spaces, and any non-numeric characters
       const cleanPhone = rawParam.replace(/[^0-9]/g, "");
 
       if (!cleanPhone) {
@@ -101,12 +113,9 @@ export default {
             phone, 
             text, 
             text AS message, 
-            text AS body, 
             CASE WHEN direction = 'outbound' THEN 'agent' ELSE 'customer' END AS sender,
             direction, 
-            direction AS type, 
-            timestamp, 
-            timestamp AS created_at
+            COALESCE(timestamp, datetime('now')) AS created_at
           FROM messages 
           WHERE REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?
           ORDER BY id ASC
@@ -119,7 +128,9 @@ export default {
           }
         });
       } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        return new Response(JSON.stringify([]), {
+          headers: { "Content-Type": "application/json" }
+        });
       }
     }
 
@@ -128,7 +139,7 @@ export default {
       try {
         const { phone, text } = await request.json();
         const cleanPhone = String(phone || "").replace(/[^0-9]/g, "");
-        const timestamp = new Date().toISOString();
+        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
         if (env.WHATSAPP_TOKEN) {
           await fetch("https://graph.facebook.com/v20.0/119627664023608/messages", {
@@ -167,7 +178,7 @@ export default {
       }
     }
 
-    // 6. Serve Original VEDASHREE PRO UI from index.html
+    // 6. Serve Original VEDASHREE PRO UI
     return new Response(HTML_CONTENT, {
       headers: { "Content-Type": "text/html;charset=UTF-8" }
     });
