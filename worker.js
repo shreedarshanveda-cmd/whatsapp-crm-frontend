@@ -53,7 +53,7 @@ export default {
               updated_at = excluded.updated_at
           `).bind(rawPhone, customerName, textBody, timestamp).run();
 
-          // Messages table me insert (dono fields fill taaki frontend koi bhi key padhe, message dikhe)
+          // Messages table me insert
           await env.whatsapp_crm_db.prepare(`
             INSERT INTO messages (phone, text, direction, timestamp)
             VALUES (?, ?, 'inbound', ?)
@@ -83,7 +83,7 @@ export default {
       }
     }
 
-    // 4. API: Get Chat Messages for a Phone Number (Cleaned Phone matching)
+    // 4. API: Get Chat Messages for a Phone Number (Cleaned Phone matching & sender mapping)
     if (request.method === "GET" && url.pathname === "/api/messages") {
       const rawParam = url.searchParams.get("phone") || "";
       const cleanPhone = rawParam.replace(/[^0-9]/g, "");
@@ -100,8 +100,9 @@ export default {
             id, 
             phone, 
             text, 
-            text AS body, 
             text AS message, 
+            text AS body, 
+            CASE WHEN direction = 'outbound' THEN 'agent' ELSE 'customer' END AS sender,
             direction, 
             direction AS type, 
             timestamp, 
