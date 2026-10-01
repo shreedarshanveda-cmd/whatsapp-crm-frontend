@@ -86,7 +86,6 @@ export default {
     // 4. API: Get Chat Messages for a Phone Number (Cleaned Phone matching)
     if (request.method === "GET" && url.pathname === "/api/messages") {
       const rawParam = url.searchParams.get("phone") || "";
-      // Strip out spaces, plus sign taaki exact match ho
       const cleanPhone = rawParam.replace(/[^0-9]/g, "");
 
       if (!cleanPhone) {
@@ -96,7 +95,6 @@ export default {
       }
 
       try {
-        // Match with or without '+' sign in database
         const { results } = await env.whatsapp_crm_db.prepare(`
           SELECT 
             id, 
