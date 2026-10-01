@@ -1,8 +1,36 @@
 import HTML_CONTENT from "./index.html";
 
+// Auto ensure tables exist with correct schema
+async function initDB(db) {
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS leads (
+      phone TEXT PRIMARY KEY,
+      name TEXT,
+      last_message TEXT,
+      updated_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      phone TEXT,
+      text TEXT,
+      direction TEXT,
+      timestamp TEXT
+    );
+  `);
+}
+
+let lastWebhookError = "None";
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // Endpoint to check exact error if webhook fails
+    if (url.pathname === "/api/last-error") {
+      return new Response(JSON.stringify({ error: lastWebhookError }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
 
     // 1. Meta Webhook Verification (GET)
     if (request.method === "GET" && url.pathname === "/webhook") {
@@ -19,12 +47,14 @@ export default {
     // 2. Incoming WhatsApp Message Webhook (POST)
     if (request.method === "POST" && url.pathname === "/webhook") {
       try {
+        await initDB(env.DB);
+
         const bodyText = await request.text();
         if (!bodyText) return new Response("OK", { status: 200 });
 
         const data = JSON.parse(bodyText);
 
-        // Teeno Meta payload structures ko handle karne ka solid check:
+        // Extract payload across all Meta formats (Production & Sandbox Test)
         let val = null;
         if (data?.entry?.[0]?.changes?.[0]?.value) {
           val = data.entry[0].changes[0].value;
@@ -47,34 +77,28 @@ export default {
           }
 
           if (rawPhone) {
-            // Messages table
+            // Save Message
             await env.DB.prepare(`
               INSERT INTO messages (phone, text, direction, timestamp)
               VALUES (?, ?, 'inbound', ?)
             `).bind(rawPhone, textBody, now).run();
 
-            // Leads table
-            const existing = await env.DB.prepare(`
-              SELECT phone FROM leads WHERE phone = ?
-            `).bind(rawPhone).first();
-
-            if (existing) {
-              await env.DB.prepare(`
-                UPDATE leads 
-                SET last_message = ?, updated_at = ?, name = CASE WHEN name IS NULL OR name = 'Customer' OR name LIKE '+%' THEN ? ELSE name END
-                WHERE phone = ?
-              `).bind(textBody, now, customerName, rawPhone).run();
-            } else {
-              await env.DB.prepare(`
-                INSERT INTO leads (phone, name, last_message, updated_at)
-                VALUES (?, ?, ?, ?)
-              `).bind(rawPhone, customerName, textBody, now).run();
-            }
+            // Save Lead
+            await env.DB.prepare(`
+              INSERT INTO leads (phone, name, last_message, updated_at)
+              VALUES (?, ?, ?, ?)
+              ON CONFLICT(phone) DO UPDATE SET
+                last_message = excluded.last_message,
+                updated_at = excluded.updated_at,
+                name = CASE WHEN leads.name IS NULL OR leads.name = 'Customer' OR leads.name LIKE '+%' THEN excluded.name ELSE leads.name END
+            `).bind(rawPhone, customerName, textBody, now).run();
           }
         }
 
+        lastWebhookError = "None";
         return new Response("EVENT_RECEIVED", { status: 200 });
       } catch (err) {
+        lastWebhookError = err.message + " | Stack: " + err.stack;
         return new Response("OK", { status: 200 });
       }
     }
@@ -82,6 +106,7 @@ export default {
     // 3. API: Get Leads List
     if (request.method === "GET" && url.pathname === "/api/leads") {
       try {
+        await initDB(env.DB);
         const { results } = await env.DB.prepare(`
           SELECT 
             phone AS id,
@@ -120,6 +145,7 @@ export default {
       }
 
       try {
+        await initDB(env.DB);
         const { results } = await env.DB.prepare(`
           SELECT 
             id, 
@@ -150,6 +176,7 @@ export default {
     // 5. API: Send Outbound Message
     if (request.method === "POST" && url.pathname === "/api/send") {
       try {
+        await initDB(env.DB);
         const { phone, text } = await request.json();
         const cleanPhone = String(phone || "").replace(/[^0-9]/g, "");
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -175,12 +202,13 @@ export default {
           VALUES (?, ?, 'outbound', ?)
         `).bind(cleanPhone, text, now).run();
 
-        const existing = await env.DB.prepare(`SELECT phone FROM leads WHERE phone = ?`).bind(cleanPhone).first();
-        if (existing) {
-          await env.DB.prepare(`UPDATE leads SET last_message = ?, updated_at = ? WHERE phone = ?`).bind(text, now, cleanPhone).run();
-        } else {
-          await env.DB.prepare(`INSERT INTO leads (phone, name, last_message, updated_at) VALUES (?, 'Customer', ?, ?)`).bind(cleanPhone, text, now).run();
-        }
+        await env.DB.prepare(`
+          INSERT INTO leads (phone, name, last_message, updated_at)
+          VALUES (?, 'Customer', ?, ?)
+          ON CONFLICT(phone) DO UPDATE SET
+            last_message = excluded.last_message,
+            updated_at = excluded.updated_at
+        `).bind(cleanPhone, text, now).run();
 
         return new Response(JSON.stringify({ success: true }), {
           headers: { "Content-Type": "application/json" }
@@ -190,7 +218,7 @@ export default {
       }
     }
 
-    // 6. Serve Original VEDASHREE PRO UI
+    // 6. Serve Original UI
     return new Response(HTML_CONTENT, {
       headers: { "Content-Type": "text/html;charset=UTF-8" }
     });
