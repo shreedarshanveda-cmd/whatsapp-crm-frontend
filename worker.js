@@ -66,9 +66,9 @@ export default {
           const textBody = msg.text?.body || (msg.type ? `[${msg.type.toUpperCase()}]` : "Message");
           const msgId = msg.id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
           
-          let customerName = "Dr";
+          let customerName = "";
           if (Array.isArray(val?.contacts) && val.contacts.length > 0) {
-            customerName = val.contacts[0]?.profile?.name || customerName;
+            customerName = val.contacts[0]?.profile?.name || "";
           }
 
           if (rawPhone) {
@@ -80,10 +80,13 @@ export default {
               VALUES (?, ?, 'customer', ?, NULL, NULL, NULL, 'delivered', ?)
             `).bind(msgId, leadId, textBody, now).run();
 
-            // Insert or update leads table
+            // Insert or update leads table (preserve name if exists and incoming name is empty)
             await env.DB.prepare(`
-              INSERT OR REPLACE INTO leads (id, name, phone, source, ad_title, stage, created_at)
+              INSERT INTO leads (id, name, phone, source, ad_title, stage, created_at)
               VALUES (?, ?, ?, 'Direct WhatsApp', NULL, 'hot', ?)
+              ON CONFLICT(id) DO UPDATE SET 
+                name = CASE WHEN excluded.name != '' THEN excluded.name ELSE leads.name END,
+                created_at = excluded.created_at
             `).bind(leadId, customerName, rawPhone, now).run();
           }
           lastWebhookError = "None";
@@ -104,7 +107,7 @@ export default {
         const { results } = await env.DB.prepare(`
           SELECT 
             id,
-            name,
+            COALESCE(name, '') AS name,
             phone,
             COALESCE(source, 'Direct WhatsApp') AS source,
             COALESCE(stage, 'hot') AS status,
@@ -162,7 +165,7 @@ export default {
       }
     }
 
-    // 7. API: Send Outbound Message (Exact 'toPhone' mapping aligned)
+    // 7. API: Send Outbound Message
     if (request.method === "POST" && url.pathname === "/api/send") {
       try {
         const body = await request.json();
@@ -204,10 +207,11 @@ export default {
           VALUES (?, ?, 'agent', ?, NULL, NULL, NULL, 'sent', ?)
         `).bind(outMsgId, leadId, messageText, now).run();
 
-        // Update leads table
+        // Update leads table without touching existing name
         await env.DB.prepare(`
-          INSERT OR REPLACE INTO leads (id, name, phone, source, ad_title, stage, created_at)
-          VALUES (?, 'Customer', ?, 'Direct WhatsApp', NULL, 'hot', ?)
+          INSERT INTO leads (id, name, phone, source, ad_title, stage, created_at)
+          VALUES (?, '', ?, 'Direct WhatsApp', NULL, 'hot', ?)
+          ON CONFLICT(id) DO UPDATE SET created_at = excluded.created_at
         `).bind(leadId, cleanPhone, now).run();
 
         return new Response(JSON.stringify({ success: true, id: outMsgId }), {
