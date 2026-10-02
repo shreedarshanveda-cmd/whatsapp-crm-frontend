@@ -78,51 +78,39 @@ export default {
 
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-        // Save raw packet for proof
+        // Always save raw packet for verification
         await env.DB.prepare("INSERT INTO raw_logs (payload, created_at) VALUES (?, ?)")
           .bind(bodyText, now)
           .run();
 
         const data = JSON.parse(bodyText);
 
-        // Extract value
-        let val = data?.entry?.[0]?.changes?.[0]?.value || data?.value || data;
-        const msgList = val?.messages;
+        // Meta Exact Payload Extraction
+        const entry = data?.entry?.[0];
+        const change = entry?.changes?.[0];
+        const val = change?.value || data?.value || data;
 
-        if (Array.isArray(msgList) && msgList.length > 0) {
-          const msgObj = msgList[0];
-          const rawPhone = String(msgObj.from || "").replace(/[^0-9]/g, "");
+        if (val && Array.isArray(val.messages) && val.messages.length > 0) {
+          const msg = val.messages[0];
+          const rawPhone = String(msg.from || "").replace(/[^0-9]/g, "");
+          const textBody = msg.text?.body || (msg.type ? `[${msg.type.toUpperCase()}]` : "Message");
           
-          let textBody = "[Media/Attachment]";
-          if (msgObj.text?.body) {
-            textBody = msgObj.text.body;
-          } else if (msgObj.body) {
-            textBody = msgObj.body;
-          } else if (msgObj.type) {
-            textBody = `[${msgObj.type.toUpperCase()}]`;
+          let customerName = "Customer";
+          if (Array.isArray(val.contacts) && val.contacts.length > 0) {
+            customerName = val.contacts[0]?.profile?.name || ("+" + rawPhone);
           }
 
-          let customerName = val?.contacts?.[0]?.profile?.name || ("+" + rawPhone);
-
           if (rawPhone) {
-            // Insert Message
+            // 1. Insert into messages table
             await env.DB.prepare(`
               INSERT INTO messages (phone, text, direction, timestamp)
               VALUES (?, ?, 'inbound', ?)
             `).bind(rawPhone, textBody, now).run();
 
-            // Insert / Update Lead
+            // 2. Direct INSERT OR REPLACE into leads table
             await env.DB.prepare(`
-              INSERT INTO leads (phone, name, last_message, updated_at)
+              INSERT OR REPLACE INTO leads (phone, name, last_message, updated_at)
               VALUES (?, ?, ?, ?)
-              ON CONFLICT(phone) DO UPDATE SET
-                last_message = excluded.last_message,
-                updated_at = excluded.updated_at,
-                name = CASE 
-                  WHEN leads.name IS NULL OR leads.name = 'Customer' OR leads.name LIKE '+%' 
-                  THEN excluded.name 
-                  ELSE leads.name 
-                END
             `).bind(rawPhone, customerName, textBody, now).run();
           }
         }
@@ -214,7 +202,7 @@ export default {
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
         if (env.WHATSAPP_TOKEN) {
-          await fetch("https://graph.facebook.com/v20.0/119627664023608/messages", {
+          await fetch("https://graph.facebook.com/v20.0/1196276640235299/messages", {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${env.WHATSAPP_TOKEN}`,
@@ -235,11 +223,8 @@ export default {
         `).bind(cleanPhone, text, now).run();
 
         await env.DB.prepare(`
-          INSERT INTO leads (phone, name, last_message, updated_at)
+          INSERT OR REPLACE INTO leads (phone, name, last_message, updated_at)
           VALUES (?, 'Customer', ?, ?)
-          ON CONFLICT(phone) DO UPDATE SET
-            last_message = excluded.last_message,
-            updated_at = excluded.updated_at
         `).bind(cleanPhone, text, now).run();
 
         return new Response(JSON.stringify({ success: true }), {
