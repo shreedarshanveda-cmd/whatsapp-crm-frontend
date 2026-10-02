@@ -12,9 +12,10 @@
     html, body { height: var(--app-h); margin: 0; padding: 0; overflow: hidden; background: #080c14; font-family: system-ui, -apple-system, sans-serif; }
     .active-tab { background: rgba(16, 185, 129, 0.2) !important; color: #34d399 !important; border-color: rgba(16, 185, 129, 0.4) !important; }
     .flt-on { background: #10b981 !important; color: #000 !important; font-weight: 700 !important; }
+    .chat-bubble { -webkit-user-select: text; user-select: text; }
   </style>
 </head>
-<body class="text-slate-100 flex flex-col h-full select-none">
+<body class="text-slate-100 flex flex-col h-full">
 
   <!-- LOGIN SCREEN MODAL -->
   <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080c14]/95 backdrop-blur-md">
@@ -103,16 +104,16 @@
         </div>
 
         <div class="px-2 py-1 bg-slate-900/80 border-t border-slate-800/80 flex space-x-1 overflow-x-auto shrink-0 text-xs">
-          <button onclick="setReply('catalog')" class="px-2 py-0.5 rounded bg-slate-850 border border-slate-700 text-slate-100 whitespace-nowrap">📦 Catalog</button>
-          <button onclick="setReply('upi')" class="px-2 py-0.5 rounded bg-slate-850 border border-slate-700 text-slate-100 whitespace-nowrap">💳 UPI</button>
-          <button onclick="setReply('dispatch')" class="px-2 py-0.5 rounded bg-slate-850 border border-slate-700 text-slate-100 whitespace-nowrap">🚚 Tracking</button>
+          <button onclick="setReply('catalog')" class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-100 whitespace-nowrap">📦 Catalog</button>
+          <button onclick="setReply('upi')" class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-100 whitespace-nowrap">💳 UPI</button>
+          <button onclick="setReply('dispatch')" class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-100 whitespace-nowrap">🚚 Tracking</button>
           <button id="b-ai" class="px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap">✨ AI Draft</button>
         </div>
 
         <form id="f-chat" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 shrink-0 pb-safe">
           <input type="file" id="in-file" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
           <button type="button" id="b-pick-file" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400">📎</button>
-          <input type="text" id="in-msg" placeholder="Type reply..." class="flex-1 bg-slate-850 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+          <input type="text" id="in-msg" placeholder="Type reply..." class="flex-1 bg-slate-950 text-white border border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
           <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2 rounded-lg text-xs">Send</button>
         </form>
       </div>
@@ -234,10 +235,10 @@
       alert("✅ Password safaltapoorvak badal gaya hai!");
       document.getElementById('pwd-change-modal').classList.add('hidden');
     };
-
     // --- REAL DATABASE ENGINE (D1 SYNC) ---
     let leads = [];
     let chatDB = {};
+    let readCountDB = JSON.parse(localStorage.getItem('crm_read_counts') || '{}');
     let bList = [];
     let curLead = null, curMed = null, curFlt = 'all';
 
@@ -287,7 +288,7 @@
       } catch (err) {}
     }
 
-    async function loadChatMessages(phone) {
+    async function loadChatMessages(phone, forceScrollBottom = false) {
       try {
         const res = await fetch('/api/messages?phone=' + phone);
         if (res.ok) {
@@ -298,7 +299,11 @@
             raw_time: m.created_at || m.timestamp,
             t: formatISTTime(m.created_at || m.timestamp)
           }));
-          renderMessages();
+          if (curLead && curLead.phone === phone) {
+            readCountDB[phone] = chatDB[phone].length;
+            localStorage.setItem('crm_read_counts', JSON.stringify(readCountDB));
+          }
+          renderMessages(forceScrollBottom);
         }
       } catch (err) {}
     }
@@ -339,22 +344,32 @@
         cont.innerHTML = '<div class="p-6 text-center text-xs text-slate-500">Koi live customer message nahi mila abhi tak.</div>';
         return;
       }
-      cont.innerHTML = leads.map(c => `
-        <div onclick="openChat('${c.id}')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
-          <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0">${c.name ? c.name.substring(0,2).toUpperCase() : 'WA'}</div>
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-baseline mb-0.5">
-              <h4 class="text-xs font-bold text-white truncate">${c.name || c.phone}</h4>
-              <span class="text-[10px] text-slate-500 font-mono">${c.t}</span>
-            </div>
-            <p class="text-[11px] text-slate-400 truncate mb-1">${c.name ? c.phone : ''}</p>
-            <div class="flex items-center space-x-1.5">
-              <span class="text-[9px] px-1.5 py-0.5 rounded border font-mono ${bStyle(c.src)}">${c.src}</span>
-              ${stBadge(c.st)}
+      cont.innerHTML = leads.map(c => {
+        const total = (chatDB[c.phone] || []).length;
+        const read = readCountDB[c.phone] || 0;
+        const unread = Math.max(0, total - read);
+        const unreadBadge = unread > 0 ? `<span class="bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.2 rounded-full shrink-0">${unread}</span>` : '';
+
+        return `
+          <div onclick="openChat('${c.id}')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
+            <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0">${c.name ? c.name.substring(0,2).toUpperCase() : 'WA'}</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-baseline mb-0.5">
+                <h4 class="text-xs font-bold text-white truncate">${c.name || c.phone}</h4>
+                <div class="flex items-center space-x-1.5">
+                  <span class="text-[10px] text-slate-500 font-mono">${c.t}</span>
+                  ${unreadBadge}
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-400 truncate mb-1">${c.name ? c.phone : ''}</p>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-[9px] px-1.5 py-0.5 rounded border font-mono ${bStyle(c.src)}">${c.src}</span>
+                ${stBadge(c.st)}
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     window.openChat = function(id) {
@@ -367,7 +382,7 @@
       document.getElementById('box-contacts').classList.add('hidden');
       document.getElementById('box-chat').classList.remove('hidden');
       document.getElementById('box-chat').classList.add('flex');
-      loadChatMessages(curLead.phone);
+      loadChatMessages(curLead.phone, true);
     };
 
     document.getElementById('b-back').onclick = () => {
@@ -378,9 +393,11 @@
       loadLiveCRMData();
     };
 
-    function renderMessages() {
+    function renderMessages(forceScroll = false) {
       const box = document.getElementById('msg-container');
       if (!box || !curLead) return;
+      
+      const userNearBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 80;
       const arr = chatDB[curLead.phone] || [];
       let lastDateLabel = "";
 
@@ -391,7 +408,6 @@
           med = m.isImg ? `<img src="${m.media}" class="mb-1.5 max-h-48 rounded w-full object-cover">` : `<div class="p-2 bg-slate-900/50 rounded mb-1 text-xs">📎 File</div>`;
         }
 
-        // Generate IST Date Divider Header
         let dividerHtml = '';
         let dateLabel = getISTDateLabel(m.raw_time);
         if (dateLabel && dateLabel !== lastDateLabel) {
@@ -406,7 +422,7 @@
         return `
           ${dividerHtml}
           <div class="flex flex-col ${me ? 'items-end' : 'items-start'} mb-1.5">
-            <div class="max-w-[85%] p-2.5 rounded-2xl text-xs ${me ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none'}">
+            <div class="chat-bubble max-w-[85%] p-2.5 rounded-2xl text-xs ${me ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none'}">
               ${med}<p>${m.txt}</p>
               <div class="flex justify-end items-center space-x-1 mt-1 text-[9px] font-mono ${me ? 'text-emerald-200' : 'text-slate-400'}">
                 <span>${m.t}</span>${me ? '<span class="text-sky-300 font-bold">&check;&check;</span>' : ''}
@@ -415,7 +431,10 @@
           </div>
         `;
       }).join('');
-      box.scrollTop = box.scrollHeight;
+
+      if (forceScroll || userNearBottom) {
+        box.scrollTop = box.scrollHeight;
+      }
     }
 
     window.setReply = function(t) {
@@ -473,7 +492,7 @@
       curMed = null;
       document.getElementById('chip-media').classList.add('hidden');
       document.getElementById('in-file').value = '';
-      renderMessages();
+      renderMessages(true);
 
       try {
         await fetch('/api/send', {
@@ -481,7 +500,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ toPhone: curLead.phone, text: txt })
         });
-        loadChatMessages(curLead.phone);
+        loadChatMessages(curLead.phone, true);
       } catch (err) {}
     };
 
@@ -575,7 +594,7 @@
     // Auto-polling (har 3 second me background me naye messages aayenge)
     setInterval(() => {
       loadLiveCRMData();
-      if (curLead) loadChatMessages(curLead.phone);
+      if (curLead) loadChatMessages(curLead.phone, false);
     }, 3000);
 
     // Initial Start
