@@ -46,7 +46,7 @@ export default {
 
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-        // Always save raw packet for verification
+        // Always save raw packet
         await env.DB.prepare("INSERT INTO raw_logs (payload, created_at) VALUES (?, ?)")
           .bind(bodyText, now)
           .run();
@@ -64,6 +64,7 @@ export default {
           const msg = messages[0];
           const rawPhone = String(msg.from || "").replace(/[^0-9]/g, "");
           const textBody = msg.text?.body || (msg.type ? `[${msg.type.toUpperCase()}]` : "Message");
+          const msgId = msg.id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
           
           let customerName = "Dr";
           if (Array.isArray(val?.contacts) && val.contacts.length > 0) {
@@ -71,14 +72,15 @@ export default {
           }
 
           if (rawPhone) {
-            // Write to messages table
-            await env.DB.prepare(`
-              INSERT INTO messages (phone, text, direction, timestamp)
-              VALUES (?, ?, 'inbound', ?)
-            `).bind(rawPhone, textBody, now).run();
-
-            // Match actual leads schema: (id, name, phone, source, ad_title, stage, created_at)
             const leadId = `lead_${rawPhone}`;
+
+            // Insert into messages table with exact schema match
+            await env.DB.prepare(`
+              INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
+              VALUES (?, ?, 'customer', ?, NULL, NULL, NULL, 'delivered', ?)
+            `).bind(msgId, leadId, textBody, now).run();
+
+            // Insert or update leads table
             await env.DB.prepare(`
               INSERT OR REPLACE INTO leads (id, name, phone, source, ad_title, stage, created_at)
               VALUES (?, ?, ?, 'Direct WhatsApp', NULL, 'hot', ?)
@@ -96,7 +98,7 @@ export default {
       }
     }
 
-    // 5. API: Fetch Leads List (Exact Schema Alignment)
+    // 5. API: Fetch Leads List
     if (request.method === "GET" && url.pathname === "/api/leads") {
       try {
         const { results } = await env.DB.prepare(`
@@ -107,7 +109,7 @@ export default {
             COALESCE(source, 'Direct WhatsApp') AS source,
             COALESCE(stage, 'hot') AS status,
             created_at,
-            (SELECT text FROM messages WHERE REPLACE(REPLACE(phone, '+', ''), ' ', '') = leads.phone ORDER BY id DESC LIMIT 1) AS last_message
+            (SELECT text FROM messages WHERE lead_id = leads.id ORDER BY timestamp DESC LIMIT 1) AS last_message
           FROM leads 
           ORDER BY created_at DESC
         `).all();
@@ -126,31 +128,25 @@ export default {
       }
     }
 
-    // 6. API: Fetch Chat Messages
+    // 6. API: Fetch Chat Messages (Matched with lead_id & UI contract)
     if (request.method === "GET" && url.pathname === "/api/messages") {
-      const rawParam = url.searchParams.get("phone") || "";
+      const rawParam = url.searchParams.get("phone") || url.searchParams.get("lead_id") || "";
       const cleanPhone = rawParam.replace(/[^0-9]/g, "");
-
-      if (!cleanPhone) {
-        return new Response(JSON.stringify([]), {
-          headers: { "Content-Type": "application/json" }
-        });
-      }
+      const leadId = rawParam.startsWith("lead_") ? rawParam : `lead_${cleanPhone}`;
 
       try {
         const { results } = await env.DB.prepare(`
           SELECT 
             id, 
-            phone, 
+            lead_id,
             text, 
             text AS message, 
-            CASE WHEN direction = 'outbound' THEN 'agent' ELSE 'customer' END AS sender,
-            direction, 
+            CASE WHEN sender = 'agent' THEN 'agent' ELSE 'customer' END AS sender,
             COALESCE(timestamp, datetime('now')) AS created_at
           FROM messages 
-          WHERE REPLACE(REPLACE(phone, '+', ''), ' ', '') = ?
-          ORDER BY id ASC
-        `).bind(cleanPhone).all();
+          WHERE lead_id = ? OR lead_id = ?
+          ORDER BY timestamp ASC
+        `).bind(leadId, cleanPhone).all();
 
         return new Response(JSON.stringify(results || []), {
           headers: { 
@@ -171,7 +167,9 @@ export default {
       try {
         const { phone, text } = await request.json();
         const cleanPhone = String(phone || "").replace(/[^0-9]/g, "");
+        const leadId = `lead_${cleanPhone}`;
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        const outMsgId = `out_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
         if (env.WHATSAPP_TOKEN) {
           await fetch("https://graph.facebook.com/v20.0/1196276640235299/messages", {
@@ -189,12 +187,13 @@ export default {
           });
         }
 
+        // Insert into messages table using exact schema
         await env.DB.prepare(`
-          INSERT INTO messages (phone, text, direction, timestamp)
-          VALUES (?, ?, 'outbound', ?)
-        `).bind(cleanPhone, text, now).run();
+          INSERT INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
+          VALUES (?, ?, 'agent', ?, NULL, NULL, NULL, 'sent', ?)
+        `).bind(outMsgId, leadId, text, now).run();
 
-        const leadId = `lead_${cleanPhone}`;
+        // Update leads table
         await env.DB.prepare(`
           INSERT OR REPLACE INTO leads (id, name, phone, source, ad_title, stage, created_at)
           VALUES (?, 'Customer', ?, 'Direct WhatsApp', NULL, 'hot', ?)
