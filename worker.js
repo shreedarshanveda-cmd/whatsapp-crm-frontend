@@ -1,6 +1,6 @@
 import HTML_CONTENT from "./index.html";
 
-// Auto ensure tables exist with correct schema
+// Table initialization
 async function initDB(db) {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS leads (
@@ -16,6 +16,11 @@ async function initDB(db) {
       direction TEXT,
       timestamp TEXT
     );
+    CREATE TABLE IF NOT EXISTS raw_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      payload TEXT,
+      created_at TEXT
+    );
   `);
 }
 
@@ -25,14 +30,27 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Endpoint to check exact error if webhook fails
+    // 1. Error Tracking Endpoint
     if (url.pathname === "/api/last-error") {
       return new Response(JSON.stringify({ error: lastWebhookError }), {
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
       });
     }
 
-    // 1. Meta Webhook Verification (GET)
+    // 2. Raw Logs Inspect Endpoint (Debugging)
+    if (url.pathname === "/api/raw-logs") {
+      try {
+        await initDB(env.DB);
+        const { results } = await env.DB.prepare("SELECT * FROM raw_logs ORDER BY id DESC LIMIT 10").all();
+        return new Response(JSON.stringify(results || []), {
+          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+      }
+    }
+
+    // 3. Meta Webhook Verification (GET)
     if (request.method === "GET" && url.pathname === "/webhook") {
       const mode = url.searchParams.get("hub.mode");
       const token = url.searchParams.get("hub.verify_token");
@@ -44,17 +62,24 @@ export default {
       return new Response("Forbidden", { status: 403 });
     }
 
-    // 2. Incoming WhatsApp Message Webhook (POST)
+    // 4. Incoming WhatsApp Message Webhook (POST)
     if (request.method === "POST" && url.pathname === "/webhook") {
+      let bodyText = "";
       try {
         await initDB(env.DB);
-
-        const bodyText = await request.text();
+        bodyText = await request.text();
         if (!bodyText) return new Response("OK", { status: 200 });
+
+        const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        // Always save raw packet for proof of delivery
+        await env.DB.prepare("INSERT INTO raw_logs (payload, created_at) VALUES (?, ?)")
+          .bind(bodyText, now)
+          .run();
 
         const data = JSON.parse(bodyText);
 
-        // Extract payload across all Meta formats (Production & Sandbox Test)
+        // Extract payload across Meta production & sandbox
         let val = null;
         if (data?.entry?.[0]?.changes?.[0]?.value) {
           val = data.entry[0].changes[0].value;
@@ -64,33 +89,43 @@ export default {
           val = data;
         }
 
-        const msgObj = val?.messages?.[0] || null;
-        let customerName = val?.contacts?.[0]?.profile?.name || "Customer";
+        const msgList = val?.messages;
 
-        if (msgObj) {
+        // Process only if actual message exists
+        if (Array.isArray(msgList) && msgList.length > 0) {
+          const msgObj = msgList[0];
           const rawPhone = String(msgObj.from || "").replace(/[^0-9]/g, "");
-          const textBody = msgObj.text?.body || msgObj.body || (msgObj.type ? `[${msgObj.type}]` : "Message");
-          const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-
-          if (customerName === "Customer" && rawPhone) {
-            customerName = "+" + rawPhone;
+          
+          let textBody = "[Media/Attachment]";
+          if (msgObj.text?.body) {
+            textBody = msgObj.text.body;
+          } else if (msgObj.body) {
+            textBody = msgObj.body;
+          } else if (msgObj.type) {
+            textBody = `[${msgObj.type.toUpperCase()}]`;
           }
 
+          let customerName = val?.contacts?.[0]?.profile?.name || ("+" + rawPhone);
+
           if (rawPhone) {
-            // Save Message
+            // Save Message to messages table
             await env.DB.prepare(`
               INSERT INTO messages (phone, text, direction, timestamp)
               VALUES (?, ?, 'inbound', ?)
             `).bind(rawPhone, textBody, now).run();
 
-            // Save Lead
+            // Save or Update Lead
             await env.DB.prepare(`
               INSERT INTO leads (phone, name, last_message, updated_at)
               VALUES (?, ?, ?, ?)
               ON CONFLICT(phone) DO UPDATE SET
                 last_message = excluded.last_message,
                 updated_at = excluded.updated_at,
-                name = CASE WHEN leads.name IS NULL OR leads.name = 'Customer' OR leads.name LIKE '+%' THEN excluded.name ELSE leads.name END
+                name = CASE 
+                  WHEN leads.name IS NULL OR leads.name = 'Customer' OR leads.name LIKE '+%' 
+                  THEN excluded.name 
+                  ELSE leads.name 
+                END
             `).bind(rawPhone, customerName, textBody, now).run();
           }
         }
@@ -98,12 +133,12 @@ export default {
         lastWebhookError = "None";
         return new Response("EVENT_RECEIVED", { status: 200 });
       } catch (err) {
-        lastWebhookError = err.message + " | Stack: " + err.stack;
+        lastWebhookError = `Error: ${err.message} | Payload: ${bodyText.slice(0, 150)}`;
         return new Response("OK", { status: 200 });
       }
     }
 
-    // 3. API: Get Leads List
+    // 5. API: Fetch Leads List
     if (request.method === "GET" && url.pathname === "/api/leads") {
       try {
         await initDB(env.DB);
@@ -133,7 +168,7 @@ export default {
       }
     }
 
-    // 4. API: Get Chat Messages
+    // 6. API: Fetch Chat Messages
     if (request.method === "GET" && url.pathname === "/api/messages") {
       const rawParam = url.searchParams.get("phone") || "";
       const cleanPhone = rawParam.replace(/[^0-9]/g, "");
@@ -173,7 +208,7 @@ export default {
       }
     }
 
-    // 5. API: Send Outbound Message
+    // 7. API: Send Outbound Message
     if (request.method === "POST" && url.pathname === "/api/send") {
       try {
         await initDB(env.DB);
@@ -218,7 +253,7 @@ export default {
       }
     }
 
-    // 6. Serve Original UI
+    // 8. Serve Frontend UI
     return new Response(HTML_CONTENT, {
       headers: { "Content-Type": "text/html;charset=UTF-8" }
     });
