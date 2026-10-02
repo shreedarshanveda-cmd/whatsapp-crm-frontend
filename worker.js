@@ -1,35 +1,5 @@
 import HTML_CONTENT from "./index.html";
 
-// Table initialization with clean individual queries
-async function initDB(db) {
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS leads (
-      phone TEXT PRIMARY KEY,
-      name TEXT,
-      last_message TEXT,
-      updated_at TEXT
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      phone TEXT,
-      text TEXT,
-      direction TEXT,
-      timestamp TEXT
-    )
-  `).run();
-
-  await db.prepare(`
-    CREATE TABLE IF NOT EXISTS raw_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      payload TEXT,
-      created_at TEXT
-    )
-  `).run();
-}
-
 let lastWebhookError = "None";
 
 export default {
@@ -46,7 +16,6 @@ export default {
     // 2. Raw Logs Inspect Endpoint
     if (url.pathname === "/api/raw-logs") {
       try {
-        await initDB(env.DB);
         const { results } = await env.DB.prepare("SELECT * FROM raw_logs ORDER BY id DESC LIMIT 10").all();
         return new Response(JSON.stringify(results || []), {
           headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
@@ -72,7 +41,6 @@ export default {
     if (request.method === "POST" && url.pathname === "/webhook") {
       let bodyText = "";
       try {
-        await initDB(env.DB);
         bodyText = await request.text();
         if (!bodyText) return new Response("OK", { status: 200 });
 
@@ -85,7 +53,6 @@ export default {
 
         const data = JSON.parse(bodyText);
 
-        // Robust unwrapping: supports object, array or nested structures
         let root = Array.isArray(data) ? data[0] : data;
         let entry = Array.isArray(root?.entry) ? root.entry[0] : root?.entry;
         let change = Array.isArray(entry?.changes) ? entry.changes[0] : entry?.changes;
@@ -110,11 +77,12 @@ export default {
               VALUES (?, ?, 'inbound', ?)
             `).bind(rawPhone, textBody, now).run();
 
-            // Direct INSERT OR REPLACE into leads table
+            // Match actual leads schema: (id, name, phone, source, ad_title, stage, created_at)
+            const leadId = `lead_${rawPhone}`;
             await env.DB.prepare(`
-              INSERT OR REPLACE INTO leads (phone, name, last_message, updated_at)
-              VALUES (?, ?, ?, ?)
-            `).bind(rawPhone, customerName, textBody, now).run();
+              INSERT OR REPLACE INTO leads (id, name, phone, source, ad_title, stage, created_at)
+              VALUES (?, ?, ?, 'Direct WhatsApp', NULL, 'hot', ?)
+            `).bind(leadId, customerName, rawPhone, now).run();
           }
           lastWebhookError = "None";
         } else {
@@ -128,21 +96,20 @@ export default {
       }
     }
 
-    // 5. API: Fetch Leads List
+    // 5. API: Fetch Leads List (Exact Schema Alignment)
     if (request.method === "GET" && url.pathname === "/api/leads") {
       try {
-        await initDB(env.DB);
         const { results } = await env.DB.prepare(`
           SELECT 
-            phone AS id,
+            id,
             name,
             phone,
-            'Direct WhatsApp' AS source,
-            'hot' AS status,
-            COALESCE(updated_at, datetime('now')) AS created_at,
-            last_message
+            COALESCE(source, 'Direct WhatsApp') AS source,
+            COALESCE(stage, 'hot') AS status,
+            created_at,
+            (SELECT text FROM messages WHERE REPLACE(REPLACE(phone, '+', ''), ' ', '') = leads.phone ORDER BY id DESC LIMIT 1) AS last_message
           FROM leads 
-          ORDER BY updated_at DESC
+          ORDER BY created_at DESC
         `).all();
 
         return new Response(JSON.stringify(results || []), {
@@ -152,8 +119,9 @@ export default {
           }
         });
       } catch (err) {
-        return new Response(JSON.stringify([]), {
-          headers: { "Content-Type": "application/json" }
+        return new Response(JSON.stringify({ error: err.message }), {
+          headers: { "Content-Type": "application/json" },
+          status: 500
         });
       }
     }
@@ -170,7 +138,6 @@ export default {
       }
 
       try {
-        await initDB(env.DB);
         const { results } = await env.DB.prepare(`
           SELECT 
             id, 
@@ -192,8 +159,9 @@ export default {
           }
         });
       } catch (err) {
-        return new Response(JSON.stringify([]), {
-          headers: { "Content-Type": "application/json" }
+        return new Response(JSON.stringify({ error: err.message }), {
+          headers: { "Content-Type": "application/json" },
+          status: 500
         });
       }
     }
@@ -201,7 +169,6 @@ export default {
     // 7. API: Send Outbound Message
     if (request.method === "POST" && url.pathname === "/api/send") {
       try {
-        await initDB(env.DB);
         const { phone, text } = await request.json();
         const cleanPhone = String(phone || "").replace(/[^0-9]/g, "");
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -227,10 +194,11 @@ export default {
           VALUES (?, ?, 'outbound', ?)
         `).bind(cleanPhone, text, now).run();
 
+        const leadId = `lead_${cleanPhone}`;
         await env.DB.prepare(`
-          INSERT OR REPLACE INTO leads (phone, name, last_message, updated_at)
-          VALUES (?, 'Customer', ?, ?)
-        `).bind(cleanPhone, text, now).run();
+          INSERT OR REPLACE INTO leads (id, name, phone, source, ad_title, stage, created_at)
+          VALUES (?, 'Customer', ?, 'Direct WhatsApp', NULL, 'hot', ?)
+        `).bind(leadId, cleanPhone, now).run();
 
         return new Response(JSON.stringify({ success: true }), {
           headers: { "Content-Type": "application/json" }
