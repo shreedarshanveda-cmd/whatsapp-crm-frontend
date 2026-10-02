@@ -85,37 +85,42 @@ export default {
 
         const data = JSON.parse(bodyText);
 
-        // Meta Exact Payload Extraction
-        const entry = data?.entry?.[0];
-        const change = entry?.changes?.[0];
-        const val = change?.value || data?.value || data;
+        // Robust unwrapping: supports object, array or nested structures
+        let root = Array.isArray(data) ? data[0] : data;
+        let entry = Array.isArray(root?.entry) ? root.entry[0] : root?.entry;
+        let change = Array.isArray(entry?.changes) ? entry.changes[0] : entry?.changes;
+        let val = change?.value || root?.value || root;
 
-        if (val && Array.isArray(val.messages) && val.messages.length > 0) {
-          const msg = val.messages[0];
+        const messages = val?.messages;
+
+        if (messages && Array.isArray(messages) && messages.length > 0) {
+          const msg = messages[0];
           const rawPhone = String(msg.from || "").replace(/[^0-9]/g, "");
           const textBody = msg.text?.body || (msg.type ? `[${msg.type.toUpperCase()}]` : "Message");
           
-          let customerName = "Customer";
-          if (Array.isArray(val.contacts) && val.contacts.length > 0) {
-            customerName = val.contacts[0]?.profile?.name || ("+" + rawPhone);
+          let customerName = "Dr";
+          if (Array.isArray(val?.contacts) && val.contacts.length > 0) {
+            customerName = val.contacts[0]?.profile?.name || customerName;
           }
 
           if (rawPhone) {
-            // 1. Insert into messages table
+            // Write to messages table
             await env.DB.prepare(`
               INSERT INTO messages (phone, text, direction, timestamp)
               VALUES (?, ?, 'inbound', ?)
             `).bind(rawPhone, textBody, now).run();
 
-            // 2. Direct INSERT OR REPLACE into leads table
+            // Direct INSERT OR REPLACE into leads table
             await env.DB.prepare(`
               INSERT OR REPLACE INTO leads (phone, name, last_message, updated_at)
               VALUES (?, ?, ?, ?)
             `).bind(rawPhone, customerName, textBody, now).run();
           }
+          lastWebhookError = "None";
+        } else {
+          lastWebhookError = "Payload received but no messages array found in value";
         }
 
-        lastWebhookError = "None";
         return new Response("EVENT_RECEIVED", { status: 200 });
       } catch (err) {
         lastWebhookError = `Error: ${err.message}`;
