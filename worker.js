@@ -128,7 +128,7 @@ export default {
       }
     }
 
-    // 6. API: Fetch Chat Messages (Matched with lead_id & UI contract)
+    // 6. API: Fetch Chat Messages
     if (request.method === "GET" && url.pathname === "/api/messages") {
       const rawParam = url.searchParams.get("phone") || url.searchParams.get("lead_id") || "";
       const cleanPhone = rawParam.replace(/[^0-9]/g, "");
@@ -162,17 +162,19 @@ export default {
       }
     }
 
-    // 7. API: Send Outbound Message
+    // 7. API: Send Outbound Message (Surgically Aligned for UI + WhatsApp Meta)
     if (request.method === "POST" && url.pathname === "/api/send") {
       try {
-        const { phone, text } = await request.json();
-        const cleanPhone = String(phone || "").replace(/[^0-9]/g, "");
+        const body = await request.json();
+        const rawPhone = body.phone || body.lead_id || "";
+        const cleanPhone = String(rawPhone).replace(/[^0-9]/g, "");
+        const messageText = body.text || body.message || "";
         const leadId = `lead_${cleanPhone}`;
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
         const outMsgId = `out_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-        if (env.WHATSAPP_TOKEN) {
-          await fetch("https://graph.facebook.com/v20.0/1196276640235299/messages", {
+        if (env.WHATSAPP_TOKEN && cleanPhone && messageText) {
+          const metaRes = await fetch("https://graph.facebook.com/v20.0/1196276640235299/messages", {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${env.WHATSAPP_TOKEN}`,
@@ -182,16 +184,25 @@ export default {
               messaging_product: "whatsapp",
               to: cleanPhone,
               type: "text",
-              text: { body: text }
+              text: { body: messageText }
             })
           });
+
+          if (!metaRes.ok) {
+            const metaErrText = await metaRes.text();
+            lastWebhookError = `Meta Send Error: ${metaErrText}`;
+            return new Response(JSON.stringify({ error: metaErrText }), {
+              headers: { "Content-Type": "application/json" },
+              status: 400
+            });
+          }
         }
 
-        // Insert into messages table using exact schema
+        // Insert outbound message to physical DB
         await env.DB.prepare(`
           INSERT INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
           VALUES (?, ?, 'agent', ?, NULL, NULL, NULL, 'sent', ?)
-        `).bind(outMsgId, leadId, text, now).run();
+        `).bind(outMsgId, leadId, messageText, now).run();
 
         // Update leads table
         await env.DB.prepare(`
@@ -199,11 +210,15 @@ export default {
           VALUES (?, 'Customer', ?, 'Direct WhatsApp', NULL, 'hot', ?)
         `).bind(leadId, cleanPhone, now).run();
 
-        return new Response(JSON.stringify({ success: true }), {
+        return new Response(JSON.stringify({ success: true, id: outMsgId }), {
           headers: { "Content-Type": "application/json" }
         });
       } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        lastWebhookError = `Send Catch Error: ${err.message}`;
+        return new Response(JSON.stringify({ error: err.message }), { 
+          headers: { "Content-Type": "application/json" },
+          status: 500 
+        });
       }
     }
 
