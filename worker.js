@@ -1,27 +1,33 @@
 import HTML_CONTENT from "./index.html";
 
-// Table initialization
+// Table initialization with clean individual queries
 async function initDB(db) {
-  await db.exec(`
+  await db.prepare(`
     CREATE TABLE IF NOT EXISTS leads (
       phone TEXT PRIMARY KEY,
       name TEXT,
       last_message TEXT,
       updated_at TEXT
-    );
+    )
+  `).run();
+
+  await db.prepare(`
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       phone TEXT,
       text TEXT,
       direction TEXT,
       timestamp TEXT
-    );
+    )
+  `).run();
+
+  await db.prepare(`
     CREATE TABLE IF NOT EXISTS raw_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       payload TEXT,
       created_at TEXT
-    );
-  `);
+    )
+  `).run();
 }
 
 let lastWebhookError = "None";
@@ -37,7 +43,7 @@ export default {
       });
     }
 
-    // 2. Raw Logs Inspect Endpoint (Debugging)
+    // 2. Raw Logs Inspect Endpoint
     if (url.pathname === "/api/raw-logs") {
       try {
         await initDB(env.DB);
@@ -72,26 +78,17 @@ export default {
 
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-        // Always save raw packet for proof of delivery
+        // Save raw packet for proof
         await env.DB.prepare("INSERT INTO raw_logs (payload, created_at) VALUES (?, ?)")
           .bind(bodyText, now)
           .run();
 
         const data = JSON.parse(bodyText);
 
-        // Extract payload across Meta production & sandbox
-        let val = null;
-        if (data?.entry?.[0]?.changes?.[0]?.value) {
-          val = data.entry[0].changes[0].value;
-        } else if (data?.value) {
-          val = data.value;
-        } else {
-          val = data;
-        }
-
+        // Extract value
+        let val = data?.entry?.[0]?.changes?.[0]?.value || data?.value || data;
         const msgList = val?.messages;
 
-        // Process only if actual message exists
         if (Array.isArray(msgList) && msgList.length > 0) {
           const msgObj = msgList[0];
           const rawPhone = String(msgObj.from || "").replace(/[^0-9]/g, "");
@@ -108,13 +105,13 @@ export default {
           let customerName = val?.contacts?.[0]?.profile?.name || ("+" + rawPhone);
 
           if (rawPhone) {
-            // Save Message to messages table
+            // Insert Message
             await env.DB.prepare(`
               INSERT INTO messages (phone, text, direction, timestamp)
               VALUES (?, ?, 'inbound', ?)
             `).bind(rawPhone, textBody, now).run();
 
-            // Save or Update Lead
+            // Insert / Update Lead
             await env.DB.prepare(`
               INSERT INTO leads (phone, name, last_message, updated_at)
               VALUES (?, ?, ?, ?)
@@ -133,7 +130,7 @@ export default {
         lastWebhookError = "None";
         return new Response("EVENT_RECEIVED", { status: 200 });
       } catch (err) {
-        lastWebhookError = `Error: ${err.message} | Payload: ${bodyText.slice(0, 150)}`;
+        lastWebhookError = `Error: ${err.message}`;
         return new Response("OK", { status: 200 });
       }
     }
