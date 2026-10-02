@@ -162,11 +162,11 @@ export default {
       }
     }
 
-    // 7. API: Send Outbound Message (Surgically Aligned for UI + WhatsApp Meta)
+    // 7. API: Send Outbound Message (Exact 'toPhone' mapping aligned)
     if (request.method === "POST" && url.pathname === "/api/send") {
       try {
         const body = await request.json();
-        const rawPhone = body.phone || body.lead_id || "";
+        const rawPhone = body.toPhone || body.phone || body.lead_id || "";
         const cleanPhone = String(rawPhone).replace(/[^0-9]/g, "");
         const messageText = body.text || body.message || "";
         const leadId = `lead_${cleanPhone}`;
