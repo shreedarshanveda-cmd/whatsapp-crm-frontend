@@ -123,27 +123,55 @@
     <div id="v-broadcast" class="hidden flex-1 p-3 overflow-y-auto space-y-3 min-h-0">
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 space-y-3">
         <div class="flex justify-between items-center">
-          <h2 class="text-xs font-bold text-white uppercase tracking-wider">Excel / CSV 1-by-1 Queue</h2>
+          <h2 class="text-xs font-bold text-white uppercase tracking-wider">Broadcast Engine (Live)</h2>
           <span id="log-status" class="text-[10px] text-emerald-400 font-mono">Idle</span>
         </div>
-        <div class="border-2 border-dashed border-slate-700 rounded-xl p-3.5 text-center bg-[#080c14]">
-          <input type="file" id="in-excel" accept=".xlsx, .xls, .csv" class="hidden">
-          <div class="text-xl mb-1">📊</div>
-          <p id="lbl-excel" class="text-xs font-semibold text-slate-300 mb-0.5">Upload Contacts Sheet (.xlsx, .csv)</p>
-          <p class="text-[9px] text-slate-500 mb-2">Col 1 = Name, Col 2 = Phone</p>
-          <button type="button" id="b-pick-excel" class="px-3 py-1 bg-slate-800 border border-slate-700 text-xs font-bold text-white rounded-lg">Browse File</button>
+
+        <!-- Metric Counter Bar -->
+        <div class="grid grid-cols-4 gap-2 text-center text-xs font-mono">
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800"><div class="text-slate-400 text-[9px]">TOTAL</div><div id="cnt-total" class="font-bold text-white">0</div></div>
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800"><div class="text-emerald-400 text-[9px]">SENT</div><div id="cnt-sent" class="font-bold text-emerald-400">0</div></div>
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800"><div class="text-rose-400 text-[9px]">FAILED</div><div id="cnt-failed" class="font-bold text-rose-400">0</div></div>
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800"><div class="text-sky-400 text-[9px]">QUEUE</div><div id="cnt-queue" class="font-bold text-sky-400">0</div></div>
         </div>
-        <select class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white">
-          <option>vedashree_festive_offer (Marketing - Flat 20% Off)</option>
-          <option>order_dispatch_alert (Utility - Delhivery Tracking)</option>
-        </select>
-        <button id="b-send-all" class="w-full bg-emerald-600 text-white font-bold p-2.5 rounded-lg text-xs">Send 1-by-1 Broadcast</button>
+
+        <!-- Mode Toggle: Sheet vs Manual -->
+        <div class="flex space-x-1 border-b border-slate-800 pb-2">
+          <button type="button" id="btn-mode-sheet" class="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs">📄 Excel / CSV</button>
+          <button type="button" id="btn-mode-manual" class="flex-1 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold text-xs">✍️ Manual Numbers</button>
+        </div>
+
+        <!-- File Upload Box -->
+        <div id="sec-sheet" class="border-2 border-dashed border-slate-700 rounded-xl p-3 text-center bg-[#080c14]">
+          <input type="file" id="in-excel" accept=".xlsx, .xls, .csv" class="hidden">
+          <p id="lbl-excel" class="text-xs font-semibold text-slate-300 mb-0.5">Upload Contacts Sheet (.xlsx, .csv)</p>
+          <button type="button" id="b-pick-excel" class="px-3 py-1 bg-slate-800 border border-slate-700 text-xs font-bold text-white rounded-lg mt-1">Browse File</button>
+        </div>
+
+        <!-- Manual Numbers Box -->
+        <div id="sec-manual" class="hidden space-y-2">
+          <textarea id="txt-manual-phones" rows="3" placeholder="Paste numbers (e.g. 919599433875, 918510893875 ya ek ke niche ek)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"></textarea>
+          <button type="button" id="b-add-manual" class="w-full bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 py-1.5 rounded-lg hover:bg-slate-700">Add Numbers To Queue</button>
+        </div>
+
+        <!-- Template Selector -->
+        <div class="space-y-1">
+          <div class="flex justify-between items-center">
+            <label class="text-[10px] text-slate-400 font-semibold uppercase">Select Approved Template</label>
+            <button type="button" id="b-refresh-tmpl" class="text-[10px] text-emerald-400 font-mono hover:underline">🔄 Refresh</button>
+          </div>
+          <select id="sel-template" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+            <option value="vedashree_vitality_consult_v1" data-lang="en">vedashree_vitality_consult_v1 (en)</option>
+          </select>
+        </div>
+
+        <button id="b-send-all" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2.5 rounded-lg text-xs transition">Start Real WhatsApp Broadcast</button>
       </div>
 
       <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden mb-6">
         <div class="p-2.5 border-b border-slate-800 flex justify-between items-center bg-[#080c14]">
-          <span class="text-xs font-bold text-white">Live Delivery Log</span>
-          <button id="b-csv" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-[10px] text-slate-300 rounded">Export CSV</button>
+          <span class="text-xs font-bold text-white">Live Meta Delivery Log</span>
+          <button id="b-csv" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-[10px] text-slate-300 rounded">Export CSV Report</button>
         </div>
         <div id="log-rows" class="divide-y divide-slate-800 max-h-56 overflow-y-auto"></div>
       </div>
@@ -240,6 +268,7 @@
     let chatDB = {};
     let readCountDB = JSON.parse(localStorage.getItem('crm_read_counts') || '{}');
     let bList = [];
+    let bTemplates = [];
     let curLead = null, curMed = null, curFlt = 'all';
 
     // HELPER: Format UTC DB Time to Indian Standard Time (IST) 12-hour AM/PM
@@ -504,7 +533,64 @@
       } catch (err) {}
     };
 
-    // --- EXCEL BROADCAST LOGIC ---
+    // --- REAL PRODUCTION BROADCAST ENGINE ---
+    async function loadMetaTemplates() {
+      try {
+        const res = await fetch('/api/templates');
+        if (res.ok) {
+          const list = await res.json();
+          if (Array.isArray(list) && list.length > 0) {
+            bTemplates = list;
+            const sel = document.getElementById('sel-template');
+            if (sel) {
+              sel.innerHTML = bTemplates.map(t => `
+                <option value="${t.name}" data-lang="${t.language || 'en'}" data-param="${t.has_param ? '1' : '0'}">${t.name} (${t.language || 'en'})</option>
+              `).join('');
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    document.getElementById('b-refresh-tmpl').onclick = loadMetaTemplates;
+    loadMetaTemplates();
+
+    // Mode Toggle (Excel vs Manual)
+    document.getElementById('btn-mode-sheet').onclick = () => {
+      document.getElementById('sec-sheet').classList.remove('hidden');
+      document.getElementById('sec-manual').classList.add('hidden');
+      document.getElementById('btn-mode-sheet').className = "flex-1 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs";
+      document.getElementById('btn-mode-manual').className = "flex-1 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold text-xs";
+    };
+
+    document.getElementById('btn-mode-manual').onclick = () => {
+      document.getElementById('sec-manual').classList.remove('hidden');
+      document.getElementById('sec-sheet').classList.add('hidden');
+      document.getElementById('btn-mode-manual').className = "flex-1 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs";
+      document.getElementById('btn-mode-sheet').className = "flex-1 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold text-xs";
+    };
+
+    // Manual Phone Numbers Addition
+    document.getElementById('b-add-manual').onclick = () => {
+      const rawText = document.getElementById('txt-manual-phones').value;
+      if (!rawText.trim()) return;
+      const lines = rawText.split(/[\n,;]+/);
+      let added = 0;
+      lines.forEach(item => {
+        let ph = String(item).replace(/[^0-9]/g, '');
+        if (ph.length >= 10) {
+          if (ph.length === 10) ph = '91' + ph;
+          bList.push({ name: '', phone: ph, st: 'pending', reason: '' });
+          added++;
+        }
+      });
+      document.getElementById('txt-manual-phones').value = '';
+      updateBroadcastCounters();
+      renderBLog();
+      alert(`✅ ${added} numbers queue mein add ho gaye!`);
+    };
+
+    // Excel Sheet Upload
     document.getElementById('b-pick-excel').onclick = () => document.getElementById('in-excel').click();
     document.getElementById('in-excel').onchange = (e) => {
       const f = e.target.files[0];
@@ -518,51 +604,128 @@
           parsed = [];
           for (let i = 1; i < rows.length; i++) {
             if (rows[i][1]) {
-              const ph = String(rows[i][1]).replace(/[^0-9]/g, '');
+              let ph = String(rows[i][1]).replace(/[^0-9]/g, '');
+              if (ph.length === 10) ph = '91' + ph;
               const isStop = leads.some(l => l.phone.includes(ph) && l.st === 'optout');
-              parsed.push({ name: rows[i][0] || "Customer", phone: ph, st: isStop ? "optout" : "pending" });
+              parsed.push({ name: rows[i][0] || "", phone: ph, st: isStop ? "optout" : "pending", reason: isStop ? "Opted Out" : "" });
             }
           }
-          if (parsed.length) { bList = parsed; renderBLog(); alert("Loaded " + parsed.length + " contacts!"); }
+          if (parsed.length) { 
+            bList = parsed; 
+            updateBroadcastCounters();
+            renderBLog(); 
+            alert("Loaded " + parsed.length + " contacts!"); 
+          }
         } catch (err) { alert("Excel read error"); }
       };
       reader.readAsArrayBuffer(f);
     };
 
+    function updateBroadcastCounters() {
+      const total = bList.length;
+      const sent = bList.filter(r => r.st === 'sent').length;
+      const failed = bList.filter(r => r.st === 'failed' || r.st === 'optout').length;
+      const queue = bList.filter(r => r.st === 'pending').length;
+
+      document.getElementById('cnt-total').innerText = total;
+      document.getElementById('cnt-sent').innerText = sent;
+      document.getElementById('cnt-failed').innerText = failed;
+      document.getElementById('cnt-queue').innerText = queue;
+    }
+
     function renderBLog() {
       const rows = document.getElementById('log-rows');
       if (!rows) return;
       rows.innerHTML = bList.map(r => `
-        <div class="p-2 flex items-center justify-between text-xs">
-          <div><div class="font-semibold text-white">${r.name}</div><div class="text-[10px] text-slate-400 font-mono">${r.phone}</div></div>
-          <span class="text-[10px] font-mono text-slate-400">${r.st === 'sent' ? '✓ Sent' : r.st === 'del' ? '✓✓ Delivered' : r.st === 'read' ? '✓✓ Read' : r.st}</span>
+        <div class="p-2.5 flex items-center justify-between text-xs">
+          <div>
+            <div class="font-semibold text-white">${r.name || r.phone}</div>
+            <div class="text-[10px] text-slate-400 font-mono">+${r.phone}</div>
+          </div>
+          <div class="text-right font-mono text-[10px]">
+            ${r.st === 'sent' ? '<span class="text-emerald-400 font-bold">✓✓ Meta Sent</span>' : 
+              r.st === 'failed' ? `<span class="text-rose-400 font-bold" title="${r.reason}">✕ Failed (${r.reason.substring(0,18)})</span>` : 
+              r.st === 'optout' ? '<span class="text-amber-400 font-bold">🚫 Opted Out</span>' : 
+              '<span class="text-slate-400">⏳ Pending</span>'}
+          </div>
         </div>
       `).join('');
     }
 
-    document.getElementById('b-send-all').onclick = () => {
-      if (!bList.length) return;
+    // Real Sequential Send Queue
+    let isBroadcasting = false;
+    document.getElementById('b-send-all').onclick = async () => {
+      if (isBroadcasting) return;
+      if (!bList.length) { alert("Pehle Excel file upload karein ya Manual numbers add karein!"); return; }
+
+      const sel = document.getElementById('sel-template');
+      const opt = sel.options[sel.selectedIndex];
+      const templateName = opt ? opt.value : "vedashree_vitality_consult_v1";
+      const languageCode = opt ? opt.getAttribute('data-lang') : "en";
+      const hasParam = opt ? (opt.getAttribute('data-param') === '1') : false;
+
       const btn = document.getElementById('b-send-all');
       const log = document.getElementById('log-status');
-      btn.disabled = true; let idx = 0;
-      const timer = setInterval(() => {
-        if (idx >= bList.length) { clearInterval(timer); btn.disabled = false; btn.innerText = "Broadcast Finished!"; log.innerText = "Idle"; return; }
-        const cur = idx;
-        if (bList[cur].st !== 'optout') {
-          bList[cur].st = 'sent'; renderBLog();
-          setTimeout(() => { bList[cur].st = 'del'; renderBLog(); }, 500);
-          setTimeout(() => { bList[cur].st = 'read'; renderBLog(); }, 1200);
+      isBroadcasting = true;
+      btn.disabled = true;
+      btn.className = "w-full bg-slate-800 text-slate-400 font-bold p-2.5 rounded-lg text-xs";
+
+      for (let i = 0; i < bList.length; i++) {
+        if (bList[i].st !== 'pending') continue;
+
+        log.innerText = `Sending: ${i + 1}/${bList.length}`;
+        btn.innerText = `Sending (${i + 1}/${bList.length})...`;
+
+        try {
+          const res = await fetch('/api/broadcast-send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: bList[i].phone,
+              templateName: templateName,
+              languageCode: languageCode,
+              name: bList[i].name || "Customer",
+              hasParam: hasParam
+            })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            bList[i].st = 'sent';
+            bList[i].reason = 'Sent Successfully';
+          } else {
+            bList[i].st = 'failed';
+            bList[i].reason = data.error || 'Meta Error';
+          }
+        } catch (e) {
+          bList[i].st = 'failed';
+          bList[i].reason = e.message;
         }
-        idx++;
-        btn.innerText = `Sending (${idx}/${bList.length})...`;
-        log.innerText = `Queue: ${idx}/${bList.length}`;
-      }, 1000);
+
+        updateBroadcastCounters();
+        renderBLog();
+
+        // 1.2s Safe Rate-limiting gap to protect WhatsApp number
+        await new Promise(r => setTimeout(r, 1200));
+      }
+
+      isBroadcasting = false;
+      btn.disabled = false;
+      btn.className = "w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2.5 rounded-lg text-xs transition";
+      btn.innerText = "Start Real WhatsApp Broadcast";
+      log.innerText = "Idle";
+      alert("✅ Broadcast complete ho gaya! Log check karein.");
     };
 
     document.getElementById('b-csv').onclick = () => {
-      let c = "Name,Phone,Status\n"; bList.forEach(r => { c += `"${r.name}","${r.phone}","${r.st}"\n`; });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv' }));
-      a.download = "broadcast_report.csv"; a.click();
+      let c = "Name,Phone,Status,Reason\n";
+      bList.forEach(r => {
+        c += `"${r.name}","${r.phone}","${r.st}","${r.reason || ''}"\n\`;
+      });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv' }));
+      a.download = `broadcast_report_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
     };
 
     window.flt = function(t) {
