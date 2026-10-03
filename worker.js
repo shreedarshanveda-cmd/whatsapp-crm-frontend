@@ -165,7 +165,7 @@ export default {
       }
     }
 
-    // 7. API: Send Outbound Message
+    // 7. API: Send Outbound 1-to-1 Message
     if (request.method === "POST" && url.pathname === "/api/send") {
       try {
         const body = await request.json();
@@ -226,7 +226,120 @@ export default {
       }
     }
 
-    // 8. Serve Frontend UI
+    // 8. API: Automatically Fetch Approved Templates from Meta
+    if (request.method === "GET" && url.pathname === "/api/templates") {
+      try {
+        let templates = [
+          { name: "vedashree_vitality_consult_v1", language: "en", status: "APPROVED" }
+        ];
+
+        if (env.WHATSAPP_TOKEN) {
+          const wabaRes = await fetch("https://graph.facebook.com/v20.0/1196276640235299?fields=whatsapp_business_account", {
+            headers: { "Authorization": `Bearer ${env.WHATSAPP_TOKEN}` }
+          });
+          if (wabaRes.ok) {
+            const wabaData = await wabaRes.json();
+            const wabaId = wabaData.whatsapp_business_account?.id;
+            if (wabaId) {
+              const tmplRes = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?status=APPROVED&limit=50`, {
+                headers: { "Authorization": `Bearer ${env.WHATSAPP_TOKEN}` }
+              });
+              if (tmplRes.ok) {
+                const tmplData = await tmplRes.json();
+                if (Array.isArray(tmplData.data) && tmplData.data.length > 0) {
+                  templates = tmplData.data.map(t => ({
+                    name: t.name,
+                    language: t.language,
+                    status: t.status,
+                    has_param: JSON.stringify(t.components || []).includes("{{1}}")
+                  }));
+                }
+              }
+            }
+          }
+        }
+
+        return new Response(JSON.stringify(templates), {
+          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify([
+          { name: "vedashree_vitality_consult_v1", language: "en", status: "APPROVED" }
+        ]), { headers: { "Content-Type": "application/json" } });
+      }
+    }
+
+    // 9. API: Send Broadcast Template Message (Live Meta Blast)
+    if (request.method === "POST" && url.pathname === "/api/broadcast-send") {
+      try {
+        const body = await request.json();
+        const rawPhone = String(body.phone || "").replace(/[^0-9]/g, "");
+        const tName = body.templateName || "vedashree_vitality_consult_v1";
+        const tLang = body.languageCode || "en";
+        const cName = body.name || "Customer";
+
+        if (!rawPhone || !env.WHATSAPP_TOKEN) {
+          return new Response(JSON.stringify({ success: false, error: "Missing phone or WhatsApp token" }), { status: 400 });
+        }
+
+        const tPayload = {
+          messaging_product: "whatsapp",
+          to: rawPhone,
+          type: "template",
+          template: {
+            name: tName,
+            language: { code: tLang }
+          }
+        };
+
+        if (body.hasParam) {
+          tPayload.template.components = [
+            {
+              type: "body",
+              parameters: [{ type: "text", text: cName }]
+            }
+          ];
+        }
+
+        const metaRes = await fetch("https://graph.facebook.com/v20.0/1196276640235299/messages", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${env.WHATSAPP_TOKEN}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(tPayload)
+        });
+
+        const metaData = await metaRes.json();
+
+        if (metaRes.ok && metaData.messages) {
+          const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+          const leadId = `lead_${rawPhone}`;
+          
+          await env.DB.prepare(`
+            INSERT INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
+            VALUES (?, ?, 'agent', ?, NULL, NULL, NULL, 'sent', ?)
+          `).bind(metaData.messages[0].id, leadId, `[Template: ${tName}]`, now).run();
+
+          return new Response(JSON.stringify({ success: true, id: metaData.messages[0].id }), {
+            headers: { "Content-Type": "application/json" }
+          });
+        } else {
+          const errMsg = metaData.error?.message || "Meta API Rejected";
+          return new Response(JSON.stringify({ success: false, error: errMsg }), {
+            headers: { "Content-Type": "application/json" },
+            status: 400
+          });
+        }
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), {
+          headers: { "Content-Type": "application/json" },
+          status: 500
+        });
+      }
+    }
+
+    // 10. Serve Frontend UI
     return new Response(HTML_CONTENT, {
       headers: { "Content-Type": "text/html;charset=UTF-8" }
     });
