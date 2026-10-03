@@ -269,7 +269,7 @@ export default {
       }
     }
 
-    // 9. API: Send Broadcast Template Message (With Parameter Fallback for Error #132000)
+    // 9. API: Send Broadcast Template Message (Exact Image Header + Body Fallback)
     if (request.method === "POST" && url.pathname === "/api/broadcast-send") {
       try {
         const body = await request.json();
@@ -283,7 +283,7 @@ export default {
           return new Response(JSON.stringify({ success: false, error: "Missing phone or WhatsApp token" }), { status: 400 });
         }
 
-        // Meta Cloud API template payload with exact {{1}} parameter mapping
+        // Exact Meta Cloud API template payload matching Image Header + Body {{1}}
         const tPayload = {
           messaging_product: "whatsapp",
           to: rawPhone,
@@ -292,6 +292,17 @@ export default {
             name: tName,
             language: { code: tLang },
             components: [
+              {
+                type: "header",
+                parameters: [
+                  {
+                    type: "image",
+                    image: {
+                      link: "https://vedashree.gt.tc/wp-content/uploads/2026/09/55b8913a-06a0-4517-936c-6be74887079b.png"
+                    }
+                  }
+                ]
+              },
               {
                 type: "body",
                 parameters: [
@@ -329,7 +340,8 @@ export default {
             headers: { "Content-Type": "application/json" }
           });
         } else {
-          const errMsg = metaData.error?.message || "Meta API Rejected";
+          const errMsg = metaData.error?.error_user_msg || metaData.error?.error_data?.details || metaData.error?.message || "Meta API Rejected";
+          lastWebhookError = JSON.stringify(metaData);
           return new Response(JSON.stringify({ success: false, error: errMsg }), {
             headers: { "Content-Type": "application/json" },
             status: 400
