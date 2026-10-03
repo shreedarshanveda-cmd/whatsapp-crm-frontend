@@ -269,37 +269,41 @@ export default {
       }
     }
 
-    // 9. API: Send Broadcast Template Message (Live Meta Blast)
+    // 9. API: Send Broadcast Template Message (With Parameter Fallback for Error #132000)
     if (request.method === "POST" && url.pathname === "/api/broadcast-send") {
       try {
         const body = await request.json();
         const rawPhone = String(body.phone || "").replace(/[^0-9]/g, "");
         const tName = body.templateName || "vedashree_vitality_consult_v1";
         const tLang = body.languageCode || "en";
-        const cName = body.name || "Customer";
+        const trimmedName = String(body.name || "").trim();
+        const cName = trimmedName.length > 0 ? trimmedName : "Sir / Ma'am";
 
         if (!rawPhone || !env.WHATSAPP_TOKEN) {
           return new Response(JSON.stringify({ success: false, error: "Missing phone or WhatsApp token" }), { status: 400 });
         }
 
+        // Meta Cloud API template payload with exact {{1}} parameter mapping
         const tPayload = {
           messaging_product: "whatsapp",
           to: rawPhone,
           type: "template",
           template: {
             name: tName,
-            language: { code: tLang }
+            language: { code: tLang },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  {
+                    type: "text",
+                    text: cName
+                  }
+                ]
+              }
+            ]
           }
         };
-
-        if (body.hasParam) {
-          tPayload.template.components = [
-            {
-              type: "body",
-              parameters: [{ type: "text", text: cName }]
-            }
-          ];
-        }
 
         const metaRes = await fetch("https://graph.facebook.com/v20.0/1196276640235299/messages", {
           method: "POST",
