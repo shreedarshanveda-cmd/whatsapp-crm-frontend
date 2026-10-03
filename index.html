@@ -24,7 +24,10 @@
       <h2 class="text-sm font-bold text-white tracking-wide">VEDASHREE CRM AUTH</h2>
       <p class="text-[11px] text-slate-400 mb-4">Enterprise Protected</p>
       <div class="space-y-3">
-        <input type="text" id="p-input" placeholder="Enter Password..." autocapitalize="none" autocomplete="off" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-center text-white focus:outline-none focus:border-emerald-500">
+        <div class="relative">
+          <input type="password" id="p-input" placeholder="Enter Password..." autocapitalize="none" autocomplete="off" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 pr-9 text-xs text-center text-white focus:outline-none focus:border-emerald-500">
+          <button type="button" id="b-toggle-eye" onclick="togglePasswordVisibility()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">👁️</button>
+        </div>
         <p id="p-err" class="text-[11px] text-rose-400 font-semibold hidden">❌ Galat Password! Dobara check karein.</p>
         <button type="button" id="b-login" onclick="forceLoginNow()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition">Login Dashboard</button>
       </div>
@@ -118,7 +121,6 @@
         </form>
       </div>
     </div>
-
     <!-- TAB 2: BROADCAST -->
     <div id="v-broadcast" class="hidden flex-1 p-3 overflow-y-auto space-y-3 min-h-0">
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 space-y-3">
@@ -204,7 +206,20 @@
       if (modal) modal.style.display = 'none';
     }
 
-    // DIRECT FOOLPROOF LOGIN FUNCTION
+    // Toggle Password Visibility (Eye Icon)
+    window.togglePasswordVisibility = function() {
+      const pIn = document.getElementById('p-input');
+      const eyeBtn = document.getElementById('b-toggle-eye');
+      if (pIn.type === "password") {
+        pIn.type = "text";
+        eyeBtn.innerText = "🙈";
+      } else {
+        pIn.type = "password";
+        eyeBtn.innerText = "👁️";
+      }
+    };
+
+    // DIRECT FOOLPROOF LOGIN FUNCTION WITH ALERT
     window.forceLoginNow = function() {
       const inEl = document.getElementById('p-input');
       const val = inEl ? inEl.value.trim().toLowerCase() : '';
@@ -219,6 +234,7 @@
       } else {
         const err = document.getElementById('p-err');
         if (err) err.classList.remove('hidden');
+        alert("❌ Galat Password! Kripya sahi password dalein.");
       }
     };
 
@@ -252,11 +268,13 @@
       if (oldVal.toLowerCase() !== cur.toLowerCase()) {
         errBox.innerText = "❌ Purana password galat hai!";
         errBox.classList.remove('hidden');
+        alert("❌ Purana password galat hai!");
         return;
       }
       if (!newVal || newVal.length < 4) {
         errBox.innerText = "❌ Naya password kam se kam 4 akshar ka ho!";
         errBox.classList.remove('hidden');
+        alert("❌ Naya password kam se kam 4 akshar ka hona chahiye!");
         return;
       }
       localStorage.setItem('crm_p', newVal);
@@ -720,7 +738,7 @@
     document.getElementById('b-csv').onclick = () => {
       let c = "Name,Phone,Status,Reason\n";
       bList.forEach(r => {
-        c += `"${r.name}","${r.phone}","${r.st}","${r.reason || ''}"\n\`;
+        c += `"${r.name}","${r.phone}","${r.st}","${r.reason || ''}"\n`;
       });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv' }));
