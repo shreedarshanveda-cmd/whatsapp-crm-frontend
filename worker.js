@@ -1,10 +1,8 @@
-import HTML_CONTENT from "./index.html";
 // ==========================================
 // VEDASHREE CRM BACKEND & ENGINE (worker.js)
 // ==========================================
 
-// 1. GEMINI AI ASSISTANT CONFIGURATION
-let IS_AI_ACTIVE_GLOBAL = true; // Default State (Can be toggled via CRM UI)
+let IS_AI_ACTIVE_GLOBAL = true;
 
 const GEMINI_CONFIG = {
   API_KEY: "AIzaSy_YOUR_DUMMY_GEMINI_KEY",
@@ -19,7 +17,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // CORS Headers setup
+    // CORS Headers
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
@@ -30,7 +28,7 @@ export default {
       });
     }
 
-    // 2. AI MANUAL ON/OFF TOGGLE API
+    // 1. AI Manual Toggle API
     if (url.pathname === "/api/toggle-ai") {
       if (request.method === "GET") {
         return new Response(JSON.stringify({ active: IS_AI_ACTIVE_GLOBAL }), {
@@ -50,7 +48,7 @@ export default {
       }
     }
 
-    // 3. PWA MANIFEST ENDPOINT
+    // 2. PWA Manifest
     if (url.pathname === "/manifest.json") {
       const manifest = {
         name: "VEDASHREE PRO CRM",
@@ -77,7 +75,7 @@ export default {
       });
     }
 
-    // 4. PWA SERVICE WORKER (Background Push Notification Handler)
+    // 3. PWA Service Worker (Push Notifications)
     if (url.pathname === "/sw.js") {
       const swCode = `
         self.addEventListener('install', (e) => { self.skipWaiting(); });
@@ -103,9 +101,7 @@ export default {
           event.notification.close();
           event.waitUntil(
             clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-              if (clientList.length > 0) {
-                return clientList[0].focus();
-              }
+              if (clientList.length > 0) return clientList[0].focus();
               return clients.openWindow(event.notification.data.url || '/');
             })
           );
@@ -116,7 +112,7 @@ export default {
       });
     }
 
-    // 5. API: Save Push Subscription Token to D1
+    // 4. API: Save Push Subscription
     if (request.method === "POST" && url.pathname === "/api/push-subscribe") {
       try {
         const sub = await request.json();
@@ -135,7 +131,7 @@ export default {
       }
     }
 
-    // 6. API: Send Image / Gallery Media File via Meta Cloud API
+    // 5. API: Send Media
     if (request.method === "POST" && url.pathname === "/api/send-media") {
       try {
         const { phone, mediaUrl, caption } = await request.json();
@@ -147,10 +143,7 @@ export default {
           recipient_type: "individual",
           to: phone,
           type: "image",
-          image: {
-            link: mediaUrl,
-            caption: caption || ""
-          }
+          image: { link: mediaUrl, caption: caption || "" }
         };
 
         const metaRes = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
@@ -173,14 +166,14 @@ export default {
           return new Response(JSON.stringify({ success: true, id: wamid }), {
             headers: { "Content-Type": "application/json" }
           });
-        } else {
-          return new Response(JSON.stringify({ success: false, error: metaData }), { status: 400 });
         }
+        return new Response(JSON.stringify({ success: false, error: metaData }), { status: 400 });
       } catch (err) {
         return new Response(JSON.stringify({ error: err.message }), { status: 500 });
       }
-                    }
-    // 7. API: Leads List
+    }
+
+    // 6. API: Leads List
     if (request.method === "GET" && url.pathname === "/api/leads") {
       try {
         const { results } = await env.DB.prepare(
@@ -194,7 +187,7 @@ export default {
       }
     }
 
-    // 8. API: Messages for a Specific Lead
+    // 7. API: Messages for a Specific Lead
     if (request.method === "GET" && url.pathname === "/api/messages") {
       try {
         const phone = url.searchParams.get("phone");
@@ -210,7 +203,7 @@ export default {
       }
     }
 
-    // 9. API: Direct 1-to-1 Send Message
+    // 8. API: Direct 1-to-1 Send Message
     if (request.method === "POST" && url.pathname === "/api/send") {
       try {
         const { phone, text } = await request.json();
@@ -254,23 +247,12 @@ export default {
       }
     }
 
-    // 10. API: Broadcast Send (Template Messages)
+    // 9. API: Broadcast Send
     if (request.method === "POST" && url.pathname === "/api/broadcast-send") {
       try {
         const { phone, name, templateName, languageCode } = await request.json();
         const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || "1196276640235299";
         const metaToken = env.WHATSAPP_ACCESS_TOKEN;
-
-        const payload = {
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: phone,
-          type: "template",
-          template: {
-            name: templateName,
-            language: { code: languageCode || "en" }
-          }
-        };
 
         const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
           method: "POST",
@@ -278,7 +260,16 @@ export default {
             "Authorization": `Bearer ${metaToken}`,
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: phone,
+            type: "template",
+            template: {
+              name: templateName,
+              language: { code: languageCode || "en" }
+            }
+          })
         });
 
         const respData = await res.json();
@@ -304,7 +295,7 @@ export default {
       }
     }
 
-    // 11. API: Broadcast Analytics & Delivery / Seen Tracking
+    // 10. API: Broadcast Analytics
     if (request.method === "GET" && url.pathname === "/api/broadcast-analytics") {
       try {
         const queryDate = url.searchParams.get("date") || new Date().toISOString().substring(0, 10);
@@ -360,7 +351,7 @@ export default {
       }
     }
 
-    // 12. API: Fetch WhatsApp Cloud Templates
+    // 11. API: Templates List
     if (request.method === "GET" && url.pathname === "/api/templates") {
       try {
         const wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || "1214041777209148";
@@ -376,7 +367,7 @@ export default {
       }
     }
 
-    // 13. WEBHOOK: Meta WhatsApp Webhook + Gemini AI Auto-Reply (Controlled by IS_AI_ACTIVE_GLOBAL)
+    // 12. Meta Webhook & Verification + Gemini Auto-Reply
     if (url.pathname === "/webhook") {
       if (request.method === "GET") {
         const mode = url.searchParams.get("hub.mode");
@@ -396,17 +387,13 @@ export default {
           const changes = entry?.changes?.[0];
           const value = changes?.value;
 
-          // Message Status Update (Sent -> Delivered -> Read Blue Tick)
           if (value?.statuses && value.statuses[0]) {
             const statusObj = value.statuses[0];
-            const wamid = statusObj.id;
-            const newStatus = statusObj.status;
             await env.DB.prepare(
               `UPDATE messages SET status = ? WHERE id = ?`
-            ).bind(newStatus, wamid).run();
+            ).bind(statusObj.status, statusObj.id).run();
           }
 
-          // Incoming Customer Message
           if (value?.messages && value.messages[0]) {
             const msg = value.messages[0];
             const fromPhone = msg.from;
@@ -414,7 +401,6 @@ export default {
             const textBody = msg.text?.body || (msg.type === "image" ? "[Image received]" : "[Unsupported message]");
             const leadId = `lead_${fromPhone}`;
 
-            // Save Lead & Message in D1
             await env.DB.prepare(
               `INSERT OR IGNORE INTO leads (id, name, status, created_at) VALUES (?, ?, 'hot', datetime('now'))`
             ).bind(leadId, senderName).run();
@@ -427,14 +413,7 @@ export default {
               `INSERT INTO messages (id, lead_id, sender, text, status, timestamp) VALUES (?, ?, 'customer', ?, 'read', datetime('now'))`
             ).bind(msg.id, leadId, textBody).run();
 
-            // Background Web Push Notification to Admin Devices
-            try {
-              const { results: subs } = await env.DB.prepare(`SELECT * FROM push_subscriptions`).all();
-            } catch (pushErr) {
-              console.error("Push notification dispatch error:", pushErr);
-            }
-
-            // GEMINI AUTO-REPLY ONLY IF TOGGLE IS "ON"
+            // Gemini Auto-Reply
             const geminiKey = env.GEMINI_API_KEY || GEMINI_CONFIG.API_KEY;
             if (IS_AI_ACTIVE_GLOBAL && textBody && !textBody.startsWith("[") && geminiKey && !geminiKey.includes("YOUR_DUMMY")) {
               try {
@@ -468,18 +447,173 @@ export default {
                   });
                 }
               } catch (aiErr) {
-                console.error("Gemini Auto-Reply Error:", aiErr);
+                console.error("Gemini Error:", aiErr);
               }
             }
           }
           return new Response("EVENT_RECEIVED", { status: 200 });
         } catch (e) {
-          return new Response("Webhook processing error: " + e.message, { status: 500 });
+          return new Response("Webhook error: " + e.message, { status: 500 });
         }
       }
     }
 
-    // 14. Serve Frontend UI
+    // 13. SERVE FRONTEND UI (Direct HTML Content variable)
     return new Response(HTML_CONTENT, {
       headers: { "Content-Type": "text/html;charset=UTF-8" }
     });
+  }
+};
+
+const HTML_CONTENT = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VEDASHREE PRO CRM</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b1120">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #0b1120; color: #f1f5f9; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
+</head>
+<body class="h-[100dvh] flex flex-col overflow-hidden">
+  <header class="bg-[#0f172a] border-b border-slate-800 px-3 py-2 flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">V</div>
+      <h1 class="text-xs sm:text-sm font-semibold text-slate-100">VEDASHREE PRO CRM</h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="btnAiToggle" onclick="toggleGeminiAiState()" class="text-[11px] bg-emerald-950/60 text-emerald-400 px-2.5 py-1.5 rounded border border-emerald-800/50 flex items-center gap-1.5">
+        <i class="fa-solid fa-robot"></i> <span id="txtAiStatus">AI: ON</span>
+      </button>
+      <button onclick="window.location.reload()" class="text-[11px] bg-slate-800 text-slate-300 px-2.5 py-1.5 rounded border border-slate-700">Refresh</button>
+    </div>
+  </header>
+
+  <nav class="bg-[#0b1329] border-b border-slate-800 px-3 flex gap-1 shrink-0">
+    <button id="tab-livechat" onclick="switchMainTab('livechat')" class="px-3 py-2 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500">Live Chat</button>
+    <button id="tab-broadcast" onclick="switchMainTab('broadcast')" class="px-3 py-2 text-xs font-medium text-slate-400 border-b-2 border-transparent">Broadcast</button>
+  </nav>
+
+  <main class="flex-1 overflow-hidden relative">
+    <div id="view-livechat" class="h-full flex flex-col md:flex-row overflow-hidden">
+      <aside id="leadsSidebar" class="w-full md:w-80 border-r border-slate-800 flex flex-col bg-[#0b1120] h-full">
+        <div class="p-2 border-b border-slate-800">
+          <input type="text" id="leadSearch" onkeyup="filterLeads()" placeholder="Search..." class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-xs text-slate-200">
+        </div>
+        <div id="leadsList" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1"></div>
+      </aside>
+
+      <section id="chatSection" class="hidden md:flex flex-1 flex-col bg-[#070b14] h-full">
+        <div class="p-2.5 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between">
+          <button onclick="mobileBack()" class="md:hidden text-xs bg-slate-800 px-2 py-1 rounded">Back</button>
+          <span id="activeName" class="text-xs font-bold text-slate-200">Select Lead</span>
+          <span id="activePhone" class="text-[10px] text-slate-400 font-mono">--</span>
+        </div>
+        <div id="chatBox" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2">
+          <p class="text-xs text-slate-500 text-center mt-10">Select a conversation to view chat.</p>
+        </div>
+        <div class="p-2 bg-[#0b1120] border-t border-slate-800 flex items-center gap-1.5">
+          <input type="file" id="mediaInput" accept="image/*" onchange="uploadImage(event)" class="hidden">
+          <button onclick="document.getElementById('mediaInput').click()" class="bg-slate-800 text-slate-300 p-2 rounded text-xs">
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
+          <input type="text" id="msgText" onkeydown="if(event.key==='Enter') sendMsg()" placeholder="Type a message..." class="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-slate-200">
+          <button onclick="sendMsg()" class="bg-emerald-600 font-bold px-3 py-1.5 rounded text-xs text-slate-950">Send</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="view-broadcast" class="hidden h-full overflow-y-auto custom-scroll p-4 space-y-4">
+      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4">
+        <h2 class="text-xs font-bold text-slate-200 uppercase mb-3">WhatsApp Broadcast</h2>
+        <input type="file" id="excelFile" accept=".xlsx,.csv" onchange="loadExcel(event)" class="text-xs text-slate-400 mb-3">
+        <button onclick="runBroadcast()" class="w-full bg-emerald-600 font-bold py-2 rounded text-xs text-slate-950">Start Broadcast</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let leads = [], curPhone = null, aiOn = true;
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadLeads();
+      setInterval(loadLeads, 8000);
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+    });
+
+    async function toggleGeminiAiState() {
+      aiOn = !aiOn;
+      await fetch('/api/toggle-ai', { method: 'POST', body: JSON.stringify({ active: aiOn }) });
+      document.getElementById('txtAiStatus').innerText = aiOn ? 'AI: ON' : 'AI: OFF';
+      document.getElementById('btnAiToggle').className = aiOn ? 'text-[11px] bg-emerald-950/60 text-emerald-400 px-2.5 py-1.5 rounded border border-emerald-800/50' : 'text-[11px] bg-red-950/60 text-red-400 px-2.5 py-1.5 rounded border border-red-800/50';
+    }
+
+    async function loadLeads() {
+      const res = await fetch('/api/leads');
+      leads = await res.json();
+      renderLeads();
+    }
+
+    function renderLeads() {
+      document.getElementById('leadsList').innerHTML = leads.map(l => \`
+        <div onclick="openChat('\${l.phone}', '\${l.name}')" class="p-2 rounded bg-slate-900/60 border border-slate-800 cursor-pointer">
+          <div class="text-xs font-semibold">\${l.name || 'Customer'}</div>
+          <div class="text-[10px] text-emerald-400 font-mono">+\${l.phone}</div>
+          <div class="text-[10px] text-slate-400 truncate">\${l.last_message || ''}</div>
+        </div>
+      \`).join('');
+    }
+
+    async function openChat(ph, nm) {
+      curPhone = ph;
+      document.getElementById('activeName').innerText = nm || 'Customer';
+      document.getElementById('activePhone').innerText = '+' + ph;
+      document.getElementById('chatSection').classList.remove('hidden');
+      if (window.innerWidth < 768) document.getElementById('leadsSidebar').classList.add('hidden');
+      loadMessages();
+    }
+
+    function mobileBack() {
+      document.getElementById('leadsSidebar').classList.remove('hidden');
+      document.getElementById('chatSection').classList.add('hidden');
+    }
+
+    async function loadMessages() {
+      if (!curPhone) return;
+      const res = await fetch('/api/messages?phone=' + curPhone);
+      const msgs = await res.json();
+      document.getElementById('chatBox').innerHTML = msgs.map(m => \`
+        <div class="flex \${m.sender === 'agent' ? 'justify-end' : 'justify-start'}">
+          <div class="max-w-[80%] rounded px-3 py-1.5 text-xs \${m.sender === 'agent' ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-slate-200'}">
+            \${m.text}
+          </div>
+        </div>
+      \`).join('');
+    }
+
+    async function sendMsg() {
+      const input = document.getElementById('msgText');
+      const val = input.value.trim();
+      if (!val || !curPhone) return;
+      input.value = '';
+      await fetch('/api/send', { method: 'POST', body: JSON.stringify({ phone: curPhone, text: val }) });
+      loadMessages();
+    }
+
+    function switchMainTab(t) {
+      document.getElementById('view-livechat').classList.toggle('hidden', t !== 'livechat');
+      document.getElementById('view-broadcast').classList.toggle('hidden', t !== 'broadcast');
+    }
+  </script>
+</body>
+</html>
+\`;
