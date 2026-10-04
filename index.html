@@ -4,9 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>VEDASHREE PRO CRM</title>
+  
+  <!-- PWA Meta Tags & Manifest Link -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b1120">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="https://vedashree.gt.tc/wp-content/uploads/2026/09/55b8913a-06a0-4517-936c-6be74887079b.png">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <style>
     body { background-color: #0b1120; color: #f1f5f9; font-family: ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
     .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -16,8 +25,8 @@
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
 
-  <!-- Top Header -->
-  <header class="bg-[#0f172a] border-b border-slate-800 px-3 py-2.5 flex items-center justify-between shrink-0">
+  <!-- Top Header with Gemini AI Switch -->
+  <header class="bg-[#0f172a] border-b border-slate-800 px-3 py-2 flex items-center justify-between shrink-0">
     <div class="flex items-center gap-2">
       <div class="w-8 h-8 rounded-lg bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-base">
         V
@@ -29,11 +38,18 @@
         </div>
       </div>
     </div>
+    
+    <!-- Controls: AI Toggle, Settings, Logout -->
     <div class="flex items-center gap-2">
-      <button onclick="toggleSettingsModal()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded border border-slate-700 flex items-center gap-1">
-        <i class="fa-solid fa-gear"></i> Settings
+      <!-- Gemini Auto-Reply Toggle Button -->
+      <button id="btnAiToggle" onclick="toggleGeminiAiState()" class="text-[11px] bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 px-2.5 py-1.5 rounded border border-emerald-800/50 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-robot"></i> <span id="txtAiStatus">AI: ON</span>
       </button>
-      <button onclick="window.location.reload()" class="text-[11px] bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-800/40 px-2.5 py-1.5 rounded">
+
+      <button onclick="toggleSettingsModal()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded border border-slate-700 flex items-center gap-1">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+      <button onclick="window.location.reload()" class="text-[11px] bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-800/40 px-2 py-1.5 rounded">
         Logout
       </button>
     </div>
@@ -52,24 +68,22 @@
     </button>
   </nav>
 
-  <!-- MAIN CONTAINER -->
+  <!-- MAIN APP CONTAINER -->
   <main class="flex-1 overflow-hidden relative">
 
-    <!-- LIVE CHAT VIEW (100% Mobile + Desktop Responsive) -->
+    <!-- LIVE CHAT VIEW (Mobile Full-Screen Switch + Attachments) -->
     <div id="view-livechat" class="hidden h-full flex flex-col md:flex-row overflow-hidden relative">
       <!-- Left Leads List -->
       <aside id="leadsSidebar" class="w-full md:w-80 border-r border-slate-800 flex flex-col bg-[#0b1120] h-full">
         <div class="p-2.5 border-b border-slate-800 shrink-0">
           <input type="text" id="leadSearchInput" onkeyup="filterLeadsUI()" placeholder="Search leads by name/phone..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
         </div>
-        <div id="leadsListContainer" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
-          <!-- Dynamic Leads List -->
-        </div>
+        <div id="leadsListContainer" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1"></div>
       </aside>
 
       <!-- Right Chat Window -->
       <section id="chatWindowSection" class="hidden md:flex flex-1 flex-col bg-[#070b14] h-full absolute inset-0 md:relative z-10">
-        <!-- Chat Header with Responsive Back Button -->
+        <!-- Chat Header -->
         <div id="chatHeader" class="p-2.5 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between shrink-0">
           <div class="flex items-center gap-2">
             <button onclick="mobileBackToLeads()" class="md:hidden text-xs bg-slate-800 text-slate-200 px-2.5 py-1.5 rounded border border-slate-700 font-bold flex items-center gap-1">
@@ -83,12 +97,12 @@
           <span id="activeChatStage" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">hot</span>
         </div>
 
-        <!-- Chat History -->
+        <!-- Chat History Messages -->
         <div id="chatMessages" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2.5">
           <div class="text-center text-xs text-slate-500 mt-20">Click on any customer lead to view chat history</div>
         </div>
 
-        <!-- Chat Actions & Send Bar -->
+        <!-- Chat Send Bar + Image/Gallery Attachment -->
         <div class="p-2 bg-[#0b1120] border-t border-slate-800 shrink-0">
           <div class="flex gap-1.5 mb-2 overflow-x-auto custom-scroll pb-1">
             <button onclick="sendQuickText('📦 Catalog: check out our wellness products at vedashree.gt.tc')" class="text-[10px] bg-slate-800 text-amber-300 px-2 py-1 rounded border border-slate-700 shrink-0">📦 Catalog</button>
@@ -96,27 +110,29 @@
             <button onclick="sendQuickText('🚚 Your order has been dispatched via Delhivery. Tracking will update shortly.')" class="text-[10px] bg-slate-800 text-amber-300 px-2 py-1 rounded border border-slate-700 shrink-0">🚚 Tracking</button>
             <button onclick="generateAiDraftReply()" class="text-[10px] bg-slate-800 text-purple-300 px-2 py-1 rounded border border-slate-700 shrink-0">✨ AI Draft</button>
           </div>
-          <div class="flex gap-2">
+          <div class="flex items-center gap-1.5">
+            <!-- Gallery / Media Attachment File Input -->
+            <input type="file" id="mediaUploadInput" accept="image/*" onchange="handleMediaUpload(event)" class="hidden">
+            <button onclick="document.getElementById('mediaUploadInput').click()" title="Send Image from Gallery" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 p-2 rounded-lg text-xs shrink-0 flex items-center justify-center">
+              <i class="fa-solid fa-paperclip text-sm text-slate-300"></i>
+            </button>
+            
             <input type="text" id="chatInputText" onkeydown="if(event.key==='Enter') send1to1Message()" placeholder="Type reply..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
             <button onclick="send1to1Message()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-3.5 py-2 rounded-lg text-xs shrink-0">Send</button>
           </div>
         </div>
       </section>
     </div>
-
-    <!-- EXCEL BROADCAST VIEW (Full Vertical Scroll Enabled) -->
+    <!-- EXCEL BROADCAST VIEW (Scroll Unfrozen) -->
     <div id="view-broadcast" class="h-full overflow-y-auto custom-scroll p-3 sm:p-4 max-w-4xl mx-auto space-y-4 pb-20">
       
       <!-- Top Engine Card -->
       <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-3.5 shadow-lg">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider">
-            BROADCAST ENGINE (LIVE)
-          </h2>
+          <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider">BROADCAST ENGINE (LIVE)</h2>
           <span id="broadcastEngineStatus" class="text-[11px] text-emerald-400 font-medium">Idle</span>
         </div>
 
-        <!-- 4 Live Counters (DELIVERED active) -->
         <div class="grid grid-cols-4 gap-2 mb-3 text-center">
           <div class="bg-slate-900/80 border border-slate-800 p-2 rounded-lg">
             <p class="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase">TOTAL</p>
@@ -136,7 +152,6 @@
           </div>
         </div>
 
-        <!-- Mode Selectors -->
         <div class="grid grid-cols-2 gap-2 mb-3">
           <button id="btnSwitchFile" onclick="setBroadcastMode('file')" class="text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-file-excel"></i> Excel / CSV
@@ -146,7 +161,6 @@
           </button>
         </div>
 
-        <!-- File Upload Section -->
         <div id="sectionFileMode" class="border-2 border-dashed border-slate-700/80 rounded-xl p-5 text-center bg-slate-900/30 mb-3">
           <p class="text-xs font-medium text-slate-300 mb-2">Upload Contacts Sheet (.xlsx, .csv)</p>
           <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event)" class="hidden">
@@ -156,7 +170,6 @@
           <p id="fileUploadNotice" class="text-[10px] text-slate-400 mt-2">Column with phone numbers will be mapped automatically.</p>
         </div>
 
-        <!-- Manual Numbers Section -->
         <div id="sectionManualMode" class="hidden mb-3">
           <textarea id="manualNumbersText" rows="3" placeholder="Paste numbers (e.g. 919599433875, 918510893875)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
           <button onclick="parseManualNumbers()" class="mt-2 w-full text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 py-1.5 rounded-lg font-medium transition">
@@ -164,7 +177,6 @@
           </button>
         </div>
 
-        <!-- Template Selector -->
         <div class="mb-3">
           <div class="flex items-center justify-between mb-1">
             <label class="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">SELECT APPROVED TEMPLATE</label>
@@ -182,7 +194,7 @@
         </button>
       </div>
 
-      <!-- Professional Analytics & Seen Tracking Panel -->
+      <!-- Seen / Unseen Tracking Panel -->
       <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-3.5 shadow-lg space-y-3">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
           <div>
@@ -191,7 +203,6 @@
             </h3>
             <p class="text-[10px] text-slate-400">Physical Blue Ticks (Seen) vs Pending Delivery</p>
           </div>
-          <!-- Date Filter Picker -->
           <div class="flex items-center gap-1.5 w-full sm:w-auto">
             <label class="text-[11px] text-slate-400 shrink-0">Date:</label>
             <input type="date" id="analyticsDateInput" onchange="fetchBroadcastAnalytics()" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
@@ -201,9 +212,7 @@
           </div>
         </div>
 
-        <!-- Seen vs Unseen Cards & Actions -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <!-- Seen Card -->
           <div class="bg-slate-900/60 border border-blue-500/30 rounded-lg p-2.5 flex flex-col justify-between">
             <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-1.5">
@@ -213,16 +222,13 @@
               <span id="statSeenCount" class="text-base font-bold text-blue-400">0</span>
             </div>
             <div class="flex gap-1.5 mt-1.5">
-              <button onclick="openDetailsModal('seen')" class="flex-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded border border-slate-700">
-                View Seen List
-              </button>
+              <button onclick="openDetailsModal('seen')" class="flex-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded border border-slate-700">View Seen List</button>
               <button onclick="exportAnalyticsCSV('seen')" class="text-[11px] bg-blue-950/60 hover:bg-blue-900/60 text-blue-300 px-2.5 py-1.5 rounded border border-blue-800/40 flex items-center gap-1">
                 <i class="fa-solid fa-file-excel"></i> Export
               </button>
             </div>
           </div>
 
-          <!-- Unseen Card -->
           <div class="bg-slate-900/60 border border-amber-500/30 rounded-lg p-2.5 flex flex-col justify-between">
             <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-1.5">
@@ -232,9 +238,7 @@
               <span id="statUnseenCount" class="text-base font-bold text-amber-400">0</span>
             </div>
             <div class="flex gap-1.5 mt-1.5">
-              <button onclick="openDetailsModal('unseen')" class="flex-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded border border-slate-700">
-                View Unseen List
-              </button>
+              <button onclick="openDetailsModal('unseen')" class="flex-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded border border-slate-700">View Unseen List</button>
               <button onclick="exportAnalyticsCSV('unseen')" class="text-[11px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 px-2.5 py-1.5 rounded border border-amber-800/40 flex items-center gap-1">
                 <i class="fa-solid fa-file-excel"></i> Export
               </button>
@@ -243,7 +247,7 @@
         </div>
       </div>
 
-      <!-- Live Meta Delivery Log Table (Unfrozen, fully scrollable) -->
+      <!-- Live Meta Delivery Log Table -->
       <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-3.5 shadow-lg">
         <div class="flex items-center justify-between mb-2.5">
           <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Live Meta Delivery Log</h3>
@@ -289,7 +293,7 @@
       </div>
     </div>
   </main>
-  <!-- Seen / Unseen Modal Popup -->
+  <!-- Modal Popups -->
   <div id="analyticsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3">
     <div class="bg-[#0f172a] border border-slate-800 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl">
       <div class="p-3 border-b border-slate-800 flex items-center justify-between">
@@ -307,24 +311,17 @@
                 <th class="p-2">Timestamp</th>
               </tr>
             </thead>
-            <tbody id="modalTableBody" class="divide-y divide-slate-800 font-mono text-[11px]">
-              <!-- Dynamic Rows -->
-            </tbody>
+            <tbody id="modalTableBody" class="divide-y divide-slate-800 font-mono text-[11px]"></tbody>
           </table>
         </div>
       </div>
       <div class="p-2.5 border-t border-slate-800 flex justify-end gap-2">
-        <button id="btnModalExport" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded transition">
-          Export CSV
-        </button>
-        <button onclick="closeDetailsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded">
-          Close
-        </button>
+        <button id="btnModalExport" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded transition">Export CSV</button>
+        <button onclick="closeDetailsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded">Close</button>
       </div>
     </div>
   </div>
 
-  <!-- Settings Modal -->
   <div id="settingsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3">
     <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 w-full max-w-sm space-y-3 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -335,12 +332,8 @@
         <label class="text-[10px] text-slate-400 block mb-1">WhatsApp Cloud API Phone ID</label>
         <input type="text" value="1196276640235299" disabled class="w-full bg-slate-900/60 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-400">
       </div>
-      <div>
-        <label class="text-[10px] text-slate-400 block mb-1">Webhook Verify Token</label>
-        <input type="text" value="vedashree_crm_secret_2026" disabled class="w-full bg-slate-900/60 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-400">
-      </div>
       <div class="text-[10px] text-emerald-400/90 bg-emerald-950/20 p-2 rounded border border-emerald-800/30">
-        ✓ Cloudflare Worker & D1 Database are active and handling status tracking.
+        ✓ Service Worker, PWA & Background Push are enabled.
       </div>
       <div class="flex justify-end">
         <button onclick="toggleSettingsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded">Close</button>
@@ -348,24 +341,134 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT: LOGIC, PWA & PUSH PERMISSION ENGINE -->
   <script>
     let allLeads = [];
     let activeLead = null;
     let broadcastQueue = [];
     let currentBroadcastLogs = [];
     let latestAnalyticsData = { seenList: [], unseenList: [] };
+    let isAiActive = true;
 
     window.addEventListener("DOMContentLoaded", () => {
       const today = new Date().toISOString().substring(0, 10);
       document.getElementById("analyticsDateInput").value = today;
 
+      initPWAAndPushNotifications();
+      fetchAiState();
       loadLeads();
       loadApprovedTemplates();
       fetchBroadcastAnalytics();
+
       setInterval(loadLeads, 8000);
       setInterval(fetchBroadcastAnalytics, 15000);
     });
+
+    // PWA & Automatic Background Push Notification Permission Handler
+    async function initPWAAndPushNotifications() {
+      if ('serviceWorker' in navigator) {
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+          if ('Notification' in window && Notification.permission !== "granted") {
+            const perm = await Notification.requestPermission();
+            if (perm === "granted") {
+              const sub = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlB64ToUint8Array("BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U")
+              });
+              await fetch("/api/push-subscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(sub)
+              });
+            }
+          }
+        } catch (e) {
+          console.log("Service Worker / Push init notice:", e);
+        }
+      }
+    }
+
+    function urlB64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+      return outputArray;
+    }
+
+    // AI On/Off Toggle Handler
+    async function fetchAiState() {
+      try {
+        const res = await fetch("/api/toggle-ai");
+        const data = await res.json();
+        updateAiButtonUI(data.active);
+      } catch(e) {}
+    }
+
+    async function toggleGeminiAiState() {
+      try {
+        isAiActive = !isAiActive;
+        const res = await fetch("/api/toggle-ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ active: isAiActive })
+        });
+        const data = await res.json();
+        updateAiButtonUI(data.active);
+      } catch(e) {
+        alert("Toggle AI error: " + e.message);
+      }
+    }
+
+    function updateAiButtonUI(active) {
+      isAiActive = Boolean(active);
+      const btn = document.getElementById("btnAiToggle");
+      const txt = document.getElementById("txtAiStatus");
+      if (isAiActive) {
+        btn.className = "text-[11px] bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 px-2.5 py-1.5 rounded border border-emerald-800/50 flex items-center gap-1.5 transition";
+        txt.innerText = "AI: ON";
+      } else {
+        btn.className = "text-[11px] bg-red-950/60 hover:bg-red-900/60 text-red-400 px-2.5 py-1.5 rounded border border-red-800/50 flex items-center gap-1.5 transition";
+        txt.innerText = "AI: OFF";
+      }
+    }
+
+    // Gallery / Media Attachment Upload Handler
+    async function handleMediaUpload(e) {
+      const file = e.target.files[0];
+      if (!file || !activeLead) {
+        if (!activeLead) alert("Please select a lead first.");
+        return;
+      }
+      const caption = prompt("Image ke sath caption bhej na hai toh type karein (optional):") || "";
+      const reader = new FileReader();
+      reader.onload = async function() {
+        const base64Data = reader.result;
+        try {
+          const res = await fetch("/api/send-media", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone: activeLead.phone,
+              mediaUrl: base64Data,
+              caption: caption
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert("✓ Image WhatsApp par bhej di gayi hai!");
+            loadChatMessages();
+          } else {
+            alert("Error sending media: " + JSON.stringify(data.error));
+          }
+        } catch (err) {
+          alert("Network upload error: " + err.message);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
 
     function switchMainTab(tab) {
       document.getElementById("view-livechat").classList.add("hidden");
@@ -398,9 +501,7 @@
         allLeads = await res.json();
         document.getElementById("leads-count-badge").innerText = allLeads.length;
         renderLeadsList(allLeads);
-      } catch (e) {
-        console.error("Leads error:", e);
-      }
+      } catch (e) {}
     }
 
     function renderLeadsList(leads) {
@@ -433,9 +534,7 @@
       document.getElementById("activeChatPhone").innerText = `+${activeLead.phone}`;
       document.getElementById("activeChatStage").innerText = activeLead.status || 'hot';
 
-      // Mobile Responsive Switch: Hide Sidebar & Show Chat Full Screen
-      const isMobile = window.innerWidth < 768;
-      if (isMobile) {
+      if (window.innerWidth < 768) {
         document.getElementById("leadsSidebar").classList.add("hidden");
         document.getElementById("chatWindowSection").classList.remove("hidden");
       } else {
@@ -479,9 +578,7 @@
           `;
         }).join("");
         container.scrollTop = container.scrollHeight;
-      } catch (e) {
-        console.error("Messages error:", e);
-      }
+      } catch (e) {}
     }
 
     async function send1to1Message() {
@@ -509,7 +606,7 @@
 
     function generateAiDraftReply() {
       if (!activeLead) return;
-      document.getElementById("chatInputText").value = `Namaste ${activeLead.name || 'Ji'}, Vedashree Wellness me aapka swagat hai. Aap kis problem ke samadhan ke liye consult karna chahte hain?`;
+      document.getElementById("chatInputText").value = `Namaste ${activeLead.name || 'Ji'}, Vedashree Wellness me aapka swagat hai. Aap kis samasya ke nidan ke liye consult karna chahte hain?`;
     }
 
     function setBroadcastMode(mode) {
@@ -577,9 +674,7 @@
         const list = await res.json();
         const sel = document.getElementById("broadcastTemplateSelect");
         sel.innerHTML = list.map(t => `<option value="${t.name}|${t.language}">${t.name} (${t.language})</option>`).join("");
-      } catch (e) {
-        console.error("Templates error:", e);
-      }
+      } catch (e) {}
     }
 
     async function startBroadcastQueue() {
@@ -596,8 +691,7 @@
       btn.innerText = "Dispatching...";
       document.getElementById("broadcastEngineStatus").innerText = "Dispatching...";
 
-      let sentCount = 0;
-      let failedCount = 0;
+      let sentCount = 0, failedCount = 0;
       currentBroadcastLogs = [];
       const tbody = document.getElementById("broadcastLogTableBody");
       tbody.innerHTML = "";
@@ -624,7 +718,7 @@
           } else {
             failedCount++;
             currentBroadcastLogs.push({ phone: item.phone, name: item.name || 'Sir / Ma\'am', status: 'Failed', time: timeNow, msgId: null });
-            appendLogRow(item.phone, item.name, `✕ Failed (${resp.error || 'Meta Block'})`, 'text-red-400', timeNow);
+            appendLogRow(item.phone, item.name, `✕ Failed`, 'text-red-400', timeNow);
           }
         } catch (e) {
           failedCount++;
@@ -638,8 +732,7 @@
       btn.disabled = false;
       btn.innerText = "Start Real WhatsApp Broadcast";
       document.getElementById("broadcastEngineStatus").innerText = "Completed";
-      alert("✅ Broadcast complete ho gaya! Status logs check karein.");
-
+      alert("✅ Broadcast complete!");
       fetchBroadcastAnalytics();
     }
 
@@ -664,21 +757,16 @@
         if (!res.ok) return;
         const data = await res.json();
         latestAnalyticsData = data;
-
         document.getElementById("statSeenCount").innerText = data.summary.seen;
         document.getElementById("statUnseenCount").innerText = data.summary.unseen;
         document.getElementById("cntDelivered").innerText = data.summary.delivered;
-      } catch (e) {
-        console.error("Analytics fetch error:", e);
-      }
+      } catch (e) {}
     }
 
     function openDetailsModal(type) {
       const modal = document.getElementById("analyticsModal");
       const title = document.getElementById("modalTitle");
       const tbody = document.getElementById("modalTableBody");
-      const exportBtn = document.getElementById("btnModalExport");
-
       const list = type === 'seen' ? latestAnalyticsData.seenList : latestAnalyticsData.unseenList;
       title.innerText = type === 'seen' ? "Contacts Who SEEN (Blue Tick) The Template" : "Contacts Who UNSEEN / Pending";
 
@@ -694,8 +782,7 @@
           </tr>
         `).join("");
       }
-
-      exportBtn.onclick = () => exportAnalyticsCSV(type);
+      document.getElementById("btnModalExport").onclick = () => exportAnalyticsCSV(type);
       modal.classList.remove("hidden");
     }
 
@@ -705,27 +792,17 @@
 
     function exportAnalyticsCSV(type) {
       const list = type === 'seen' ? latestAnalyticsData.seenList : latestAnalyticsData.unseenList;
-      if (!list || !list.length) {
-        alert("Export karne ke liye koi data nahi hai.");
-        return;
-      }
+      if (!list || !list.length) return alert("Export karne ke liye data nahi hai.");
       const date = document.getElementById("analyticsDateInput").value;
       let csv = "Phone,Name,Status,Timestamp\n";
-      list.forEach(r => {
-   csv += `"${r.phone}","${r.name}","${r.status}","${r.timestamp}"\n`;
-      });
+      list.forEach(r => { csv += `"${r.phone}","${r.name}","${r.status}","${r.timestamp}"\n`; });
       downloadCSVFile(csv, `Vedashree_Broadcast_${type.toUpperCase()}_${date}.csv`);
     }
 
     function exportCurrentLogCSV() {
-      if (!currentBroadcastLogs.length) {
-        alert("Current session mein koi log nahi hai.");
-        return;
-      }
+      if (!currentBroadcastLogs.length) return alert("Current session me koi log nahi hai.");
       let csv = "Phone,Name,Status,Time\n";
-      currentBroadcastLogs.forEach(r => {
-        csv += `"${r.phone}","${r.name}","${r.status}","${r.time}"\n`;
-      });
+      currentBroadcastLogs.forEach(r => { csv += `"${r.phone}","${r.name}","${r.status}","${r.time}"\n`; });
       downloadCSVFile(csv, `Broadcast_Session_Log_${new Date().toISOString().substring(0, 10)}.csv`);
     }
 
@@ -743,7 +820,6 @@
       document.getElementById("countHot").innerText = allLeads.filter(l => (l.status||'hot') === 'hot').length;
       document.getElementById("countConsult").innerText = allLeads.filter(l => l.status === 'consultation').length;
       document.getElementById("countConverted").innerText = allLeads.filter(l => l.status === 'converted').length;
-
       document.getElementById("pipeHot").innerHTML = allLeads.filter(l => (l.status||'hot') === 'hot').map(l => `
         <div class="bg-slate-900 p-2 rounded-lg border border-slate-800">
           <p class="text-xs font-bold text-slate-200">${l.name || 'Customer'}</p>
@@ -753,10 +829,8 @@
     }
 
     function toggleSettingsModal() {
-      const m = document.getElementById("settingsModal");
-      m.classList.toggle("hidden");
+      document.getElementById("settingsModal").classList.toggle("hidden");
     }
   </script>
 </body>
 </html>
-             
