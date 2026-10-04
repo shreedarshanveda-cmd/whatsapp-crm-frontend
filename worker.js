@@ -458,10 +458,213 @@ export default {
       }
     }
     // 13. Serve Frontend UI
-    const htmlRes = await fetch("https://raw.githubusercontent.com/shreedarshanvedashree-prog/whatsapp-crm-frontend/main/index.html");
-    const htmlData = await htmlRes.text();
-    return new Response(htmlData, {
+    return new Response(INDEX_HTML, {
       headers: { "Content-Type": "text/html;charset=UTF-8" }
     });
   }
 };
+
+const INDEX_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VEDASHREE PRO CRM</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b1120">
+  <script src="https://cdn.tailwindcss.com"><\/script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #0b1120; color: #f1f5f9; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
+</head>
+<body class="h-[100dvh] flex flex-col overflow-hidden">
+  <header class="bg-[#0f172a] border-b border-slate-800 px-3 py-2 flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">V</div>
+      <h1 class="text-xs sm:text-sm font-semibold text-slate-100">VEDASHREE PRO CRM</h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="btnAiToggle" onclick="toggleGeminiAiState()" class="text-[11px] bg-emerald-950/60 text-emerald-400 px-2.5 py-1.5 rounded border border-emerald-800/50 flex items-center gap-1.5">
+        <i class="fa-solid fa-robot"></i> <span id="txtAiStatus">AI: ON</span>
+      </button>
+      <button onclick="window.location.reload()" class="text-[11px] bg-slate-800 text-slate-300 px-2.5 py-1.5 rounded border border-slate-700">Refresh</button>
+    </div>
+  </header>
+
+  <nav class="bg-[#0b1329] border-b border-slate-800 px-3 flex gap-1 shrink-0">
+    <button id="tab-livechat" onclick="switchMainTab('livechat')" class="px-3 py-2 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500">Live Chat</button>
+    <button id="tab-broadcast" onclick="switchMainTab('broadcast')" class="px-3 py-2 text-xs font-medium text-slate-400 border-b-2 border-transparent">Broadcast</button>
+  </nav>
+
+  <main class="flex-1 overflow-hidden relative">
+    <div id="view-livechat" class="h-full flex flex-col md:flex-row overflow-hidden">
+      <aside id="leadsSidebar" class="w-full md:w-80 border-r border-slate-800 flex flex-col bg-[#0b1120] h-full">
+        <div class="p-2 border-b border-slate-800">
+          <input type="text" id="leadSearch" onkeyup="filterLeads()" placeholder="Search..." class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-xs text-slate-200">
+        </div>
+        <div id="leadsList" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1"></div>
+      </aside>
+
+      <section id="chatSection" class="hidden md:flex flex-1 flex-col bg-[#070b14] h-full">
+        <div class="p-2.5 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between">
+          <button onclick="mobileBack()" class="md:hidden text-xs bg-slate-800 px-2 py-1 rounded">Back</button>
+          <span id="activeName" class="text-xs font-bold text-slate-200">Select Lead</span>
+          <span id="activePhone" class="text-[10px] text-slate-400 font-mono">--</span>
+        </div>
+        <div id="chatBox" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2">
+          <p class="text-xs text-slate-500 text-center mt-10">Select a conversation to view chat.</p>
+        </div>
+        <div class="p-2 bg-[#0b1120] border-t border-slate-800 flex items-center gap-1.5">
+          <input type="file" id="mediaInput" accept="image/*" onchange="uploadImage(event)" class="hidden">
+          <button onclick="document.getElementById('mediaInput').click()" class="bg-slate-800 text-slate-300 p-2 rounded text-xs">
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
+          <input type="text" id="msgText" onkeydown="if(event.key==='Enter') sendMsg()" placeholder="Type a message..." class="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-slate-200">
+          <button onclick="sendMsg()" class="bg-emerald-600 font-bold px-3 py-1.5 rounded text-xs text-slate-950">Send</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="view-broadcast" class="hidden h-full overflow-y-auto custom-scroll p-4 space-y-4">
+      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4">
+        <h2 class="text-xs font-bold text-slate-200 uppercase mb-3">WhatsApp Broadcast</h2>
+        <p class="text-xs text-slate-400">Broadcast dashboard ready.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    var leads = [], curPhone = null, aiOn = true;
+
+    window.addEventListener("DOMContentLoaded", function() {
+      loadLeads();
+      setInterval(loadLeads, 8000);
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function(e){});
+    });
+
+    function toggleGeminiAiState() {
+      aiOn = !aiOn;
+      fetch('/api/toggle-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: aiOn })
+      });
+      document.getElementById('txtAiStatus').innerText = aiOn ? 'AI: ON' : 'AI: OFF';
+      document.getElementById('btnAiToggle').className = aiOn 
+        ? 'text-[11px] bg-emerald-950/60 text-emerald-400 px-2.5 py-1.5 rounded border border-emerald-800/50 flex items-center gap-1.5' 
+        : 'text-[11px] bg-red-950/60 text-red-400 px-2.5 py-1.5 rounded border border-red-800/50 flex items-center gap-1.5';
+    }
+
+    function loadLeads() {
+      fetch('/api/leads').then(function(r){ return r.json(); }).then(function(data){
+        leads = data;
+        renderLeads();
+      }).catch(function(e){});
+    }
+
+    function renderLeads() {
+      var html = '';
+      for (var i = 0; i < leads.length; i++) {
+        var l = leads[i];
+        html += '<div onclick="openChat(\\'' + l.phone + '\\', \\'' + (l.name || 'Customer') + '\\')" class="p-2 rounded bg-slate-900/60 border border-slate-800 cursor-pointer mb-1">' +
+          '<div class="text-xs font-semibold text-slate-200">' + (l.name || 'Customer') + '</div>' +
+          '<div class="text-[10px] text-emerald-400 font-mono">+' + l.phone + '</div>' +
+          '<div class="text-[10px] text-slate-400 truncate">' + (l.last_message || '') + '</div>' +
+        '</div>';
+      }
+      document.getElementById('leadsList').innerHTML = html || '<p class="text-xs text-slate-500 text-center p-3">No leads yet</p>';
+    }
+
+    function filterLeads() {
+      var q = document.getElementById('leadSearch').value.toLowerCase();
+      var filtered = leads.filter(function(l){ return (l.name || '').toLowerCase().indexOf(q) !== -1 || (l.phone || '').indexOf(q) !== -1; });
+      var html = '';
+      for (var i = 0; i < filtered.length; i++) {
+        var l = filtered[i];
+        html += '<div onclick="openChat(\\'' + l.phone + '\\', \\'' + (l.name || 'Customer') + '\\')" class="p-2 rounded bg-slate-900/60 border border-slate-800 cursor-pointer mb-1">' +
+          '<div class="text-xs font-semibold text-slate-200">' + (l.name || 'Customer') + '</div>' +
+          '<div class="text-[10px] text-emerald-400 font-mono">+' + l.phone + '</div>' +
+        '</div>';
+      }
+      document.getElementById('leadsList').innerHTML = html;
+    }
+
+    function openChat(ph, nm) {
+      curPhone = ph;
+      document.getElementById('activeName').innerText = nm || 'Customer';
+      document.getElementById('activePhone').innerText = '+' + ph;
+      document.getElementById('chatSection').classList.remove('hidden');
+      if (window.innerWidth < 768) document.getElementById('leadsSidebar').classList.add('hidden');
+      loadMessages();
+    }
+
+    function mobileBack() {
+      document.getElementById('leadsSidebar').classList.remove('hidden');
+      document.getElementById('chatSection').classList.add('hidden');
+    }
+
+    function loadMessages() {
+      if (!curPhone) return;
+      fetch('/api/messages?phone=' + curPhone).then(function(r){ return r.json(); }).then(function(msgs){
+        var html = '';
+        for (var i = 0; i < msgs.length; i++) {
+          var m = msgs[i];
+          var isAgent = m.sender === 'agent';
+          html += '<div class="flex ' + (isAgent ? 'justify-end' : 'justify-start') + ' mb-2">' +
+            '<div class="max-w-[80%] rounded px-3 py-1.5 text-xs ' + (isAgent ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-slate-200') + '">' +
+              m.text +
+            '</div>' +
+          '</div>';
+        }
+        var box = document.getElementById('chatBox');
+        box.innerHTML = html || '<p class="text-xs text-slate-500 text-center mt-10">No messages yet.</p>';
+        box.scrollTop = box.scrollHeight;
+      }).catch(function(e){});
+    }
+
+    function sendMsg() {
+      var input = document.getElementById('msgText');
+      var val = input.value.trim();
+      if (!val || !curPhone) return;
+      input.value = '';
+      fetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: curPhone, text: val })
+      }).then(function(){
+        loadMessages();
+        loadLeads();
+      });
+    }
+
+    function uploadImage(e) {
+      var file = e.target.files[0];
+      if (!file || !curPhone) return alert("Pehle lead select karein.");
+      var caption = prompt("Caption (optional):") || "";
+      var reader = new FileReader();
+      reader.onload = function() {
+        fetch('/api/send-media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: curPhone, mediaUrl: reader.result, caption: caption })
+        }).then(function(r){ return r.json(); }).then(function(d){
+          if (d.success) { alert("Sent!"); loadMessages(); }
+          else { alert("Error: " + JSON.stringify(d)); }
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function switchMainTab(t) {
+      document.getElementById('view-livechat').classList.toggle('hidden', t !== 'livechat');
+      document.getElementById('view-broadcast').classList.toggle('hidden', t !== 'broadcast');
+      document.getElementById('tab-livechat').className = t === 'livechat' ? 'px-3 py-2 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500' : 'px-3 py-2 text-xs font-medium text-slate-400 border-b-2 border-transparent';
+      document.getElementById('tab-broadcast').className = t === 'broadcast' ? 'px-3 py-2 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500' : 'px-3 py-2 text-xs font-medium text-slate-400 border-b-2 border-transparent';
+    }
+  <\/script>
+</body>
+</html>\`;
