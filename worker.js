@@ -458,12 +458,10 @@ export default {
       }
     }
     // 13. Serve Frontend UI
-    if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
-    }
-    return new Response("Vedashree CRM Backend Active", {
-      headers: { "Content-Type": "text/plain" }
+    const htmlRes = await fetch("https://raw.githubusercontent.com/shreedarshanvedashree-prog/whatsapp-crm-frontend/main/index.html");
+    const htmlData = await htmlRes.text();
+    return new Response(htmlData, {
+      headers: { "Content-Type": "text/html;charset=UTF-8" }
     });
   }
 };
-
