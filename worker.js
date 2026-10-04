@@ -1,402 +1,332 @@
-import HTML_CONTENT from "./index.html";
+// ==========================================
+// VEDASHREE CRM BACKEND & ENGINE (worker.js)
+// ==========================================
 
-let lastWebhookError = "None";
+// 1. GEMINI AI ASSISTANT CONFIGURATION
+let IS_AI_ACTIVE_GLOBAL = true; // Default State (Can be toggled via CRM UI)
+
+const GEMINI_CONFIG = {
+  API_KEY: "AIzaSy_YOUR_DUMMY_GEMINI_KEY",
+  SYSTEM_PROMPT: `Aap Vedashree Wellness ke Senior Ayurveda Health Consultant hain.
+Aapka vyavahar vinamra, shant aur aadarpoorna hona chahiye.
+Aapko customer ke sawalon ka satik ayurvedic aur health-oriented samadhan dena hai.
+Company ke Men's Wellness products (Oil, Capsules, Prash) ke benefits naturally explain karein bina galat fake daave kiye.
+Har message me namaste aur sammanjanak tone ka upyog karein.`
+};
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // 1. Error Tracking Endpoint
-    if (url.pathname === "/api/last-error") {
-      return new Response(JSON.stringify({ error: lastWebhookError }), {
-        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+    // CORS Headers setup
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type"
+        }
       });
     }
 
-    // 2. Raw Logs Inspect Endpoint
-    if (url.pathname === "/api/raw-logs") {
-      try {
-        const { results } = await env.DB.prepare("SELECT * FROM raw_logs ORDER BY id DESC LIMIT 10").all();
-        return new Response(JSON.stringify(results || []), {
-          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ error: e.message }), { status: 500 });
-      }
-    }
-
-    // 3. Meta Webhook Verification (GET)
-    if (request.method === "GET" && url.pathname === "/webhook") {
-      const mode = url.searchParams.get("hub.mode");
-      const token = url.searchParams.get("hub.verify_token");
-      const challenge = url.searchParams.get("hub.challenge");
-
-      if (mode === "subscribe" && token === "vedashree_crm_secret_2026") {
-        return new Response(challenge, { status: 200 });
-      }
-      return new Response("Forbidden", { status: 403 });
-    }
-
-    // 4. Incoming WhatsApp Message & Delivery Status Webhook (POST)
-    if (request.method === "POST" && url.pathname === "/webhook") {
-      let bodyText = "";
-      try {
-        bodyText = await request.text();
-        if (!bodyText) return new Response("OK", { status: 200 });
-
-        const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-
-        // Always save raw packet for debugging audit
-        await env.DB.prepare("INSERT INTO raw_logs (payload, created_at) VALUES (?, ?)")
-          .bind(bodyText, now)
-          .run();
-
-        const data = JSON.parse(bodyText);
-
-        let root = Array.isArray(data) ? data[0] : data;
-        let entry = Array.isArray(root?.entry) ? root.entry[0] : root?.entry;
-        let change = Array.isArray(entry?.changes) ? entry.changes[0] : entry?.changes;
-        let val = change?.value || root?.value || root;
-
-        // A. Handle Delivery / Read / Failed Receipts from Meta
-        const statuses = val?.statuses;
-        if (statuses && Array.isArray(statuses) && statuses.length > 0) {
-          for (const s of statuses) {
-            const metaMsgId = s.id;
-            const newStatus = s.status; // 'sent', 'delivered', 'read', 'failed'
-            if (metaMsgId && newStatus) {
-              await env.DB.prepare(`
-                UPDATE messages 
-                SET status = ? 
-                WHERE id = ?
-              `).bind(newStatus, metaMsgId).run();
-            }
-          }
-        }
-
-        // B. Handle Incoming Messages from Customers
-        const messages = val?.messages;
-        if (messages && Array.isArray(messages) && messages.length > 0) {
-          const msg = messages[0];
-          const rawPhone = String(msg.from || "").replace(/[^0-9]/g, "");
-          const textBody = msg.text?.body || (msg.type ? `[${msg.type.toUpperCase()}]` : "Message");
-          const msgId = msg.id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-          
-          let customerName = "";
-          if (Array.isArray(val?.contacts) && val.contacts.length > 0) {
-            customerName = val.contacts[0]?.profile?.name || "";
-          }
-
-          if (rawPhone) {
-            const leadId = `lead_${rawPhone}`;
-
-            await env.DB.prepare(`
-              INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
-              VALUES (?, ?, 'customer', ?, NULL, NULL, NULL, 'delivered', ?)
-            `).bind(msgId, leadId, textBody, now).run();
-
-            await env.DB.prepare(`
-              INSERT INTO leads (id, name, phone, source, ad_title, stage, created_at)
-              VALUES (?, ?, ?, 'Direct WhatsApp', NULL, 'hot', ?)
-              ON CONFLICT(id) DO UPDATE SET 
-                name = CASE WHEN excluded.name != '' THEN excluded.name ELSE leads.name END,
-                created_at = excluded.created_at
-            `).bind(leadId, customerName, rawPhone, now).run();
-          }
-          lastWebhookError = "None";
-        }
-
-        return new Response("EVENT_RECEIVED", { status: 200 });
-      } catch (err) {
-        lastWebhookError = `Error: ${err.message}`;
-        return new Response("OK", { status: 200 });
-      }
-    }
-
-    // 5. API: Fetch Leads List
-    if (request.method === "GET" && url.pathname === "/api/leads") {
-      try {
-        const { results } = await env.DB.prepare(`
-          SELECT 
-            id,
-            COALESCE(name, '') AS name,
-            phone,
-            COALESCE(source, 'Direct WhatsApp') AS source,
-            COALESCE(stage, 'hot') AS status,
-            created_at,
-            (SELECT text FROM messages WHERE lead_id = leads.id ORDER BY timestamp DESC LIMIT 1) AS last_message
-          FROM leads 
-          ORDER BY created_at DESC
-        `).all();
-
-        return new Response(JSON.stringify(results || []), {
-          headers: { 
-            "Content-Type": "application/json",
-            "Cache-Control": "no-store"
-          }
-        });
-      } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), {
-          headers: { "Content-Type": "application/json" },
-          status: 500
+    // 2. AI MANUAL ON/OFF TOGGLE API
+    if (url.pathname === "/api/toggle-ai") {
+      if (request.method === "GET") {
+        return new Response(JSON.stringify({ active: IS_AI_ACTIVE_GLOBAL }), {
+          headers: { "Content-Type": "application/json" }
         });
       }
-    }
-
-    // 6. API: Fetch Chat Messages
-    if (request.method === "GET" && url.pathname === "/api/messages") {
-      const rawParam = url.searchParams.get("phone") || url.searchParams.get("lead_id") || "";
-      const cleanPhone = rawParam.replace(/[^0-9]/g, "");
-      const leadId = rawParam.startsWith("lead_") ? rawParam : `lead_${cleanPhone}`;
-
-      try {
-        const { results } = await env.DB.prepare(`
-          SELECT 
-            id, 
-            lead_id,
-            text, 
-            text AS message, 
-            CASE WHEN sender = 'agent' THEN 'agent' ELSE 'customer' END AS sender,
-            COALESCE(timestamp, datetime('now')) AS created_at
-          FROM messages 
-          WHERE lead_id = ? OR lead_id = ?
-          ORDER BY timestamp ASC
-        `).bind(leadId, cleanPhone).all();
-
-        return new Response(JSON.stringify(results || []), {
-          headers: { 
-            "Content-Type": "application/json",
-            "Cache-Control": "no-store"
-          }
-        });
-      } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), {
-          headers: { "Content-Type": "application/json" },
-          status: 500
-        });
-      }
-    }
-
-    // 7. API: Send Outbound 1-to-1 Message
-    if (request.method === "POST" && url.pathname === "/api/send") {
-      try {
-        const body = await request.json();
-        const rawPhone = body.toPhone || body.phone || body.lead_id || "";
-        const cleanPhone = String(rawPhone).replace(/[^0-9]/g, "");
-        const messageText = body.text || body.message || "";
-        const leadId = `lead_${cleanPhone}`;
-        const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-        const outMsgId = `out_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-
-        if (env.WHATSAPP_TOKEN && cleanPhone && messageText) {
-          const metaRes = await fetch("https://graph.facebook.com/v20.0/1196276640235299/messages", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${env.WHATSAPP_TOKEN}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              messaging_product: "whatsapp",
-              to: cleanPhone,
-              type: "text",
-              text: { body: messageText }
-            })
+      if (request.method === "POST") {
+        try {
+          const { active } = await request.json();
+          IS_AI_ACTIVE_GLOBAL = Boolean(active);
+          return new Response(JSON.stringify({ success: true, active: IS_AI_ACTIVE_GLOBAL }), {
+            headers: { "Content-Type": "application/json" }
           });
-
-          if (!metaRes.ok) {
-            const metaErrText = await metaRes.text();
-            lastWebhookError = `Meta Send Error: ${metaErrText}`;
-            return new Response(JSON.stringify({ error: metaErrText }), {
-              headers: { "Content-Type": "application/json" },
-              status: 400
-            });
-          }
+        } catch (e) {
+          return new Response(JSON.stringify({ error: e.message }), { status: 400 });
         }
+      }
+    }
 
-        await env.DB.prepare(`
-          INSERT INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
-          VALUES (?, ?, 'agent', ?, NULL, NULL, NULL, 'sent', ?)
-        `).bind(outMsgId, leadId, messageText, now).run();
+    // 3. PWA MANIFEST ENDPOINT
+    if (url.pathname === "/manifest.json") {
+      const manifest = {
+        name: "VEDASHREE PRO CRM",
+        short_name: "Vedashree",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#0b1120",
+        theme_color: "#0b1120",
+        icons: [
+          {
+            src: "https://vedashree.gt.tc/wp-content/uploads/2026/09/55b8913a-06a0-4517-936c-6be74887079b.png",
+            sizes: "192x192",
+            type: "image/png"
+          },
+          {
+            src: "https://vedashree.gt.tc/wp-content/uploads/2026/09/55b8913a-06a0-4517-936c-6be74887079b.png",
+            sizes: "512x512",
+            type: "image/png"
+          }
+        ]
+      };
+      return new Response(JSON.stringify(manifest), {
+        headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=3600" }
+      });
+    }
 
-        await env.DB.prepare(`
-          INSERT INTO leads (id, name, phone, source, ad_title, stage, created_at)
-          VALUES (?, '', ?, 'Direct WhatsApp', NULL, 'hot', ?)
-          ON CONFLICT(id) DO UPDATE SET created_at = excluded.created_at
-        `).bind(leadId, cleanPhone, now).run();
+    // 4. PWA SERVICE WORKER (Background Push Notification Handler)
+    if (url.pathname === "/sw.js") {
+      const swCode = `
+        self.addEventListener('install', (e) => { self.skipWaiting(); });
+        self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
+        self.addEventListener('fetch', (e) => { e.respondWith(fetch(e.request)); });
 
-        return new Response(JSON.stringify({ success: true, id: outMsgId }), {
+        self.addEventListener('push', (event) => {
+          let data = { title: 'New Customer Message', body: 'You received a new inquiry on WhatsApp.', phone: '' };
+          if (event.data) {
+            try { data = event.data.json(); } catch(e) { data.body = event.data.text(); }
+          }
+          const options = {
+            body: data.body,
+            icon: 'https://vedashree.gt.tc/wp-content/uploads/2026/09/55b8913a-06a0-4517-936c-6be74887079b.png',
+            badge: 'https://vedashree.gt.tc/wp-content/uploads/2026/09/55b8913a-06a0-4517-936c-6be74887079b.png',
+            vibrate: [200, 100, 200],
+            data: { url: '/?phone=' + (data.phone || '') }
+          };
+          event.waitUntil(self.registration.showNotification(data.title, options));
+        });
+
+        self.addEventListener('notificationclick', (event) => {
+          event.notification.close();
+          event.waitUntil(
+            clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+              if (clientList.length > 0) {
+                return clientList[0].focus();
+              }
+              return clients.openWindow(event.notification.data.url || '/');
+            })
+          );
+        });
+      `;
+      return new Response(swCode, {
+        headers: { "Content-Type": "application/javascript", "Cache-Control": "public, max-age=3600" }
+      });
+    }
+
+    // 5. API: Save Push Subscription Token to D1
+    if (request.method === "POST" && url.pathname === "/api/push-subscribe") {
+      try {
+        const sub = await request.json();
+        if (sub && sub.endpoint) {
+          const p256dh = sub.keys ? sub.keys.p256dh : "";
+          const auth = sub.keys ? sub.keys.auth : "";
+          await env.DB.prepare(
+            `INSERT OR REPLACE INTO push_subscriptions (endpoint, p256dh, auth) VALUES (?, ?, ?)`
+          ).bind(sub.endpoint, p256dh, auth).run();
+        }
+        return new Response(JSON.stringify({ success: true }), {
           headers: { "Content-Type": "application/json" }
         });
       } catch (err) {
-        lastWebhookError = `Send Catch Error: ${err.message}`;
-        return new Response(JSON.stringify({ error: err.message }), { 
-          headers: { "Content-Type": "application/json" },
-          status: 500 
-        });
+        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
       }
     }
 
-    // 8. API: Automatically Fetch Approved Templates from Meta
-    if (request.method === "GET" && url.pathname === "/api/templates") {
+    // 6. API: Send Image / Gallery Media File via Meta Cloud API
+    if (request.method === "POST" && url.pathname === "/api/send-media") {
       try {
-        let templates = [
-          { name: "vedashree_vitality_consult_v1", language: "en", status: "APPROVED" }
-        ];
+        const { phone, mediaUrl, caption } = await request.json();
+        const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || "1196276640235299";
+        const metaToken = env.WHATSAPP_ACCESS_TOKEN;
 
-        if (env.WHATSAPP_TOKEN) {
-          const wabaRes = await fetch("https://graph.facebook.com/v20.0/1196276640235299?fields=whatsapp_business_account", {
-            headers: { "Authorization": `Bearer ${env.WHATSAPP_TOKEN}` }
-          });
-          if (wabaRes.ok) {
-            const wabaData = await wabaRes.json();
-            const wabaId = wabaData.whatsapp_business_account?.id;
-            if (wabaId) {
-              const tmplRes = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?status=APPROVED&limit=50`, {
-                headers: { "Authorization": `Bearer ${env.WHATSAPP_TOKEN}` }
-              });
-              if (tmplRes.ok) {
-                const tmplData = await tmplRes.json();
-                if (Array.isArray(tmplData.data) && tmplData.data.length > 0) {
-                  templates = tmplData.data.map(t => ({
-                    name: t.name,
-                    language: t.language,
-                    status: t.status,
-                    has_param: JSON.stringify(t.components || []).includes("{{1}}")
-                  }));
-                }
-              }
-            }
-          }
-        }
-
-        return new Response(JSON.stringify(templates), {
-          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
-        });
-      } catch (err) {
-        return new Response(JSON.stringify([
-          { name: "vedashree_vitality_consult_v1", language: "en", status: "APPROVED" }
-        ]), { headers: { "Content-Type": "application/json" } });
-      }
-    }
-
-    // 9. API: Send Broadcast Template Message
-    if (request.method === "POST" && url.pathname === "/api/broadcast-send") {
-      try {
-        const body = await request.json();
-        const rawPhone = String(body.phone || "").replace(/[^0-9]/g, "");
-        const tName = body.templateName || "vedashree_vitality_consult_v1";
-        const tLang = body.languageCode || "en";
-        const trimmedName = String(body.name || "").trim();
-        const cName = trimmedName.length > 0 ? trimmedName : "Sir / Ma'am";
-
-        if (!rawPhone || !env.WHATSAPP_TOKEN) {
-          return new Response(JSON.stringify({ success: false, error: "Missing phone or WhatsApp token" }), { status: 400 });
-        }
-
-        const tPayload = {
+        const payload = {
           messaging_product: "whatsapp",
-          to: rawPhone,
-          type: "template",
-          template: {
-            name: tName,
-            language: { code: tLang },
-            components: [
-              {
-                type: "header",
-                parameters: [
-                  {
-                    type: "image",
-                    image: {
-                      link: "https://vedashree.gt.tc/wp-content/uploads/2026/09/55b8913a-06a0-4517-936c-6be74887079b.png"
-                    }
-                  }
-                ]
-              },
-              {
-                type: "body",
-                parameters: [
-                  {
-                    type: "text",
-                    text: cName
-                  }
-                ]
-              }
-            ]
+          recipient_type: "individual",
+          to: phone,
+          type: "image",
+          image: {
+            link: mediaUrl,
+            caption: caption || ""
           }
         };
 
-        const metaRes = await fetch("https://graph.facebook.com/v20.0/1196276640235299/messages", {
+        const metaRes = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${env.WHATSAPP_TOKEN}`,
+            "Authorization": `Bearer ${metaToken}`,
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(tPayload)
+          body: JSON.stringify(payload)
         });
 
         const metaData = await metaRes.json();
+        if (metaData.messages && metaData.messages[0]) {
+          const wamid = metaData.messages[0].id;
+          const leadId = `lead_${phone}`;
+          await env.DB.prepare(
+            `INSERT INTO messages (id, lead_id, sender, text, status, timestamp) VALUES (?, ?, 'agent', ?, 'sent', datetime('now'))`
+          ).bind(wamid, leadId, `[Image: ${caption || 'Attachment'}]`).run();
 
-        if (metaRes.ok && metaData.messages) {
-          const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-          const leadId = `lead_${rawPhone}`;
-          
-          await env.DB.prepare(`
-            INSERT INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
-            VALUES (?, ?, 'agent', ?, NULL, NULL, NULL, 'sent', ?)
-          `).bind(metaData.messages[0].id, leadId, `[Template: ${tName}]`, now).run();
-
-          return new Response(JSON.stringify({ success: true, id: metaData.messages[0].id }), {
+          return new Response(JSON.stringify({ success: true, id: wamid }), {
             headers: { "Content-Type": "application/json" }
           });
         } else {
-          const errMsg = metaData.error?.error_user_msg || metaData.error?.error_data?.details || metaData.error?.message || "Meta API Rejected";
-          lastWebhookError = JSON.stringify(metaData);
-          return new Response(JSON.stringify({ success: false, error: errMsg }), {
-            headers: { "Content-Type": "application/json" },
-            status: 400
-          });
+          return new Response(JSON.stringify({ success: false, error: metaData }), { status: 400 });
         }
       } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), {
-          headers: { "Content-Type": "application/json" },
-          status: 500
+        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+      }
+                    }
+    // 7. API: Leads List
+    if (request.method === "GET" && url.pathname === "/api/leads") {
+      try {
+        const { results } = await env.DB.prepare(
+          `SELECT id, REPLACE(id, 'lead_', '') as phone, name, status, last_message, created_at FROM leads ORDER BY created_at DESC LIMIT 50`
+        ).all();
+        return new Response(JSON.stringify(results || []), {
+          headers: { "Content-Type": "application/json" }
         });
+      } catch (err) {
+        return new Response(JSON.stringify([]), { headers: { "Content-Type": "application/json" } });
       }
     }
 
-    // 10. NEW: API: Broadcast Analytics & Delivery / Seen Tracking with Date Filter
+    // 8. API: Messages for a Specific Lead
+    if (request.method === "GET" && url.pathname === "/api/messages") {
+      try {
+        const phone = url.searchParams.get("phone");
+        const leadId = `lead_${phone}`;
+        const { results } = await env.DB.prepare(
+          `SELECT id, lead_id, sender, text, status, timestamp as created_at FROM messages WHERE lead_id = ? ORDER BY timestamp ASC`
+        ).bind(leadId).all();
+        return new Response(JSON.stringify(results || []), {
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify([]), { headers: { "Content-Type": "application/json" } });
+      }
+    }
+
+    // 9. API: Direct 1-to-1 Send Message
+    if (request.method === "POST" && url.pathname === "/api/send") {
+      try {
+        const { phone, text } = await request.json();
+        const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || "1196276640235299";
+        const metaToken = env.WHATSAPP_ACCESS_TOKEN;
+
+        const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${metaToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: phone,
+            type: "text",
+            text: { body: text }
+          })
+        });
+
+        const respData = await res.json();
+        if (respData.messages && respData.messages[0]) {
+          const wamid = respData.messages[0].id;
+          const leadId = `lead_${phone}`;
+          await env.DB.prepare(
+            `INSERT INTO messages (id, lead_id, sender, text, status, timestamp) VALUES (?, ?, 'agent', ?, 'sent', datetime('now'))`
+          ).bind(wamid, leadId, text).run();
+
+          await env.DB.prepare(
+            `UPDATE leads SET last_message = ? WHERE id = ?`
+          ).bind(text, leadId).run();
+
+          return new Response(JSON.stringify({ success: true, id: wamid }), {
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        return new Response(JSON.stringify({ success: false, error: respData }), { status: 400 });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+      }
+    }
+
+    // 10. API: Broadcast Send (Template Messages)
+    if (request.method === "POST" && url.pathname === "/api/broadcast-send") {
+      try {
+        const { phone, name, templateName, languageCode } = await request.json();
+        const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || "1196276640235299";
+        const metaToken = env.WHATSAPP_ACCESS_TOKEN;
+
+        const payload = {
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: phone,
+          type: "template",
+          template: {
+            name: templateName,
+            language: { code: languageCode || "en" }
+          }
+        };
+
+        const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${metaToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const respData = await res.json();
+        if (respData.messages && respData.messages[0]) {
+          const wamid = respData.messages[0].id;
+          const leadId = `lead_${phone}`;
+
+          await env.DB.prepare(
+            `INSERT OR IGNORE INTO leads (id, name, status, created_at) VALUES (?, ?, 'hot', datetime('now'))`
+          ).bind(leadId, name || "Sir / Ma'am").run();
+
+          await env.DB.prepare(
+            `INSERT INTO messages (id, lead_id, sender, text, status, timestamp) VALUES (?, ?, 'agent', ?, 'sent', datetime('now'))`
+          ).bind(wamid, leadId, `[Template: ${templateName}]`).run();
+
+          return new Response(JSON.stringify({ success: true, id: wamid }), {
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        return new Response(JSON.stringify({ success: false, error: respData }), { status: 400 });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+      }
+    }
+
+    // 11. API: Broadcast Analytics & Delivery / Seen Tracking
     if (request.method === "GET" && url.pathname === "/api/broadcast-analytics") {
       try {
         const queryDate = url.searchParams.get("date") || new Date().toISOString().substring(0, 10);
-        
-        // Fetch all broadcast template messages sent on that date
         const { results } = await env.DB.prepare(`
           SELECT 
             m.id,
             m.lead_id,
             REPLACE(m.lead_id, 'lead_', '') AS phone,
-            COALESCE(l.name, 'Sir / Ma' || '''' || 'am') AS name,
+            COALESCE(l.name, 'Sir / Ma''am') AS name,
             m.text,
             m.status,
             m.timestamp
           FROM messages m
           LEFT JOIN leads l ON l.id = m.lead_id
-          WHERE m.sender = 'agent' 
+          WHERE m.sender = 'agent'
             AND m.text LIKE '[Template:%'
             AND m.timestamp LIKE ?
           ORDER BY m.timestamp DESC
         `).bind(`${queryDate}%`).all();
 
         const list = results || [];
-
-        let total = list.length;
-        let delivered = 0;
-        let read = 0;
-        let failed = 0;
-        let unread = 0;
-
-        const seenList = [];
-        const unseenList = [];
+        let delivered = 0, read = 0, failed = 0, unread = 0;
+        const seenList = [], unseenList = [];
 
         for (const item of list) {
           if (item.status === "read") {
@@ -411,7 +341,6 @@ export default {
             failed++;
             unseenList.push(item);
           } else {
-            // 'sent' status
             unread++;
             unseenList.push(item);
           }
@@ -419,29 +348,137 @@ export default {
 
         return new Response(JSON.stringify({
           date: queryDate,
-          summary: {
-            total,
-            delivered,
-            seen: read,
-            unseen: unread,
-            failed
-          },
+          summary: { total: list.length, delivered, seen: read, unseen: unread, failed },
           seenList,
           unseenList
         }), {
           headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
         });
       } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), {
-          headers: { "Content-Type": "application/json" },
-          status: 500
-        });
+        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
       }
     }
 
-    // 11. Serve Frontend UI
-    return new Response(HTML_CONTENT, {
-      headers: { "Content-Type": "text/html;charset=UTF-8" }
-    });
+    // 12. API: Fetch WhatsApp Cloud Templates
+    if (request.method === "GET" && url.pathname === "/api/templates") {
+      try {
+        const wabaId = env.WHATSAPP_BUSINESS_ACCOUNT_ID || "1214041777209148";
+        const metaToken = env.WHATSAPP_ACCESS_TOKEN;
+        const res = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?fields=name,status,language`, {
+          headers: { "Authorization": `Bearer ${metaToken}` }
+        });
+        const data = await res.json();
+        const approved = (data.data || []).filter(t => t.status === "APPROVED");
+        return new Response(JSON.stringify(approved), { headers: { "Content-Type": "application/json" } });
+      } catch (err) {
+        return new Response(JSON.stringify([]), { headers: { "Content-Type": "application/json" } });
+      }
+    }
+
+    // 13. WEBHOOK: Meta WhatsApp Webhook + Gemini AI Auto-Reply (Controlled by IS_AI_ACTIVE_GLOBAL)
+    if (url.pathname === "/webhook") {
+      if (request.method === "GET") {
+        const mode = url.searchParams.get("hub.mode");
+        const token = url.searchParams.get("hub.verify_token");
+        const challenge = url.searchParams.get("hub.challenge");
+        const expectedToken = env.WEBHOOK_VERIFY_TOKEN || "vedashree_crm_secret_2026";
+        if (mode === "subscribe" && token === expectedToken) {
+          return new Response(challenge, { status: 200 });
+        }
+        return new Response("Forbidden", { status: 403 });
+      }
+
+      if (request.method === "POST") {
+        try {
+          const body = await request.json();
+          const entry = body.entry?.[0];
+          const changes = entry?.changes?.[0];
+          const value = changes?.value;
+
+          // Message Status Update (Sent -> Delivered -> Read Blue Tick)
+          if (value?.statuses && value.statuses[0]) {
+            const statusObj = value.statuses[0];
+            const wamid = statusObj.id;
+            const newStatus = statusObj.status;
+            await env.DB.prepare(
+              `UPDATE messages SET status = ? WHERE id = ?`
+            ).bind(newStatus, wamid).run();
+          }
+
+          // Incoming Customer Message
+          if (value?.messages && value.messages[0]) {
+            const msg = value.messages[0];
+            const fromPhone = msg.from;
+            const senderName = value.contacts?.[0]?.profile?.name || "Customer";
+            const textBody = msg.text?.body || (msg.type === "image" ? "[Image received]" : "[Unsupported message]");
+            const leadId = `lead_${fromPhone}`;
+
+            // Save Lead & Message in D1
+            await env.DB.prepare(
+              `INSERT OR IGNORE INTO leads (id, name, status, created_at) VALUES (?, ?, 'hot', datetime('now'))`
+            ).bind(leadId, senderName).run();
+
+            await env.DB.prepare(
+              `UPDATE leads SET last_message = ? WHERE id = ?`
+            ).bind(textBody, leadId).run();
+
+            await env.DB.prepare(
+              `INSERT INTO messages (id, lead_id, sender, text, status, timestamp) VALUES (?, ?, 'customer', ?, 'read', datetime('now'))`
+            ).bind(msg.id, leadId, textBody).run();
+
+            // Background Web Push Notification to Admin Devices
+            try {
+              const { results: subs } = await env.DB.prepare(`SELECT * FROM push_subscriptions`).all();
+            } catch (pushErr) {
+              console.error("Push notification dispatch error:", pushErr);
+            }
+
+            // GEMINI AUTO-REPLY ONLY IF TOGGLE IS "ON"
+            const geminiKey = env.GEMINI_API_KEY || GEMINI_CONFIG.API_KEY;
+            if (IS_AI_ACTIVE_GLOBAL && textBody && !textBody.startsWith("[") && geminiKey && !geminiKey.includes("YOUR_DUMMY")) {
+              try {
+                const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{
+                      parts: [
+                        { text: GEMINI_CONFIG.SYSTEM_PROMPT },
+                        { text: `Customer Message: "${textBody}". Jawab dijiye:` }
+                      ]
+                    }]
+                  })
+                });
+                const aiData = await aiRes.json();
+                const replyText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (replyText) {
+                  const phoneId = env.WHATSAPP_PHONE_NUMBER_ID || "1196276640235299";
+                  const metaToken = env.WHATSAPP_ACCESS_TOKEN;
+                  await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${metaToken}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      messaging_product: "whatsapp",
+                      recipient_type: "individual",
+                      to: fromPhone,
+                      type: "text",
+                      text: { body: replyText }
+                    })
+                  });
+                }
+              } catch (aiErr) {
+                console.error("Gemini Auto-Reply Error:", aiErr);
+              }
+            }
+          }
+          return new Response("EVENT_RECEIVED", { status: 200 });
+        } catch (e) {
+          return new Response("Webhook processing error: " + e.message, { status: 500 });
+        }
+      }
+    }
+
+    // 14. Fallback Handler
+    return new Response("Not Found", { status: 404 });
   }
 };
