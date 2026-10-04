@@ -2,784 +2,741 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Vedashree AI WhatsApp CRM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VEDASHREE PRO CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    :root { --app-h: 100vh; }
-    @supports (height: 100dvh) { :root { --app-h: 100dvh; } }
-    html, body { height: var(--app-h); margin: 0; padding: 0; overflow: hidden; background: #080c14; font-family: system-ui, -apple-system, sans-serif; }
-    .active-tab { background: rgba(16, 185, 129, 0.2) !important; color: #34d399 !important; border-color: rgba(16, 185, 129, 0.4) !important; }
-    .flt-on { background: #10b981 !important; color: #000 !important; font-weight: 700 !important; }
-    .chat-bubble { -webkit-user-select: text; user-select: text; }
+    body { background-color: #0b1120; color: #f1f5f9; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
   </style>
 </head>
-<body class="text-slate-100 flex flex-col h-full">
+<body class="h-screen flex flex-col overflow-hidden">
 
-  <!-- LOGIN SCREEN MODAL -->
-  <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080c14]/95 backdrop-blur-md">
-    <div class="w-full max-w-xs bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl text-center">
-      <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center mx-auto mb-3">V</div>
-      <h2 class="text-sm font-bold text-white tracking-wide">VEDASHREE CRM AUTH</h2>
-      <p class="text-[11px] text-slate-400 mb-4">Enterprise Protected</p>
-      <div class="space-y-3">
-        <div class="relative">
-          <input type="password" id="p-input" placeholder="Enter Password..." autocapitalize="none" autocomplete="off" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 pr-9 text-xs text-center text-white focus:outline-none focus:border-emerald-500">
-          <button type="button" id="b-toggle-eye" onclick="togglePasswordVisibility()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">👁️</button>
-        </div>
-        <p id="p-err" class="text-[11px] text-rose-400 font-semibold hidden">❌ Galat Password! Dobara check karein.</p>
-        <button type="button" id="b-login" onclick="forceLoginNow()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition">Login Dashboard</button>
+  <!-- Top Navigation Header -->
+  <header class="bg-[#0f172a] border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-lg">
+        V
       </div>
-      <div class="text-[10px] text-slate-500 mt-4">Default Password: <span class="font-mono text-emerald-400">admin</span></div>
-    </div>
-  </div>
-
-  <!-- CHANGE PASSWORD MODAL -->
-  <div id="pwd-change-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080c14]/90 backdrop-blur-sm">
-    <div class="w-full max-w-xs bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl text-center space-y-3">
-      <h3 class="text-xs font-bold text-white uppercase tracking-wider">Change Dashboard Password</h3>
-      <input type="password" id="old-pwd" placeholder="Old Password" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-      <input type="password" id="new-pwd" placeholder="New Password (min 4 chars)..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-      <div id="pwd-modal-err" class="text-[10px] text-rose-400 hidden"></div>
-      <div class="flex space-x-2">
-        <button type="button" id="b-save-pwd" class="flex-1 bg-emerald-600 font-bold py-2 rounded-lg text-xs text-white">Save</button>
-        <button type="button" id="b-cancel-pwd" class="flex-1 bg-slate-800 font-bold py-2 rounded-lg text-xs text-slate-300">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOP HEADER -->
-  <header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
-    <div class="flex items-center space-x-2.5">
-      <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-sm shadow-inner">V</div>
       <div>
-        <h1 class="text-xs font-bold text-white">VEDASHREE PRO</h1>
-        <span class="text-[9px] text-emerald-400 font-mono">Meta Cloud API</span>
+        <h1 class="text-sm font-semibold text-slate-100 flex items-center gap-2">
+          VEDASHREE PRO
+          <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-normal">Meta Cloud API</span>
+        </h1>
       </div>
     </div>
-    <div class="flex items-center space-x-2">
-      <button id="b-set" class="px-2 py-1 rounded-lg bg-slate-800 text-[10px] text-slate-300 border border-slate-700">Settings</button>
-      <button id="b-out" class="p-1.5 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 text-xs">Logout</button>
+    <div class="flex items-center gap-2">
+      <button onclick="toggleSettingsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md border border-slate-700 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-gear"></i> Settings
+      </button>
+      <button onclick="window.location.reload()" class="text-xs bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-800/40 px-3 py-1.5 rounded-md transition">
+        Logout
+      </button>
     </div>
   </header>
 
-  <!-- TABS NAVIGATION -->
-  <nav class="bg-slate-900/90 border-b border-slate-800 px-2 py-1.5 flex space-x-1.5 shrink-0 text-xs font-medium overflow-x-auto">
-    <button id="t-inbox" class="px-3 py-1.5 rounded-lg active-tab flex items-center space-x-1.5 whitespace-nowrap">
-      <span>Live Chat</span>
-      <span id="inbox-badge" class="bg-emerald-500 text-black text-[9px] font-bold px-1.5 rounded-full">0</span>
+  <!-- Navigation Tabs -->
+  <nav class="bg-[#0b1329] border-b border-slate-800 px-4 flex gap-2 shrink-0">
+    <button id="tab-livechat" onclick="switchMainTab('livechat')" class="px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2">
+      Live Chat <span id="leads-count-badge" class="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded-full text-[10px]">0</span>
     </button>
-    <button id="t-broadcast" class="px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5 whitespace-nowrap">
-      <span>Excel Broadcast</span>
+    <button id="tab-broadcast" onclick="switchMainTab('broadcast')" class="px-4 py-2.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500 flex items-center gap-2">
+      Excel Broadcast
     </button>
-    <button id="t-leads" class="px-3 py-1.5 rounded-lg text-slate-400 flex items-center space-x-1.5 whitespace-nowrap">
-      <span>Pipeline</span>
+    <button id="tab-pipeline" onclick="switchMainTab('pipeline')" class="px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent">
+      Pipeline
     </button>
   </nav>
 
   <!-- MAIN CONTAINER -->
-  <main class="flex-1 relative overflow-hidden flex flex-col min-h-0 bg-[#080c14]">
+  <main class="flex-1 overflow-hidden relative">
 
-    <!-- TAB 1: INBOX & CHAT -->
-    <div id="v-inbox" class="flex-1 flex flex-col overflow-hidden min-h-0">
-      <div id="box-contacts" class="flex-1 overflow-y-auto divide-y divide-slate-800/80"></div>
+    <!-- LIVE CHAT VIEW -->
+    <div id="view-livechat" class="hidden h-full flex">
+      <!-- Left Leads List -->
+      <aside class="w-80 border-r border-slate-800 flex flex-col bg-[#0b1120]">
+        <div class="p-3 border-b border-slate-800">
+          <input type="text" id="leadSearchInput" onkeyup="filterLeadsUI()" placeholder="Search leads by name/phone..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+        </div>
+        <div id="leadsListContainer" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
+          <!-- Dynamic Leads Here -->
+        </div>
+      </aside>
 
-      <div id="box-chat" class="hidden flex-1 flex-col overflow-hidden min-h-0 bg-[#080c14]">
-        <div class="h-12 px-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
-          <div class="flex items-center space-x-2">
-            <button id="b-back" class="p-1.5 text-slate-400 font-bold text-xs bg-slate-800 rounded-lg">&larr; Back</button>
+      <!-- Right Chat Window -->
+      <section class="flex-1 flex flex-col bg-[#070b14]">
+        <div id="chatHeader" class="p-3 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button onclick="mobileBackToLeads()" class="md:hidden text-xs bg-slate-800 px-2.5 py-1 rounded text-slate-300">← Back</button>
             <div>
-              <div id="head-name" class="text-xs font-bold text-white"></div>
-              <div id="head-phone" class="text-[9px] text-slate-400 font-mono"></div>
+              <h2 id="activeChatName" class="text-xs font-bold text-slate-200">Select a lead to chat</h2>
+              <p id="activeChatPhone" class="text-[11px] text-slate-400">--</p>
             </div>
           </div>
-          <div class="flex items-center space-x-1.5">
-            <span id="head-badge" class="text-[9px] px-1.5 py-0.5 rounded border font-mono"></span>
+          <span id="activeChatStage" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">hot</span>
+        </div>
+
+        <div id="chatMessages" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+          <div class="text-center text-xs text-slate-500 mt-20">Click on any customer lead to view chat history</div>
+        </div>
+
+        <!-- Quick actions & Chat Input -->
+        <div class="p-3 bg-[#0b1120] border-t border-slate-800">
+          <div class="flex gap-2 mb-2">
+            <button onclick="sendQuickText('📦 Catalog: check out our wellness products at vedashree.gt.tc')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-1 rounded border border-slate-700">📦 Catalog</button>
+            <button onclick="sendQuickText('💳 UPI ID: vedashree@upi. Kindly share screenshot after payment.')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-1 rounded border border-slate-700">💳 UPI</button>
+            <button onclick="sendQuickText('🚚 Your order has been dispatched via Delhivery. Tracking will update shortly.')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-1 rounded border border-slate-700">🚚 Tracking</button>
+            <button onclick="generateAiDraftReply()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-purple-300 px-2 py-1 rounded border border-slate-700">✨ AI Draft</button>
+          </div>
+          <div class="flex gap-2">
+            <input type="text" id="chatInputText" onkeydown="if(event.key==='Enter') send1to1Message()" placeholder="Type reply..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+            <button onclick="send1to1Message()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs transition">Send</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- EXCEL BROADCAST VIEW -->
+    <div id="view-broadcast" class="h-full overflow-y-auto custom-scroll p-4 max-w-4xl mx-auto space-y-4">
+      
+      <!-- Top Engine Card -->
+      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+            BROADCAST ENGINE (LIVE)
+          </h2>
+          <span id="broadcastEngineStatus" class="text-[11px] text-emerald-400 font-medium">Idle</span>
+        </div>
+
+        <!-- 4 Live Counters (QUEUE replaced with DELIVERED) -->
+        <div class="grid grid-cols-4 gap-3 mb-4 text-center">
+          <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg">
+            <p class="text-[10px] text-slate-400 font-semibold uppercase">TOTAL</p>
+            <p id="cntTotal" class="text-lg font-bold text-slate-100">0</p>
+          </div>
+          <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg">
+            <p class="text-[10px] text-emerald-400 font-semibold uppercase">SENT</p>
+            <p id="cntSent" class="text-lg font-bold text-emerald-400">0</p>
+          </div>
+          <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg">
+            <p class="text-[10px] text-teal-400 font-semibold uppercase">DELIVERED</p>
+            <p id="cntDelivered" class="text-lg font-bold text-teal-400">0</p>
+          </div>
+          <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg">
+            <p class="text-[10px] text-red-400 font-semibold uppercase">FAILED</p>
+            <p id="cntFailed" class="text-lg font-bold text-red-400">0</p>
           </div>
         </div>
 
-        <div id="msg-container" class="flex-1 overflow-y-auto space-y-2.5 min-h-0 p-3"></div>
-
-        <div id="chip-media" class="hidden px-3 py-1 bg-slate-900 border-t border-slate-800 flex justify-between items-center text-xs">
-          <span id="chip-txt" class="truncate text-xs">File Ready</span>
-          <button id="b-del-med" class="text-rose-400 font-bold ml-2">&times;</button>
+        <!-- Target Switcher Tabs -->
+        <div class="grid grid-cols-2 gap-2 mb-4">
+          <button id="btnSwitchFile" onclick="setBroadcastMode('file')" class="text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-file-excel"></i> Excel / CSV
+          </button>
+          <button id="btnSwitchManual" onclick="setBroadcastMode('manual')" class="text-xs font-semibold py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-2">
+            ✍️ Manual Numbers
+          </button>
         </div>
 
-        <div class="px-2 py-1 bg-slate-900/80 border-t border-slate-800/80 flex space-x-1 overflow-x-auto shrink-0 text-xs">
-          <button onclick="setReply('catalog')" class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-100 whitespace-nowrap">📦 Catalog</button>
-          <button onclick="setReply('upi')" class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-100 whitespace-nowrap">💳 UPI</button>
-          <button onclick="setReply('dispatch')" class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-100 whitespace-nowrap">🚚 Tracking</button>
-          <button id="b-ai" class="px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap">✨ AI Draft</button>
+        <!-- File Upload Section -->
+        <div id="sectionFileMode" class="border-2 border-dashed border-slate-700/80 rounded-xl p-6 text-center bg-slate-900/30 mb-4">
+          <p class="text-xs font-medium text-slate-300 mb-2">Upload Contacts Sheet (.xlsx, .csv)</p>
+          <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event)" class="hidden">
+          <button onclick="document.getElementById('excelFileInput').click()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-lg font-medium transition">
+            Browse File
+          </button>
+          <p id="fileUploadNotice" class="text-[11px] text-slate-400 mt-2">Column with phone numbers (Phone/Mobile/Contact) will be read automatically.</p>
         </div>
 
-        <form id="f-chat" class="p-2 bg-slate-900 border-t border-slate-800 flex items-center space-x-2 shrink-0 pb-safe">
-          <input type="file" id="in-file" class="hidden" accept="image/*,video/*,audio/*,application/pdf">
-          <button type="button" id="b-pick-file" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400">📎</button>
-          <input type="text" id="in-msg" placeholder="Type reply..." class="flex-1 bg-slate-950 text-white border border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
-          <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2 rounded-lg text-xs">Send</button>
-        </form>
-      </div>
-    </div>
-    <!-- TAB 2: BROADCAST -->
-    <div id="v-broadcast" class="hidden flex-1 p-3 overflow-y-auto space-y-3 min-h-0">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 space-y-3">
-        <div class="flex justify-between items-center">
-          <h2 class="text-xs font-bold text-white uppercase tracking-wider">Broadcast Engine (Live)</h2>
-          <span id="log-status" class="text-[10px] text-emerald-400 font-mono">Idle</span>
-        </div>
-
-        <!-- Metric Counter Bar -->
-        <div class="grid grid-cols-4 gap-2 text-center text-xs font-mono">
-          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800"><div class="text-slate-400 text-[9px]">TOTAL</div><div id="cnt-total" class="font-bold text-white">0</div></div>
-          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800"><div class="text-emerald-400 text-[9px]">SENT</div><div id="cnt-sent" class="font-bold text-emerald-400">0</div></div>
-          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800"><div class="text-rose-400 text-[9px]">FAILED</div><div id="cnt-failed" class="font-bold text-rose-400">0</div></div>
-          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800"><div class="text-sky-400 text-[9px]">QUEUE</div><div id="cnt-queue" class="font-bold text-sky-400">0</div></div>
-        </div>
-
-        <!-- Mode Toggle: Sheet vs Manual -->
-        <div class="flex space-x-1 border-b border-slate-800 pb-2">
-          <button type="button" id="btn-mode-sheet" class="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs">📄 Excel / CSV</button>
-          <button type="button" id="btn-mode-manual" class="flex-1 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold text-xs">✍️ Manual Numbers</button>
-        </div>
-
-        <!-- File Upload Box -->
-        <div id="sec-sheet" class="border-2 border-dashed border-slate-700 rounded-xl p-3 text-center bg-[#080c14]">
-          <input type="file" id="in-excel" accept=".xlsx, .xls, .csv" class="hidden">
-          <p id="lbl-excel" class="text-xs font-semibold text-slate-300 mb-0.5">Upload Contacts Sheet (.xlsx, .csv)</p>
-          <button type="button" id="b-pick-excel" class="px-3 py-1 bg-slate-800 border border-slate-700 text-xs font-bold text-white rounded-lg mt-1">Browse File</button>
-        </div>
-
-        <!-- Manual Numbers Box -->
-        <div id="sec-manual" class="hidden space-y-2">
-          <textarea id="txt-manual-phones" rows="3" placeholder="Paste numbers (e.g. 919599433875, 918510893875 ya ek ke niche ek)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"></textarea>
-          <button type="button" id="b-add-manual" class="w-full bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 py-1.5 rounded-lg hover:bg-slate-700">Add Numbers To Queue</button>
+        <!-- Manual Numbers Section -->
+        <div id="sectionManualMode" class="hidden mb-4">
+          <textarea id="manualNumbersText" rows="3" placeholder="Paste numbers (e.g. 919599433875, 918510893875 ya ek ke niche ek)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
+          <button onclick="parseManualNumbers()" class="mt-2 w-full text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 py-2 rounded-lg font-medium transition">
+            Add Numbers To Queue
+          </button>
         </div>
 
         <!-- Template Selector -->
-        <div class="space-y-1">
-          <div class="flex justify-between items-center">
-            <label class="text-[10px] text-slate-400 font-semibold uppercase">Select Approved Template</label>
-            <button type="button" id="b-refresh-tmpl" class="text-[10px] text-emerald-400 font-mono hover:underline">🔄 Refresh</button>
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">SELECT APPROVED TEMPLATE</label>
+            <button onclick="loadApprovedTemplates()" class="text-[11px] text-emerald-400 hover:underline flex items-center gap-1">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh
+            </button>
           </div>
-          <select id="sel-template" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
-            <option value="vedashree_vitality_consult_v1" data-lang="en">vedashree_vitality_consult_v1 (en)</option>
+          <select id="broadcastTemplateSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+            <option value="vedashree_vitality_consult_v1|en">vedashree_vitality_consult_v1 (en)</option>
           </select>
         </div>
 
-        <button id="b-send-all" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2.5 rounded-lg text-xs transition">Start Real WhatsApp Broadcast</button>
+        <button id="btnStartBroadcast" onclick="startBroadcastQueue()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-lg text-xs tracking-wide transition shadow-lg">
+          Start Real WhatsApp Broadcast
+        </button>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden mb-6">
-        <div class="p-2.5 border-b border-slate-800 flex justify-between items-center bg-[#080c14]">
-          <span class="text-xs font-bold text-white">Live Meta Delivery Log</span>
-          <button id="b-csv" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-[10px] text-slate-300 rounded">Export CSV Report</button>
+      <!-- Professional Analytics & Seen Tracking Panel -->
+      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 shadow-lg space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-chart-pie text-emerald-400"></i> Broadcast Seen / Unseen Tracking
+            </h3>
+            <p class="text-[11px] text-slate-400">Check physical Blue Ticks (Seen) vs Undelivered/Unseen</p>
+          </div>
+          <!-- Date Filter Picker -->
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <label class="text-[11px] text-slate-400 shrink-0">Date:</label>
+            <input type="date" id="analyticsDateInput" onchange="fetchBroadcastAnalytics()" class="bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+            <button onclick="fetchBroadcastAnalytics()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded-md border border-slate-700">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+          </div>
         </div>
-        <div id="log-rows" class="divide-y divide-slate-800 max-h-56 overflow-y-auto"></div>
+
+        <!-- Seen vs Unseen Cards & Actions -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Seen Card -->
+          <div class="bg-slate-900/60 border border-blue-500/30 rounded-lg p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+                <span class="text-xs font-semibold text-slate-200">Seen (Read Blue Tick)</span>
+              </div>
+              <span id="statSeenCount" class="text-base font-bold text-blue-400">0</span>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button onclick="openDetailsModal('seen')" class="flex-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded border border-slate-700">
+                View Seen List
+              </button>
+              <button onclick="exportAnalyticsCSV('seen')" class="text-[11px] bg-blue-950/60 hover:bg-blue-900/60 text-blue-300 px-3 py-1.5 rounded border border-blue-800/40 flex items-center gap-1">
+                <i class="fa-solid fa-file-excel"></i> Export
+              </button>
+            </div>
+          </div>
+
+          <!-- Unseen Card -->
+          <div class="bg-slate-900/60 border border-amber-500/30 rounded-lg p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <span class="text-xs font-semibold text-slate-200">Unseen / Pending</span>
+              </div>
+              <span id="statUnseenCount" class="text-base font-bold text-amber-400">0</span>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button onclick="openDetailsModal('unseen')" class="flex-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded border border-slate-700">
+                View Unseen List
+              </button>
+              <button onclick="exportAnalyticsCSV('unseen')" class="text-[11px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 px-3 py-1.5 rounded border border-amber-800/40 flex items-center gap-1">
+                <i class="fa-solid fa-file-excel"></i> Export
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Meta Delivery Log Table -->
+      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 shadow-lg">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Live Meta Delivery Log</h3>
+          <button onclick="exportCurrentLogCSV()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700">
+            Export CSV Report
+          </button>
+        </div>
+        <div class="overflow-x-auto max-h-60 custom-scroll border border-slate-800 rounded-lg">
+          <table class="w-full text-left text-[11px] text-slate-300">
+            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] sticky top-0">
+              <tr>
+                <th class="p-2">Number</th>
+                <th class="p-2">Name</th>
+                <th class="p-2">Status</th>
+                <th class="p-2">Time</th>
+              </tr>
+            </thead>
+            <tbody id="broadcastLogTableBody" class="divide-y divide-slate-800/60 font-mono">
+              <tr>
+                <td colspan="4" class="p-3 text-center text-slate-500 font-sans">No broadcast dispatched in this session</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- TAB 3: PIPELINE -->
-    <div id="v-leads" class="hidden flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0">
-      <div class="flex justify-between items-center">
-        <h2 class="text-xs font-bold text-white uppercase tracking-wider">Lead Attribution Pipeline</h2>
-        <span class="text-[10px] text-emerald-400 font-mono">D1 Database Sync</span>
+    <!-- PIPELINE VIEW -->
+    <div id="view-pipeline" class="hidden h-full p-4 overflow-x-auto custom-scroll">
+      <div class="flex gap-4 h-full min-w-[700px]">
+        <div class="flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col">
+          <h4 class="text-xs font-bold text-amber-400 mb-2">🔥 Hot Leads (<span id="countHot">0</span>)</h4>
+          <div id="pipeHot" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+        </div>
+        <div class="flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col">
+          <h4 class="text-xs font-bold text-blue-400 mb-2">💬 In Consultation (<span id="countConsult">0</span>)</h4>
+          <div id="pipeConsult" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+        </div>
+        <div class="flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col">
+          <h4 class="text-xs font-bold text-emerald-400 mb-2">✅ Converted (<span id="countConverted">0</span>)</h4>
+          <div id="pipeConverted" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+        </div>
       </div>
-      <div class="flex space-x-1 overflow-x-auto text-[10px] font-semibold py-0.5">
-        <button onclick="flt('all')" id="f-all" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 flt-on whitespace-nowrap">All</button>
-        <button onclick="flt('hot')" id="f-hot" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 whitespace-nowrap">🔥 Hot</button>
-        <button onclick="flt('converted')" id="f-converted" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 whitespace-nowrap">✅ Converted</button>
-        <button onclick="flt('optout')" id="f-optout" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 whitespace-nowrap">🚫 Optout</button>
-      </div>
-      <div id="leads-container" class="space-y-2 mb-6"></div>
     </div>
-
   </main>
 
+  <!-- Seen / Unseen Modal Popup -->
+  <div id="analyticsModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#0f172a] border border-slate-800 rounded-xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <h3 id="modalTitle" class="text-xs font-bold text-slate-100 uppercase tracking-wider">Broadcast Details</h3>
+        <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-slate-100 text-base">&times;</button>
+      </div>
+      <div class="flex-1 overflow-y-auto custom-scroll p-4">
+        <div class="overflow-x-auto border border-slate-800 rounded-lg">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px]">
+              <tr>
+                <th class="p-2.5">Phone</th>
+                <th class="p-2.5">Name</th>
+                <th class="p-2.5">Status</th>
+                <th class="p-2.5">Sent Time</th>
+              </tr>
+            </thead>
+            <tbody id="modalTableBody" class="divide-y divide-slate-800 font-mono">
+              <!-- Dynamic Rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="p-3 border-t border-slate-800 flex justify-end gap-2">
+        <button id="btnModalExport" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded transition">
+          Export This List (CSV)
+        </button>
+        <button onclick="closeDetailsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal (Password & Token Config) -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-5 w-full max-w-md space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-xs font-bold text-slate-100 uppercase tracking-wider">System Settings</h3>
+        <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-100">&times;</button>
+      </div>
+  <div>
+        <label class="text-[11px] text-slate-400 block mb-1">WhatsApp Cloud API Phone ID</label>
+        <input type="text" value="1196276640235299" disabled class="w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-400">
+      </div>
+      <div>
+        <label class="text-[11px] text-slate-400 block mb-1">Webhook Verify Token</label>
+        <input type="text" value="vedashree_crm_secret_2026" disabled class="w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-400">
+      </div>
+      <div class="text-[11px] text-emerald-400/90 bg-emerald-950/20 p-2.5 rounded border border-emerald-800/30">
+        ✓ Cloudflare Worker & D1 Database are active and handling status tracking.
+      </div>
+      <div class="flex justify-end">
+        <button onclick="toggleSettingsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-1.5 rounded">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
   <script>
-    function fH() { document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px'); }
-    window.addEventListener('resize', fH); fH();
+    let allLeads = [];
+    let activeLead = null;
+    let broadcastQueue = [];
+    let currentBroadcastLogs = [];
+    let latestAnalyticsData = { seenList: [], unseenList: [] };
 
-    // AUTO UNLOCK IF ALREADY LOGGED IN
-    if (sessionStorage.getItem('crm_active') === '1' || localStorage.getItem('crm_ok') === '1') {
-      const modal = document.getElementById('login-modal');
-      if (modal) modal.style.display = 'none';
-    }
+    // Initialize application
+    window.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().substring(0, 10);
+      document.getElementById("analyticsDateInput").value = today;
 
-    // Toggle Password Visibility (Eye Icon)
-    window.togglePasswordVisibility = function() {
-      const pIn = document.getElementById('p-input');
-      const eyeBtn = document.getElementById('b-toggle-eye');
-      if (pIn.type === "password") {
-        pIn.type = "text";
-        eyeBtn.innerText = "🙈";
-      } else {
-        pIn.type = "password";
-        eyeBtn.innerText = "👁️";
-      }
-    };
-
-    // DIRECT FOOLPROOF LOGIN FUNCTION WITH ALERT
-    window.forceLoginNow = function() {
-      const inEl = document.getElementById('p-input');
-      const val = inEl ? inEl.value.trim().toLowerCase() : '';
-      const saved = (localStorage.getItem('crm_p') || 'admin').toLowerCase();
-
-      if (val === 'admin' || val === saved || val === 'admin ') {
-        sessionStorage.setItem('crm_active', '1');
-        localStorage.setItem('crm_ok', '1');
-        const modal = document.getElementById('login-modal');
-        if (modal) modal.style.display = 'none';
-        loadLiveCRMData();
-      } else {
-        const err = document.getElementById('p-err');
-        if (err) err.classList.remove('hidden');
-        alert("❌ Galat Password! Kripya sahi password dalein.");
-      }
-    };
-
-    document.getElementById('p-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') forceLoginNow();
+      loadLeads();
+      loadApprovedTemplates();
+      fetchBroadcastAnalytics();
+      setInterval(loadLeads, 8000);
+      setInterval(fetchBroadcastAnalytics, 15000);
     });
 
-    document.getElementById('b-out').onclick = () => {
-      sessionStorage.removeItem('crm_active');
-      localStorage.removeItem('crm_ok');
-      location.reload();
-    };
+    // 1. Navigation Switching
+    function switchMainTab(tab) {
+      document.getElementById("view-livechat").classList.add("hidden");
+      document.getElementById("view-broadcast").classList.add("hidden");
+      document.getElementById("view-pipeline").classList.add("hidden");
 
-    document.getElementById('b-set').onclick = () => {
-      document.getElementById('old-pwd').value = '';
-      document.getElementById('new-pwd').value = '';
-      document.getElementById('pwd-modal-err').classList.add('hidden');
-      document.getElementById('pwd-change-modal').classList.remove('hidden');
-    };
+      document.getElementById("tab-livechat").className = "px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2";
+      document.getElementById("tab-broadcast").className = "px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent";
+      document.getElementById("tab-pipeline").className = "px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent";
 
-    document.getElementById('b-cancel-pwd').onclick = () => {
-      document.getElementById('pwd-change-modal').classList.add('hidden');
-    };
-
-    document.getElementById('b-save-pwd').onclick = () => {
-      const oldVal = document.getElementById('old-pwd').value.trim();
-      const newVal = document.getElementById('new-pwd').value.trim();
-      const errBox = document.getElementById('pwd-modal-err');
-      const cur = localStorage.getItem('crm_p') || 'admin';
-
-      if (oldVal.toLowerCase() !== cur.toLowerCase()) {
-        errBox.innerText = "❌ Purana password galat hai!";
-        errBox.classList.remove('hidden');
-        alert("❌ Purana password galat hai!");
-        return;
+      if (tab === "livechat") {
+        document.getElementById("view-livechat").classList.remove("hidden");
+        document.getElementById("tab-livechat").className = "px-4 py-2.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500 flex items-center gap-2";
+      } else if (tab === "broadcast") {
+        document.getElementById("view-broadcast").classList.remove("hidden");
+        document.getElementById("tab-broadcast").className = "px-4 py-2.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500";
+        fetchBroadcastAnalytics();
+      } else if (tab === "pipeline") {
+        document.getElementById("view-pipeline").classList.remove("hidden");
+        document.getElementById("tab-pipeline").className = "px-4 py-2.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500";
+        renderPipelineUI();
       }
-      if (!newVal || newVal.length < 4) {
-        errBox.innerText = "❌ Naya password kam se kam 4 akshar ka ho!";
-        errBox.classList.remove('hidden');
-        alert("❌ Naya password kam se kam 4 akshar ka hona chahiye!");
-        return;
-      }
-      localStorage.setItem('crm_p', newVal);
-      alert("✅ Password safaltapoorvak badal gaya hai!");
-      document.getElementById('pwd-change-modal').classList.add('hidden');
-    };
-    // --- REAL DATABASE ENGINE (D1 SYNC) ---
-    let leads = [];
-    let chatDB = {};
-    let readCountDB = JSON.parse(localStorage.getItem('crm_read_counts') || '{}');
-    let bList = [];
-    let bTemplates = [];
-    let curLead = null, curMed = null, curFlt = 'all';
-
-    // HELPER: Format UTC DB Time to Indian Standard Time (IST) 12-hour AM/PM
-    function formatISTTime(utcStr) {
-      if (!utcStr || utcStr === 'Live') return 'Live';
-      let d = new Date(utcStr.includes('Z') ? utcStr : utcStr.replace(' ', 'T') + 'Z');
-      if (isNaN(d.getTime())) return utcStr;
-      return d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
     }
 
-    // HELPER: Date Divider (Today, Yesterday, or DD MMM YYYY) in IST
-    function getISTDateLabel(utcStr) {
-      if (!utcStr || utcStr === 'Live') return '';
-      let d = new Date(utcStr.includes('Z') ? utcStr : utcStr.replace(' ', 'T') + 'Z');
-      if (isNaN(d.getTime())) return '';
-      let msgDateStr = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-      let todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-      
-      let msgDay = new Date(msgDateStr);
-      let todayDay = new Date(todayStr);
-      let diffDays = Math.round((todayDay - msgDay) / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 0) return 'Today';
-      if (diffDays === 1) return 'Yesterday';
-      return d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
-    }
-
-    async function loadLiveCRMData() {
+    // 2. Fetch Leads & Chat Logic
+    async function loadLeads() {
       try {
-        const res = await fetch('/api/leads');
-        if (res.ok) {
-          const data = await res.json();
-          leads = data.map(l => ({
-            id: l.phone,
-            name: l.name || '',
-            phone: l.phone,
-            src: l.source || 'Direct WhatsApp',
-            st: l.stage || l.status || 'hot',
-            t: l.created_at ? formatISTTime(l.created_at) : 'Live'
-          }));
-          const badge = document.getElementById('inbox-badge');
-          if (badge) badge.innerText = leads.length;
-          renderInboxList();
-          renderPipeline();
-        }
-      } catch (err) {}
+        const res = await fetch("/api/leads");
+        if (!res.ok) return;
+        allLeads = await res.json();
+        document.getElementById("leads-count-badge").innerText = allLeads.length;
+        renderLeadsList(allLeads);
+      } catch (e) {
+        console.error("Leads fetch error:", e);
+      }
     }
 
-    async function loadChatMessages(phone, forceScrollBottom = false) {
-      try {
-        const res = await fetch('/api/messages?phone=' + phone);
-        if (res.ok) {
-          const data = await res.json();
-          chatDB[phone] = data.map(m => ({
-            s: (m.sender === 'agent' || m.sender === 'me') ? 'm' : 'c',
-            txt: m.message || m.text,
-            raw_time: m.created_at || m.timestamp,
-            t: formatISTTime(m.created_at || m.timestamp)
-          }));
-          if (curLead && curLead.phone === phone) {
-            readCountDB[phone] = chatDB[phone].length;
-            localStorage.setItem('crm_read_counts', JSON.stringify(readCountDB));
-          }
-          renderMessages(forceScrollBottom);
-        }
-      } catch (err) {}
-    }
-
-    function bStyle(s) {
-      if (!s) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-      if (s.includes("Facebook")) return "bg-blue-500/10 text-blue-400 border-blue-500/30";
-      if (s.includes("Instagram")) return "bg-pink-500/10 text-pink-400 border-pink-500/30";
-      if (s.includes("Website")) return "bg-amber-500/10 text-amber-400 border-amber-500/30";
-      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-    }
-
-    function stBadge(st) {
-      if (st === "hot") return `<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">🔥 Hot</span>`;
-      if (st === "converted") return `<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">✅ Converted</span>`;
-      return `<span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">🚫 Optout</span>`;
-    }
-
-    function nav(tab) {
-      ['inbox', 'broadcast', 'leads'].forEach(t => {
-        document.getElementById('v-' + t).classList.add('hidden');
-        document.getElementById('t-' + t).classList.remove('active-tab');
-      });
-      document.getElementById('v-' + tab).classList.remove('hidden');
-      document.getElementById('t-' + tab).classList.add('active-tab');
-      if (tab === 'broadcast') renderBLog();
-      if (tab === 'leads') renderPipeline();
-    }
-
-    document.getElementById('t-inbox').onclick = () => nav('inbox');
-    document.getElementById('t-broadcast').onclick = () => nav('broadcast');
-    document.getElementById('t-leads').onclick = () => nav('leads');
-
-    function renderInboxList() {
-      const cont = document.getElementById('box-contacts');
-      if (!cont) return;
-      if (leads.length === 0) {
-        cont.innerHTML = '<div class="p-6 text-center text-xs text-slate-500">Koi live customer message nahi mila abhi tak.</div>';
+    function renderLeadsList(leads) {
+      const container = document.getElementById("leadsListContainer");
+      if (!leads.length) {
+        container.innerHTML = '<div class="text-center text-xs text-slate-500 p-4">No leads recorded yet</div>';
         return;
       }
-      cont.innerHTML = leads.map(c => {
-        const total = (chatDB[c.phone] || []).length;
-        const read = readCountDB[c.phone] || 0;
-        const unread = Math.max(0, total - read);
-        const unreadBadge = unread > 0 ? `<span class="bg-emerald-500 text-black text-[10px] font-bold px-1.5 py-0.2 rounded-full shrink-0">${unread}</span>` : '';
+      container.innerHTML = leads.map(l => `
+        <div onclick="selectActiveLead('${l.phone}')" class="p-2.5 rounded-lg cursor-pointer transition ${activeLead?.phone === l.phone ? 'bg-emerald-950/40 border border-emerald-500/40' : 'bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/60'}">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold text-slate-200">${l.name || 'Sir / Ma\'am'}</span>
+            <span class="text-[10px] text-slate-500">${(l.created_at || '').substring(11, 16)}</span>
+          </div>
+          <div class="text-[11px] text-emerald-400 font-mono mb-1">+${l.phone}</div>
+          <div class="text-[11px] text-slate-400 truncate">${l.last_message || 'No messages yet'}</div>
+        </div>
+      `).join("");
+    }
 
-        return `
-          <div onclick="openChat('${c.id}')" class="p-3.5 flex items-start space-x-3 active:bg-slate-800 transition cursor-pointer">
-            <div class="w-10 h-10 rounded-xl bg-slate-800 text-white font-bold flex items-center justify-center text-xs shrink-0">${c.name ? c.name.substring(0,2).toUpperCase() : 'WA'}</div>
-            <div class="flex-1 min-w-0">
-              <div class="flex justify-between items-baseline mb-0.5">
-                <h4 class="text-xs font-bold text-white truncate">${c.name || c.phone}</h4>
-                <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] text-slate-500 font-mono">${c.t}</span>
-                  ${unreadBadge}
+    function filterLeadsUI() {
+      const q = document.getElementById("leadSearchInput").value.toLowerCase();
+      const filtered = allLeads.filter(l => (l.name || '').toLowerCase().includes(q) || (l.phone || '').includes(q));
+      renderLeadsList(filtered);
+    }
+
+    async function selectActiveLead(phone) {
+      activeLead = allLeads.find(l => l.phone === phone) || { phone: phone, name: 'Customer' };
+      document.getElementById("activeChatName").innerText = activeLead.name || 'Sir / Ma\'am';
+      document.getElementById("activeChatPhone").innerText = `+${activeLead.phone}`;
+      document.getElementById("activeChatStage").innerText = activeLead.status || 'hot';
+      renderLeadsList(allLeads);
+      await loadChatMessages();
+    }
+
+    async function loadChatMessages() {
+      if (!activeLead) return;
+      try {
+        const res = await fetch(`/api/messages?phone=${activeLead.phone}`);
+        if (!res.ok) return;
+        const msgs = await res.json();
+        const container = document.getElementById("chatMessages");
+        if (!msgs.length) {
+          container.innerHTML = '<div class="text-center text-xs text-slate-500 mt-20">No conversation history yet.</div>';
+          return;
+        }
+        container.innerHTML = msgs.map(m => {
+          const isAgent = m.sender === 'agent';
+          return `
+            <div class="flex ${isAgent ? 'justify-end' : 'justify-start'}">
+              <div class="max-w-[75%] rounded-xl px-3 py-2 text-xs ${isAgent ? 'bg-emerald-700/80 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'}">
+                <p class="whitespace-pre-wrap">${m.text || m.message}</p>
+                <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-300/70 font-mono">
+                  <span>${(m.created_at || '').substring(11, 16)}</span>
+                  ${isAgent ? `<span class="${m.status === 'read' ? 'text-blue-300' : 'text-slate-300'}">✓✓</span>` : ''}
                 </div>
               </div>
-              <p class="text-[11px] text-slate-400 truncate mb-1">${c.name ? c.phone : ''}</p>
-              <div class="flex items-center space-x-1.5">
-                <span class="text-[9px] px-1.5 py-0.5 rounded border font-mono ${bStyle(c.src)}">${c.src}</span>
-                ${stBadge(c.st)}
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    window.openChat = function(id) {
-      curLead = leads.find(l => l.id === id);
-      if (!curLead) return;
-      document.getElementById('head-name').innerText = curLead.name || curLead.phone;
-      document.getElementById('head-phone').innerText = curLead.name ? ('+' + curLead.phone) : '';
-      document.getElementById('head-badge').className = "text-[9px] px-1.5 py-0.5 rounded border font-mono " + bStyle(curLead.src);
-      document.getElementById('head-badge').innerText = curLead.st;
-      document.getElementById('box-contacts').classList.add('hidden');
-      document.getElementById('box-chat').classList.remove('hidden');
-      document.getElementById('box-chat').classList.add('flex');
-      loadChatMessages(curLead.phone, true);
-    };
-
-    document.getElementById('b-back').onclick = () => {
-      curLead = null;
-      document.getElementById('box-chat').classList.add('hidden');
-      document.getElementById('box-chat').classList.remove('flex');
-      document.getElementById('box-contacts').classList.remove('hidden');
-      loadLiveCRMData();
-    };
-
-    function renderMessages(forceScroll = false) {
-      const box = document.getElementById('msg-container');
-      if (!box || !curLead) return;
-      
-      const userNearBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 80;
-      const arr = chatDB[curLead.phone] || [];
-      let lastDateLabel = "";
-
-      box.innerHTML = arr.map(m => {
-        const me = m.s === 'm';
-        let med = '';
-        if (m.media) {
-          med = m.isImg ? `<img src="${m.media}" class="mb-1.5 max-h-48 rounded w-full object-cover">` : `<div class="p-2 bg-slate-900/50 rounded mb-1 text-xs">📎 File</div>`;
-        }
-
-        let dividerHtml = '';
-        let dateLabel = getISTDateLabel(m.raw_time);
-        if (dateLabel && dateLabel !== lastDateLabel) {
-          lastDateLabel = dateLabel;
-          dividerHtml = `
-            <div class="flex justify-center my-2.5">
-              <span class="bg-slate-800/90 text-slate-400 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border border-slate-700/60 shadow-sm">${dateLabel}</span>
             </div>
           `;
-        }
-
-        return `
-          ${dividerHtml}
-          <div class="flex flex-col ${me ? 'items-end' : 'items-start'} mb-1.5">
-            <div class="chat-bubble max-w-[85%] p-2.5 rounded-2xl text-xs ${me ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none'}">
-              ${med}<p>${m.txt}</p>
-              <div class="flex justify-end items-center space-x-1 mt-1 text-[9px] font-mono ${me ? 'text-emerald-200' : 'text-slate-400'}">
-                <span>${m.t}</span>${me ? '<span class="text-sky-300 font-bold">&check;&check;</span>' : ''}
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      if (forceScroll || userNearBottom) {
-        box.scrollTop = box.scrollHeight;
+        }).join("");
+        container.scrollTop = container.scrollHeight;
+      } catch (e) {
+        console.error("Messages error:", e);
       }
     }
 
-    window.setReply = function(t) {
-      const i = document.getElementById('in-msg');
-      if (t === 'catalog') i.value = "Namaste! Here is our authentic Product Catalogue: https://vedashree.in";
-      if (t === 'upi') i.value = "Please pay via UPI to: vedashree@icici. Share payment screenshot once done!";
-      if (t === 'dispatch') i.value = "Your order has been dispatched via Delhivery. Track here: https://delhivery.com";
-      i.focus();
-    };
-
-    document.getElementById('b-ai').onclick = () => {
-      const i = document.getElementById('in-msg');
-      if (!curLead) return;
-      i.value = `Namaste ${curLead.name || ''}! Yes, we have this wellness combo in stock with flat 20% discount & free shipping.`;
-      i.focus();
-    };
-
-    document.getElementById('b-pick-file').onclick = () => document.getElementById('in-file').click();
-    document.getElementById('in-file').onchange = (e) => {
-      const f = e.target.files[0];
-      if (!f) return;
-      curMed = { f: f, name: f.name, url: URL.createObjectURL(f), isImg: f.type.startsWith('image/') };
-      document.getElementById('chip-txt').innerText = "📎 " + f.name;
-      document.getElementById('chip-media').classList.remove('hidden');
-    };
-
-    document.getElementById('b-del-med').onclick = () => {
-      curMed = null;
-      document.getElementById('chip-media').classList.add('hidden');
-      document.getElementById('in-file').value = '';
-    };
-
-    document.getElementById('f-chat').onsubmit = async function(e) {
-      e.preventDefault();
-      const i = document.getElementById('in-msg');
-      const txt = i.value.trim();
-      if (!txt && !curMed) return;
-      if (!curLead) return;
-
-      const nowIST = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
-
-      const newM = {
-        s: 'm',
-        txt: txt,
-        media: curMed ? curMed.url : null,
-        isImg: curMed ? curMed.isImg : false,
-        mName: curMed ? curMed.name : null,
-        raw_time: new Date().toISOString(),
-        t: nowIST
-      };
-
-      if (!chatDB[curLead.phone]) chatDB[curLead.phone] = [];
-      chatDB[curLead.phone].push(newM);
-      i.value = '';
-      curMed = null;
-      document.getElementById('chip-media').classList.add('hidden');
-      document.getElementById('in-file').value = '';
-      renderMessages(true);
-
+    async function send1to1Message() {
+      const input = document.getElementById("chatInputText");
+      const text = input.value.trim();
+      if (!text || !activeLead) return;
+      input.value = "";
       try {
-        await fetch('/api/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ toPhone: curLead.phone, text: txt })
+        await fetch("/api/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: activeLead.phone, text: text })
         });
-        loadChatMessages(curLead.phone, true);
-      } catch (err) {}
-    };
-
-    // --- REAL PRODUCTION BROADCAST ENGINE ---
-    async function loadMetaTemplates() {
-      try {
-        const res = await fetch('/api/templates');
-        if (res.ok) {
-          const list = await res.json();
-          if (Array.isArray(list) && list.length > 0) {
-            bTemplates = list;
-            const sel = document.getElementById('sel-template');
-            if (sel) {
-              sel.innerHTML = bTemplates.map(t => `
-                <option value="${t.name}" data-lang="${t.language || 'en'}" data-param="${t.has_param ? '1' : '0'}">${t.name} (${t.language || 'en'})</option>
-              `).join('');
-            }
-          }
-        }
-      } catch (e) {}
+        await loadChatMessages();
+        loadLeads();
+      } catch (e) {
+        alert("Send error: " + e.message);
+      }
     }
 
-    document.getElementById('b-refresh-tmpl').onclick = loadMetaTemplates;
-    loadMetaTemplates();
+    function sendQuickText(text) {
+      document.getElementById("chatInputText").value = text;
+      send1to1Message();
+    }
 
-    // Mode Toggle (Excel vs Manual)
-    document.getElementById('btn-mode-sheet').onclick = () => {
-      document.getElementById('sec-sheet').classList.remove('hidden');
-      document.getElementById('sec-manual').classList.add('hidden');
-      document.getElementById('btn-mode-sheet').className = "flex-1 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs";
-      document.getElementById('btn-mode-manual').className = "flex-1 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold text-xs";
-    };
+    function generateAiDraftReply() {
+      if (!activeLead) return;
+      document.getElementById("chatInputText").value = `Namaste ${activeLead.name || 'Ji'}, Vedashree Wellness me aapka swagat hai. Aap kis problem ke samadhan ke liye consult karna chahte hain?`;
+    }
+    function setBroadcastMode(mode) {
+      if (mode === 'file') {
+        document.getElementById("sectionFileMode").classList.remove("hidden");
+        document.getElementById("sectionManualMode").classList.add("hidden");
+        document.getElementById("btnSwitchFile").className = "text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-2";
+        document.getElementById("btnSwitchManual").className = "text-xs font-semibold py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-2";
+      } else {
+        document.getElementById("sectionFileMode").classList.add("hidden");
+        document.getElementById("sectionManualMode").classList.remove("hidden");
+        document.getElementById("btnSwitchManual").className = "text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-2";
+        document.getElementById("btnSwitchFile").className = "text-xs font-semibold py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-2";
+      }
+    }
 
-    document.getElementById('btn-mode-manual').onclick = () => {
-      document.getElementById('sec-manual').classList.remove('hidden');
-      document.getElementById('sec-sheet').classList.add('hidden');
-      document.getElementById('btn-mode-manual').className = "flex-1 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs";
-      document.getElementById('btn-mode-sheet').className = "flex-1 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-bold text-xs";
-    };
+    function handleExcelUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(firstSheet);
+          broadcastQueue = [];
+          json.forEach(row => {
+            const raw = row['Phone'] || row['phone'] || row['Mobile'] || row['mobile'] || row['Contact'] || row['contact'] || '';
+            const clean = String(raw).replace(/[^0-9]/g, "");
+            const name = row['Name'] || row['name'] || row['Customer'] || '';
+            if (clean.length >= 10) {
+              const fullPhone = clean.length === 10 ? '91' + clean : clean;
+              broadcastQueue.push({ phone: fullPhone, name: name });
+            }
+          });
+          document.getElementById("cntTotal").innerText = broadcastQueue.length;
+          document.getElementById("fileUploadNotice").innerText = `✓ Loaded ${broadcastQueue.length} valid contacts from file.`;
+        } catch (err) {
+          alert("Error parsing file: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
 
-    // Manual Phone Numbers Addition
-    document.getElementById('b-add-manual').onclick = () => {
-      const rawText = document.getElementById('txt-manual-phones').value;
-      if (!rawText.trim()) return;
-      const lines = rawText.split(/[\n,;]+/);
-      let added = 0;
-      lines.forEach(item => {
-        let ph = String(item).replace(/[^0-9]/g, '');
-        if (ph.length >= 10) {
-          if (ph.length === 10) ph = '91' + ph;
-          bList.push({ name: '', phone: ph, st: 'pending', reason: '' });
-          added++;
+    function parseManualNumbers() {
+      const raw = document.getElementById("manualNumbersText").value;
+      const lines = raw.split(/[\n,;]+/);
+      broadcastQueue = [];
+      lines.forEach(line => {
+        const clean = line.replace(/[^0-9]/g, "");
+        if (clean.length >= 10) {
+          const fullPhone = clean.length === 10 ? '91' + clean : clean;
+          broadcastQueue.push({ phone: fullPhone, name: '' });
         }
       });
-      document.getElementById('txt-manual-phones').value = '';
-      updateBroadcastCounters();
-      renderBLog();
-      alert(`✅ ${added} numbers queue mein add ho gaye!`);
-    };
-
-    // Excel Sheet Upload
-    document.getElementById('b-pick-excel').onclick = () => document.getElementById('in-excel').click();
-    document.getElementById('in-excel').onchange = (e) => {
-      const f = e.target.files[0];
-      if (!f) return;
-      document.getElementById('lbl-excel').innerText = "File: " + f.name;
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        try {
-          const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
-          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
-          parsed = [];
-          for (let i = 1; i < rows.length; i++) {
-            if (rows[i][1]) {
-              let ph = String(rows[i][1]).replace(/[^0-9]/g, '');
-              if (ph.length === 10) ph = '91' + ph;
-              const isStop = leads.some(l => l.phone.includes(ph) && l.st === 'optout');
-              parsed.push({ name: rows[i][0] || "", phone: ph, st: isStop ? "optout" : "pending", reason: isStop ? "Opted Out" : "" });
-            }
-          }
-          if (parsed.length) { 
-            bList = parsed; 
-            updateBroadcastCounters();
-            renderBLog(); 
-            alert("Loaded " + parsed.length + " contacts!"); 
-          }
-        } catch (err) { alert("Excel read error"); }
-      };
-      reader.readAsArrayBuffer(f);
-    };
-
-    function updateBroadcastCounters() {
-      const total = bList.length;
-      const sent = bList.filter(r => r.st === 'sent').length;
-      const failed = bList.filter(r => r.st === 'failed' || r.st === 'optout').length;
-      const queue = bList.filter(r => r.st === 'pending').length;
-
-      document.getElementById('cnt-total').innerText = total;
-      document.getElementById('cnt-sent').innerText = sent;
-      document.getElementById('cnt-failed').innerText = failed;
-      document.getElementById('cnt-queue').innerText = queue;
+      document.getElementById("cntTotal").innerText = broadcastQueue.length;
+      alert(`${broadcastQueue.length} numbers queued for broadcast.`);
     }
 
-    function renderBLog() {
-      const rows = document.getElementById('log-rows');
-      if (!rows) return;
-      rows.innerHTML = bList.map(r => `
-        <div class="p-2.5 flex items-center justify-between text-xs">
-          <div>
-            <div class="font-semibold text-white">${r.name || r.phone}</div>
-            <div class="text-[10px] text-slate-400 font-mono">+${r.phone}</div>
-          </div>
-          <div class="text-right font-mono text-[10px]">
-            ${r.st === 'sent' ? '<span class="text-emerald-400 font-bold">✓✓ Meta Sent</span>' : 
-              r.st === 'failed' ? `<span class="text-rose-400 font-bold" title="${r.reason}">✕ Failed (${r.reason.substring(0,18)})</span>` : 
-              r.st === 'optout' ? '<span class="text-amber-400 font-bold">🚫 Opted Out</span>' : 
-              '<span class="text-slate-400">⏳ Pending</span>'}
-          </div>
-        </div>
-      `).join('');
+    async function loadApprovedTemplates() {
+      try {
+        const res = await fetch("/api/templates");
+        if (!res.ok) return;
+        const list = await res.json();
+        const sel = document.getElementById("broadcastTemplateSelect");
+        sel.innerHTML = list.map(t => `<option value="${t.name}|${t.language}">${t.name} (${t.language})</option>`).join("");
+      } catch (e) {
+        console.error("Templates error:", e);
+      }
     }
 
-    // Real Sequential Send Queue
-    let isBroadcasting = false;
-    document.getElementById('b-send-all').onclick = async () => {
-      if (isBroadcasting) return;
-      if (!bList.length) { alert("Pehle Excel file upload karein ya Manual numbers add karein!"); return; }
+    async function startBroadcastQueue() {
+      if (!broadcastQueue.length) {
+        alert("Please add numbers via Excel or Manual Numbers first.");
+        return;
+      }
+      const tVal = document.getElementById("broadcastTemplateSelect").value.split("|");
+      const templateName = tVal[0];
+      const languageCode = tVal[1] || 'en';
 
-      const sel = document.getElementById('sel-template');
-      const opt = sel.options[sel.selectedIndex];
-      const templateName = opt ? opt.value : "vedashree_vitality_consult_v1";
-      const languageCode = opt ? opt.getAttribute('data-lang') : "en";
-      const hasParam = opt ? (opt.getAttribute('data-param') === '1') : false;
-
-      const btn = document.getElementById('b-send-all');
-      const log = document.getElementById('log-status');
-      isBroadcasting = true;
+      const btn = document.getElementById("btnStartBroadcast");
       btn.disabled = true;
-      btn.className = "w-full bg-slate-800 text-slate-400 font-bold p-2.5 rounded-lg text-xs";
+      btn.innerText = "Dispatching Broadcast...";
+      document.getElementById("broadcastEngineStatus").innerText = "Dispatching...";
 
-      for (let i = 0; i < bList.length; i++) {
-        if (bList[i].st !== 'pending') continue;
+      let sentCount = 0;
+      let failedCount = 0;
+      currentBroadcastLogs = [];
+      const tbody = document.getElementById("broadcastLogTableBody");
+      tbody.innerHTML = "";
 
-        log.innerText = `Sending: ${i + 1}/${bList.length}`;
-        btn.innerText = `Sending (${i + 1}/${bList.length})...`;
-
+      for (let i = 0; i < broadcastQueue.length; i++) {
+        const item = broadcastQueue[i];
+        const timeNow = new Date().toTimeString().substring(0, 8);
         try {
-          const res = await fetch('/api/broadcast-send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const res = await fetch("/api/broadcast-send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              phone: bList[i].phone,
+              phone: item.phone,
+              name: item.name,
               templateName: templateName,
-              languageCode: languageCode,
-              name: bList[i].name || "Customer",
-              hasParam: hasParam
+              languageCode: languageCode
             })
           });
-
-          const data = await res.json();
-          if (res.ok && data.success) {
-            bList[i].st = 'sent';
-            bList[i].reason = 'Sent Successfully';
+          const resp = await res.json();
+          if (resp.success) {
+            sentCount++;
+            currentBroadcastLogs.push({ phone: item.phone, name: item.name || 'Sir / Ma\'am', status: 'Sent', time: timeNow, msgId: resp.id });
+            appendLogRow(item.phone, item.name, '✓✓ Meta Sent', 'text-emerald-400', timeNow, resp.id);
           } else {
-            bList[i].st = 'failed';
-            bList[i].reason = data.error || 'Meta Error';
+            failedCount++;
+            currentBroadcastLogs.push({ phone: item.phone, name: item.name || 'Sir / Ma\'am', status: 'Failed', time: timeNow, msgId: null });
+            appendLogRow(item.phone, item.name, `✕ Failed (${resp.error || 'Meta Block'})`, 'text-red-400', timeNow);
           }
         } catch (e) {
-          bList[i].st = 'failed';
-          bList[i].reason = e.message;
+          failedCount++;
+          appendLogRow(item.phone, item.name, `✕ Net Error`, 'text-red-400', timeNow);
         }
-
-        updateBroadcastCounters();
-        renderBLog();
-
-        // 1.2s Safe Rate-limiting gap to protect WhatsApp number
-        await new Promise(r => setTimeout(r, 1200));
+        document.getElementById("cntSent").innerText = sentCount;
+        document.getElementById("cntFailed").innerText = failedCount;
+        await new Promise(r => setTimeout(r, 600));
       }
 
-      isBroadcasting = false;
       btn.disabled = false;
-      btn.className = "w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2.5 rounded-lg text-xs transition";
       btn.innerText = "Start Real WhatsApp Broadcast";
-      log.innerText = "Idle";
-      alert("✅ Broadcast complete ho gaya! Log check karein.");
-    };
+      document.getElementById("broadcastEngineStatus").innerText = "Completed";
+      alert("✅ Broadcast complete ho gaya! Status logs check karein.");
 
-    document.getElementById('b-csv').onclick = () => {
-      let c = "Name,Phone,Status,Reason\n";
-      bList.forEach(r => {
-        c += `"${r.name}","${r.phone}","${r.st}","${r.reason || ''}"\n`;
-      });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv' }));
-      a.download = `broadcast_report_${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
-    };
-
-    window.flt = function(t) {
-      curFlt = t;
-      ['all', 'hot', 'converted', 'optout'].forEach(f => document.getElementById('f-' + f).classList.remove('flt-on'));
-      document.getElementById('f-' + t).classList.add('flt-on');
-      renderPipeline();
-    };
-
-    function renderPipeline() {
-      const f = curFlt === 'all' ? leads : leads.filter(l => l.st === curFlt);
-      const container = document.getElementById('leads-container');
-      if (!container) return;
-      container.innerHTML = f.map(c => `
-        <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
-          <div class="space-y-1">
-            <div class="text-xs font-bold text-white">${c.name || c.phone}</div>
-            <div class="text-[10px] text-slate-400 font-mono">${c.name ? ('+' + c.phone) : ''}</div>
-            <div class="flex items-center space-x-1.5">
-              <span class="text-[9px] px-1.5 py-0.5 rounded border font-mono ${bStyle(c.src)}">${c.src}</span>
-              ${stBadge(c.st)}
-            </div>
-          </div>
-          <button onclick="nav('inbox');openChat('${c.id}')" class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold rounded-lg text-xs">Chat</button>
-        </div>
-      `).join('');
+      fetchBroadcastAnalytics();
     }
 
-    // Auto-polling (har 3 second me background me naye messages aayenge)
-    setInterval(() => {
-      loadLiveCRMData();
-      if (curLead) loadChatMessages(curLead.phone, false);
-    }, 3000);
+    function appendLogRow(phone, name, status, colorClass, time, msgId) {
+      const tbody = document.getElementById("broadcastLogTableBody");
+      const tr = document.createElement("tr");
+      tr.id = msgId ? `log-row-${msgId}` : `log-row-${Date.now()}`;
+      tr.innerHTML = `
+        <td class="p-2">+${phone}</td>
+        <td class="p-2 font-sans">${name || 'Sir / Ma\'am'}</td>
+        <td class="p-2 ${colorClass} font-semibold">${status}</td>
+        <td class="p-2 text-slate-500">${time}</td>
+      `;
+      tbody.prepend(tr);
+    }
 
-    // Initial Start
-    loadLiveCRMData();
+    async function fetchBroadcastAnalytics() {
+      const date = document.getElementById("analyticsDateInput").value;
+      if (!date) return;
+      try {
+        const res = await fetch(`/api/broadcast-analytics?date=${date}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        latestAnalyticsData = data;
+
+        document.getElementById("statSeenCount").innerText = data.summary.seen;
+        document.getElementById("statUnseenCount").innerText = data.summary.unseen;
+        document.getElementById("cntDelivered").innerText = data.summary.delivered;
+      } catch (e) {
+        console.error("Analytics fetch error:", e);
+      }
+    }
+
+    function openDetailsModal(type) {
+      const modal = document.getElementById("analyticsModal");
+      const title = document.getElementById("modalTitle");
+      const tbody = document.getElementById("modalTableBody");
+      const exportBtn = document.getElementById("btnModalExport");
+
+      const list = type === 'seen' ? latestAnalyticsData.seenList : latestAnalyticsData.unseenList;
+      title.innerText = type === 'seen' ? "Contacts Who SEEN (Blue Tick) The Template" : "Contacts Who UNSEEN / Pending";
+
+      if (!list || !list.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500 font-sans">No contacts found for this criteria on selected date.</td></tr>';
+      } else {
+        tbody.innerHTML = list.map(item => `
+          <tr>
+            <td class="p-2.5">+${item.phone}</td>
+            <td class="p-2.5 font-sans">${item.name}</td>
+            <td class="p-2.5 font-semibold ${item.status === 'read' ? 'text-blue-400' : (item.status === 'delivered' ? 'text-teal-400' : (item.status === 'failed' ? 'text-red-400' : 'text-slate-400'))}">${item.status.toUpperCase()}</td>
+            <td class="p-2.5 text-slate-400">${item.timestamp}</td>
+          </tr>
+        `).join("");
+      }
+
+      exportBtn.onclick = () => exportAnalyticsCSV(type);
+      modal.classList.remove("hidden");
+    }
+
+    function closeDetailsModal() {
+      document.getElementById("analyticsModal").classList.add("hidden");
+    }
+
+    function exportAnalyticsCSV(type) {
+      const list = type === 'seen' ? latestAnalyticsData.seenList : latestAnalyticsData.unseenList;
+      if (!list || !list.length) {
+        alert("Export karne ke liye koi data nahi hai.");
+        return;
+      }
+      const date = document.getElementById("analyticsDateInput").value;
+      let csv = "Phone,Name,Status,Timestamp\n";
+      list.forEach(r => {
+        csv += `"${r.phone}","${r.name}","${r.status}","${r.timestamp}"\n`;
+      });
+      downloadCSVFile(csv, `Vedashree_Broadcast_${type.toUpperCase()}_${date}.csv`);
+    }
+
+    function exportCurrentLogCSV() {
+      if (!currentBroadcastLogs.length) {
+        alert("Current session mein koi log nahi hai.");
+        return;
+      }
+      let csv = "Phone,Name,Status,Time\n";
+      currentBroadcastLogs.forEach(r => {
+        csv += `"${r.phone}","${r.name}","${r.status}","${r.time}"\n`;
+      });
+      downloadCSVFile(csv, `Broadcast_Session_Log_${new Date().toISOString().substring(0, 10)}.csv`);
+    }
+
+    function downloadCSVFile(csvContent, fileName) {
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function renderPipelineUI() {
+      document.getElementById("countHot").innerText = allLeads.filter(l => (l.status||'hot') === 'hot').length;
+      document.getElementById("countConsult").innerText = allLeads.filter(l => l.status === 'consultation').length;
+      document.getElementById("countConverted").innerText = allLeads.filter(l => l.status === 'converted').length;
+
+      document.getElementById("pipeHot").innerHTML = allLeads.filter(l => (l.status||'hot') === 'hot').map(l => `
+        <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+          <p class="text-xs font-bold text-slate-200">${l.name || 'Customer'}</p>
+          <p class="text-[11px] text-emerald-400 font-mono">+${l.phone}</p>
+        </div>
+      `).join("");
+    }
+
+    function toggleSettingsModal() {
+      const m = document.getElementById("settingsModal");
+      m.classList.toggle("hidden");
+    }
   </script>
 </body>
 </html>
