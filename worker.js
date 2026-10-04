@@ -564,13 +564,13 @@ const HTML_CONTENT = `
     }
 
     function renderLeads() {
-      document.getElementById('leadsList').innerHTML = leads.map(l => \`
-        <div onclick="openChat('\${l.phone}', '\${l.name}')" class="p-2 rounded bg-slate-900/60 border border-slate-800 cursor-pointer">
-          <div class="text-xs font-semibold">\${l.name || 'Customer'}</div>
-          <div class="text-[10px] text-emerald-400 font-mono">+\${l.phone}</div>
-          <div class="text-[10px] text-slate-400 truncate">\${l.last_message || ''}</div>
+      document.getElementById('leadsList').innerHTML = leads.map(l => `
+        <div onclick="openChat('${l.phone}', '${l.name}')" class="p-2 rounded bg-slate-900/60 border border-slate-800 cursor-pointer">
+          <div class="text-xs font-semibold">${l.name || 'Customer'}</div>
+          <div class="text-[10px] text-emerald-400 font-mono">+${l.phone}</div>
+          <div class="text-[10px] text-slate-400 truncate">${l.last_message || ''}</div>
         </div>
-      \`).join('');
+      `).join('');
     }
 
     async function openChat(ph, nm) {
@@ -591,13 +591,13 @@ const HTML_CONTENT = `
       if (!curPhone) return;
       const res = await fetch('/api/messages?phone=' + curPhone);
       const msgs = await res.json();
-      document.getElementById('chatBox').innerHTML = msgs.map(m => \`
-        <div class="flex \${m.sender === 'agent' ? 'justify-end' : 'justify-start'}">
-          <div class="max-w-[80%] rounded px-3 py-1.5 text-xs \${m.sender === 'agent' ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-slate-200'}">
-            \${m.text}
+      document.getElementById('chatBox').innerHTML = msgs.map(m => `
+        <div class="flex ${m.sender === 'agent' ? 'justify-end' : 'justify-start'}">
+          <div class="max-w-[80%] rounded px-3 py-1.5 text-xs ${m.sender === 'agent' ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-slate-200'}">
+            ${m.text}
           </div>
         </div>
-      \`).join('');
+      `).join('');
     }
 
     async function sendMsg() {
@@ -616,4 +616,5 @@ const HTML_CONTENT = `
   </script>
 </body>
 </html>
+`;
 \`;
