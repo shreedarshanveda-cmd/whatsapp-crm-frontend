@@ -1,3 +1,4 @@
+import HTML_CONTENT from "./index.html";
 // ==========================================
 // VEDASHREE CRM BACKEND & ENGINE (worker.js)
 // ==========================================
@@ -478,7 +479,7 @@ export default {
       }
     }
 
-    // 14. Fallback Handler
-    return new Response("Not Found", { status: 404 });
-  }
-};
+    // 14. Serve Frontend UI
+    return new Response(HTML_CONTENT, {
+      headers: { "Content-Type": "text/html;charset=UTF-8" }
+    });
