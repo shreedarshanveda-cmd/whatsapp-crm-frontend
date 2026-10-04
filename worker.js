@@ -37,7 +37,7 @@ export default {
       return new Response("Forbidden", { status: 403 });
     }
 
-    // 4. Incoming WhatsApp Message Webhook (POST)
+    // 4. Incoming WhatsApp Message & Delivery Status Webhook (POST)
     if (request.method === "POST" && url.pathname === "/webhook") {
       let bodyText = "";
       try {
@@ -46,7 +46,7 @@ export default {
 
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-        // Always save raw packet
+        // Always save raw packet for debugging audit
         await env.DB.prepare("INSERT INTO raw_logs (payload, created_at) VALUES (?, ?)")
           .bind(bodyText, now)
           .run();
@@ -58,8 +58,24 @@ export default {
         let change = Array.isArray(entry?.changes) ? entry.changes[0] : entry?.changes;
         let val = change?.value || root?.value || root;
 
-        const messages = val?.messages;
+        // A. Handle Delivery / Read / Failed Receipts from Meta
+        const statuses = val?.statuses;
+        if (statuses && Array.isArray(statuses) && statuses.length > 0) {
+          for (const s of statuses) {
+            const metaMsgId = s.id;
+            const newStatus = s.status; // 'sent', 'delivered', 'read', 'failed'
+            if (metaMsgId && newStatus) {
+              await env.DB.prepare(`
+                UPDATE messages 
+                SET status = ? 
+                WHERE id = ?
+              `).bind(newStatus, metaMsgId).run();
+            }
+          }
+        }
 
+        // B. Handle Incoming Messages from Customers
+        const messages = val?.messages;
         if (messages && Array.isArray(messages) && messages.length > 0) {
           const msg = messages[0];
           const rawPhone = String(msg.from || "").replace(/[^0-9]/g, "");
@@ -74,13 +90,11 @@ export default {
           if (rawPhone) {
             const leadId = `lead_${rawPhone}`;
 
-            // Insert into messages table with exact schema match
             await env.DB.prepare(`
               INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
               VALUES (?, ?, 'customer', ?, NULL, NULL, NULL, 'delivered', ?)
             `).bind(msgId, leadId, textBody, now).run();
 
-            // Insert or update leads table (preserve name if exists and incoming name is empty)
             await env.DB.prepare(`
               INSERT INTO leads (id, name, phone, source, ad_title, stage, created_at)
               VALUES (?, ?, ?, 'Direct WhatsApp', NULL, 'hot', ?)
@@ -90,8 +104,6 @@ export default {
             `).bind(leadId, customerName, rawPhone, now).run();
           }
           lastWebhookError = "None";
-        } else {
-          lastWebhookError = "Payload received but no messages array found in value";
         }
 
         return new Response("EVENT_RECEIVED", { status: 200 });
@@ -201,13 +213,11 @@ export default {
           }
         }
 
-        // Insert outbound message to physical DB
         await env.DB.prepare(`
           INSERT INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
           VALUES (?, ?, 'agent', ?, NULL, NULL, NULL, 'sent', ?)
         `).bind(outMsgId, leadId, messageText, now).run();
 
-        // Update leads table without touching existing name
         await env.DB.prepare(`
           INSERT INTO leads (id, name, phone, source, ad_title, stage, created_at)
           VALUES (?, '', ?, 'Direct WhatsApp', NULL, 'hot', ?)
@@ -269,7 +279,7 @@ export default {
       }
     }
 
-    // 9. API: Send Broadcast Template Message (Exact Image Header + Body Fallback)
+    // 9. API: Send Broadcast Template Message
     if (request.method === "POST" && url.pathname === "/api/broadcast-send") {
       try {
         const body = await request.json();
@@ -283,7 +293,6 @@ export default {
           return new Response(JSON.stringify({ success: false, error: "Missing phone or WhatsApp token" }), { status: 400 });
         }
 
-        // Exact Meta Cloud API template payload matching Image Header + Body {{1}}
         const tPayload = {
           messaging_product: "whatsapp",
           to: rawPhone,
@@ -355,7 +364,82 @@ export default {
       }
     }
 
-    // 10. Serve Frontend UI
+    // 10. NEW: API: Broadcast Analytics & Delivery / Seen Tracking with Date Filter
+    if (request.method === "GET" && url.pathname === "/api/broadcast-analytics") {
+      try {
+        const queryDate = url.searchParams.get("date") || new Date().toISOString().substring(0, 10);
+        
+        // Fetch all broadcast template messages sent on that date
+        const { results } = await env.DB.prepare(`
+          SELECT 
+            m.id,
+            m.lead_id,
+            REPLACE(m.lead_id, 'lead_', '') AS phone,
+            COALESCE(l.name, 'Sir / Ma' || '''' || 'am') AS name,
+            m.text,
+            m.status,
+            m.timestamp
+          FROM messages m
+          LEFT JOIN leads l ON l.id = m.lead_id
+          WHERE m.sender = 'agent' 
+            AND m.text LIKE '[Template:%'
+            AND m.timestamp LIKE ?
+          ORDER BY m.timestamp DESC
+        `).bind(`${queryDate}%`).all();
+
+        const list = results || [];
+
+        let total = list.length;
+        let delivered = 0;
+        let read = 0;
+        let failed = 0;
+        let unread = 0;
+
+        const seenList = [];
+        const unseenList = [];
+
+        for (const item of list) {
+          if (item.status === "read") {
+            read++;
+            delivered++;
+            seenList.push(item);
+          } else if (item.status === "delivered") {
+            delivered++;
+            unread++;
+            unseenList.push(item);
+          } else if (item.status === "failed") {
+            failed++;
+            unseenList.push(item);
+          } else {
+            // 'sent' status
+            unread++;
+            unseenList.push(item);
+          }
+        }
+
+        return new Response(JSON.stringify({
+          date: queryDate,
+          summary: {
+            total,
+            delivered,
+            seen: read,
+            unseen: unread,
+            failed
+          },
+          seenList,
+          unseenList
+        }), {
+          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          headers: { "Content-Type": "application/json" },
+          status: 500
+        });
+      }
+    }
+
+    // 11. Serve Frontend UI
     return new Response(HTML_CONTENT, {
       headers: { "Content-Type": "text/html;charset=UTF-8" }
     });
