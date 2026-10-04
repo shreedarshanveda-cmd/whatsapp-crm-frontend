@@ -2,52 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>VEDASHREE PRO CRM</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { background-color: #0b1120; color: #f1f5f9; font-family: ui-sans-serif, system-ui, sans-serif; }
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    body { background-color: #0b1120; color: #f1f5f9; font-family: ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
     .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
   </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
+<body class="h-[100dvh] flex flex-col overflow-hidden">
 
-  <!-- Top Navigation Header -->
-  <header class="bg-[#0f172a] border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-lg bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-lg">
+  <!-- Top Header -->
+  <header class="bg-[#0f172a] border-b border-slate-800 px-3 py-2.5 flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-base">
         V
       </div>
       <div>
-        <h1 class="text-sm font-semibold text-slate-100 flex items-center gap-2">
-          VEDASHREE PRO
-          <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-normal">Meta Cloud API</span>
-        </h1>
+        <div class="flex items-center gap-1.5">
+          <h1 class="text-xs sm:text-sm font-semibold text-slate-100">VEDASHREE PRO</h1>
+          <span class="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1 py-0.2 rounded font-normal">Cloud API</span>
+        </div>
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <button onclick="toggleSettingsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md border border-slate-700 flex items-center gap-1.5 transition">
+      <button onclick="toggleSettingsModal()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded border border-slate-700 flex items-center gap-1">
         <i class="fa-solid fa-gear"></i> Settings
       </button>
-      <button onclick="window.location.reload()" class="text-xs bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-800/40 px-3 py-1.5 rounded-md transition">
+      <button onclick="window.location.reload()" class="text-[11px] bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-800/40 px-2.5 py-1.5 rounded">
         Logout
       </button>
     </div>
   </header>
 
   <!-- Navigation Tabs -->
-  <nav class="bg-[#0b1329] border-b border-slate-800 px-4 flex gap-2 shrink-0">
-    <button id="tab-livechat" onclick="switchMainTab('livechat')" class="px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2">
+  <nav class="bg-[#0b1329] border-b border-slate-800 px-3 flex gap-1 shrink-0 overflow-x-auto custom-scroll">
+    <button id="tab-livechat" onclick="switchMainTab('livechat')" class="px-3 py-2 text-xs font-medium text-slate-400 border-b-2 border-transparent flex items-center gap-1.5 shrink-0">
       Live Chat <span id="leads-count-badge" class="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded-full text-[10px]">0</span>
     </button>
-    <button id="tab-broadcast" onclick="switchMainTab('broadcast')" class="px-4 py-2.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500 flex items-center gap-2">
+    <button id="tab-broadcast" onclick="switchMainTab('broadcast')" class="px-3 py-2 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500 flex items-center gap-1.5 shrink-0">
       Excel Broadcast
     </button>
-    <button id="tab-pipeline" onclick="switchMainTab('pipeline')" class="px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent">
+    <button id="tab-pipeline" onclick="switchMainTab('pipeline')" class="px-3 py-2 text-xs font-medium text-slate-400 border-b-2 border-transparent shrink-0">
       Pipeline
     </button>
   </nav>
@@ -55,120 +55,124 @@
   <!-- MAIN CONTAINER -->
   <main class="flex-1 overflow-hidden relative">
 
-    <!-- LIVE CHAT VIEW -->
-    <div id="view-livechat" class="hidden h-full flex">
+    <!-- LIVE CHAT VIEW (100% Mobile + Desktop Responsive) -->
+    <div id="view-livechat" class="hidden h-full flex flex-col md:flex-row overflow-hidden relative">
       <!-- Left Leads List -->
-      <aside class="w-80 border-r border-slate-800 flex flex-col bg-[#0b1120]">
-        <div class="p-3 border-b border-slate-800">
+      <aside id="leadsSidebar" class="w-full md:w-80 border-r border-slate-800 flex flex-col bg-[#0b1120] h-full">
+        <div class="p-2.5 border-b border-slate-800 shrink-0">
           <input type="text" id="leadSearchInput" onkeyup="filterLeadsUI()" placeholder="Search leads by name/phone..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
         </div>
         <div id="leadsListContainer" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
-          <!-- Dynamic Leads Here -->
+          <!-- Dynamic Leads List -->
         </div>
       </aside>
 
       <!-- Right Chat Window -->
-      <section class="flex-1 flex flex-col bg-[#070b14]">
-        <div id="chatHeader" class="p-3 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between">
+      <section id="chatWindowSection" class="hidden md:flex flex-1 flex-col bg-[#070b14] h-full absolute inset-0 md:relative z-10">
+        <!-- Chat Header with Responsive Back Button -->
+        <div id="chatHeader" class="p-2.5 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between shrink-0">
           <div class="flex items-center gap-2">
-            <button onclick="mobileBackToLeads()" class="md:hidden text-xs bg-slate-800 px-2.5 py-1 rounded text-slate-300">← Back</button>
+            <button onclick="mobileBackToLeads()" class="md:hidden text-xs bg-slate-800 text-slate-200 px-2.5 py-1.5 rounded border border-slate-700 font-bold flex items-center gap-1">
+              <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
             <div>
-              <h2 id="activeChatName" class="text-xs font-bold text-slate-200">Select a lead to chat</h2>
-              <p id="activeChatPhone" class="text-[11px] text-slate-400">--</p>
+              <h2 id="activeChatName" class="text-xs font-bold text-slate-200 truncate max-w-[150px] sm:max-w-none">Select a lead</h2>
+              <p id="activeChatPhone" class="text-[10px] text-slate-400 font-mono">--</p>
             </div>
           </div>
           <span id="activeChatStage" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">hot</span>
         </div>
 
-        <div id="chatMessages" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+        <!-- Chat History -->
+        <div id="chatMessages" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2.5">
           <div class="text-center text-xs text-slate-500 mt-20">Click on any customer lead to view chat history</div>
         </div>
 
-        <!-- Quick actions & Chat Input -->
-        <div class="p-3 bg-[#0b1120] border-t border-slate-800">
-          <div class="flex gap-2 mb-2">
-            <button onclick="sendQuickText('📦 Catalog: check out our wellness products at vedashree.gt.tc')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-1 rounded border border-slate-700">📦 Catalog</button>
-            <button onclick="sendQuickText('💳 UPI ID: vedashree@upi. Kindly share screenshot after payment.')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-1 rounded border border-slate-700">💳 UPI</button>
-            <button onclick="sendQuickText('🚚 Your order has been dispatched via Delhivery. Tracking will update shortly.')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-1 rounded border border-slate-700">🚚 Tracking</button>
-            <button onclick="generateAiDraftReply()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-purple-300 px-2 py-1 rounded border border-slate-700">✨ AI Draft</button>
+        <!-- Chat Actions & Send Bar -->
+        <div class="p-2 bg-[#0b1120] border-t border-slate-800 shrink-0">
+          <div class="flex gap-1.5 mb-2 overflow-x-auto custom-scroll pb-1">
+            <button onclick="sendQuickText('📦 Catalog: check out our wellness products at vedashree.gt.tc')" class="text-[10px] bg-slate-800 text-amber-300 px-2 py-1 rounded border border-slate-700 shrink-0">📦 Catalog</button>
+            <button onclick="sendQuickText('💳 UPI ID: vedashree@upi. Kindly share screenshot after payment.')" class="text-[10px] bg-slate-800 text-amber-300 px-2 py-1 rounded border border-slate-700 shrink-0">💳 UPI</button>
+            <button onclick="sendQuickText('🚚 Your order has been dispatched via Delhivery. Tracking will update shortly.')" class="text-[10px] bg-slate-800 text-amber-300 px-2 py-1 rounded border border-slate-700 shrink-0">🚚 Tracking</button>
+            <button onclick="generateAiDraftReply()" class="text-[10px] bg-slate-800 text-purple-300 px-2 py-1 rounded border border-slate-700 shrink-0">✨ AI Draft</button>
           </div>
           <div class="flex gap-2">
             <input type="text" id="chatInputText" onkeydown="if(event.key==='Enter') send1to1Message()" placeholder="Type reply..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
-            <button onclick="send1to1Message()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs transition">Send</button>
+            <button onclick="send1to1Message()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-3.5 py-2 rounded-lg text-xs shrink-0">Send</button>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- EXCEL BROADCAST VIEW -->
-    <div id="view-broadcast" class="h-full overflow-y-auto custom-scroll p-4 max-w-4xl mx-auto space-y-4">
+    <!-- EXCEL BROADCAST VIEW (Full Vertical Scroll Enabled) -->
+    <div id="view-broadcast" class="h-full overflow-y-auto custom-scroll p-3 sm:p-4 max-w-4xl mx-auto space-y-4 pb-20">
       
       <!-- Top Engine Card -->
-      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 shadow-lg">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-3.5 shadow-lg">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider">
             BROADCAST ENGINE (LIVE)
           </h2>
           <span id="broadcastEngineStatus" class="text-[11px] text-emerald-400 font-medium">Idle</span>
         </div>
 
-        <!-- 4 Live Counters (QUEUE replaced with DELIVERED) -->
-        <div class="grid grid-cols-4 gap-3 mb-4 text-center">
-          <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg">
-            <p class="text-[10px] text-slate-400 font-semibold uppercase">TOTAL</p>
-            <p id="cntTotal" class="text-lg font-bold text-slate-100">0</p>
+        <!-- 4 Live Counters (DELIVERED active) -->
+        <div class="grid grid-cols-4 gap-2 mb-3 text-center">
+          <div class="bg-slate-900/80 border border-slate-800 p-2 rounded-lg">
+            <p class="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase">TOTAL</p>
+            <p id="cntTotal" class="text-base sm:text-lg font-bold text-slate-100">0</p>
           </div>
-          <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg">
-            <p class="text-[10px] text-emerald-400 font-semibold uppercase">SENT</p>
-            <p id="cntSent" class="text-lg font-bold text-emerald-400">0</p>
+          <div class="bg-slate-900/80 border border-slate-800 p-2 rounded-lg">
+            <p class="text-[9px] sm:text-[10px] text-emerald-400 font-semibold uppercase">SENT</p>
+            <p id="cntSent" class="text-base sm:text-lg font-bold text-emerald-400">0</p>
           </div>
-          <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg">
-            <p class="text-[10px] text-teal-400 font-semibold uppercase">DELIVERED</p>
-            <p id="cntDelivered" class="text-lg font-bold text-teal-400">0</p>
+          <div class="bg-slate-900/80 border border-slate-800 p-2 rounded-lg">
+            <p class="text-[9px] sm:text-[10px] text-teal-400 font-semibold uppercase">DELIVERED</p>
+            <p id="cntDelivered" class="text-base sm:text-lg font-bold text-teal-400">0</p>
           </div>
-          <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg">
-            <p class="text-[10px] text-red-400 font-semibold uppercase">FAILED</p>
-            <p id="cntFailed" class="text-lg font-bold text-red-400">0</p>
+          <div class="bg-slate-900/80 border border-slate-800 p-2 rounded-lg">
+            <p class="text-[9px] sm:text-[10px] text-red-400 font-semibold uppercase">FAILED</p>
+            <p id="cntFailed" class="text-base sm:text-lg font-bold text-red-400">0</p>
           </div>
         </div>
 
-        <!-- Target Switcher Tabs -->
-        <div class="grid grid-cols-2 gap-2 mb-4">
-          <button id="btnSwitchFile" onclick="setBroadcastMode('file')" class="text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-2">
+        <!-- Mode Selectors -->
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <button id="btnSwitchFile" onclick="setBroadcastMode('file')" class="text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-file-excel"></i> Excel / CSV
           </button>
-          <button id="btnSwitchManual" onclick="setBroadcastMode('manual')" class="text-xs font-semibold py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-2">
+          <button id="btnSwitchManual" onclick="setBroadcastMode('manual')" class="text-xs font-semibold py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
             ✍️ Manual Numbers
           </button>
         </div>
 
         <!-- File Upload Section -->
-        <div id="sectionFileMode" class="border-2 border-dashed border-slate-700/80 rounded-xl p-6 text-center bg-slate-900/30 mb-4">
+        <div id="sectionFileMode" class="border-2 border-dashed border-slate-700/80 rounded-xl p-5 text-center bg-slate-900/30 mb-3">
           <p class="text-xs font-medium text-slate-300 mb-2">Upload Contacts Sheet (.xlsx, .csv)</p>
           <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event)" class="hidden">
-          <button onclick="document.getElementById('excelFileInput').click()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-lg font-medium transition">
+          <button onclick="document.getElementById('excelFileInput').click()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3.5 py-1.5 rounded-lg font-medium transition">
             Browse File
           </button>
-          <p id="fileUploadNotice" class="text-[11px] text-slate-400 mt-2">Column with phone numbers (Phone/Mobile/Contact) will be read automatically.</p>
+          <p id="fileUploadNotice" class="text-[10px] text-slate-400 mt-2">Column with phone numbers will be mapped automatically.</p>
         </div>
 
         <!-- Manual Numbers Section -->
-        <div id="sectionManualMode" class="hidden mb-4">
-          <textarea id="manualNumbersText" rows="3" placeholder="Paste numbers (e.g. 919599433875, 918510893875 ya ek ke niche ek)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
-          <button onclick="parseManualNumbers()" class="mt-2 w-full text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 py-2 rounded-lg font-medium transition">
+        <div id="sectionManualMode" class="hidden mb-3">
+          <textarea id="manualNumbersText" rows="3" placeholder="Paste numbers (e.g. 919599433875, 918510893875)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
+          <button onclick="parseManualNumbers()" class="mt-2 w-full text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 py-1.5 rounded-lg font-medium transition">
             Add Numbers To Queue
           </button>
         </div>
 
         <!-- Template Selector -->
-        <div class="mb-4">
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">SELECT APPROVED TEMPLATE</label>
-            <button onclick="loadApprovedTemplates()" class="text-[11px] text-emerald-400 hover:underline flex items-center gap-1">
+        <div class="mb-3">
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">SELECT APPROVED TEMPLATE</label>
+            <button onclick="loadApprovedTemplates()" class="text-[10px] text-emerald-400 hover:underline flex items-center gap-1">
               <i class="fa-solid fa-arrows-rotate"></i> Refresh
             </button>
           </div>
-          <select id="broadcastTemplateSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+          <select id="broadcastTemplateSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
             <option value="vedashree_vitality_consult_v1|en">vedashree_vitality_consult_v1 (en)</option>
           </select>
         </div>
@@ -179,59 +183,59 @@
       </div>
 
       <!-- Professional Analytics & Seen Tracking Panel -->
-      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 shadow-lg space-y-4">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-3.5 shadow-lg space-y-3">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
           <div>
-            <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+            <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
               <i class="fa-solid fa-chart-pie text-emerald-400"></i> Broadcast Seen / Unseen Tracking
             </h3>
-            <p class="text-[11px] text-slate-400">Check physical Blue Ticks (Seen) vs Undelivered/Unseen</p>
+            <p class="text-[10px] text-slate-400">Physical Blue Ticks (Seen) vs Pending Delivery</p>
           </div>
           <!-- Date Filter Picker -->
-          <div class="flex items-center gap-2 w-full sm:w-auto">
+          <div class="flex items-center gap-1.5 w-full sm:w-auto">
             <label class="text-[11px] text-slate-400 shrink-0">Date:</label>
-            <input type="date" id="analyticsDateInput" onchange="fetchBroadcastAnalytics()" class="bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
-            <button onclick="fetchBroadcastAnalytics()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded-md border border-slate-700">
+            <input type="date" id="analyticsDateInput" onchange="fetchBroadcastAnalytics()" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+            <button onclick="fetchBroadcastAnalytics()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded border border-slate-700">
               <i class="fa-solid fa-rotate"></i>
             </button>
           </div>
         </div>
 
         <!-- Seen vs Unseen Cards & Actions -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <!-- Seen Card -->
-          <div class="bg-slate-900/60 border border-blue-500/30 rounded-lg p-3 flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+          <div class="bg-slate-900/60 border border-blue-500/30 rounded-lg p-2.5 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-blue-400"></span>
                 <span class="text-xs font-semibold text-slate-200">Seen (Read Blue Tick)</span>
               </div>
               <span id="statSeenCount" class="text-base font-bold text-blue-400">0</span>
             </div>
-            <div class="flex gap-2 mt-2">
+            <div class="flex gap-1.5 mt-1.5">
               <button onclick="openDetailsModal('seen')" class="flex-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded border border-slate-700">
                 View Seen List
               </button>
-              <button onclick="exportAnalyticsCSV('seen')" class="text-[11px] bg-blue-950/60 hover:bg-blue-900/60 text-blue-300 px-3 py-1.5 rounded border border-blue-800/40 flex items-center gap-1">
+              <button onclick="exportAnalyticsCSV('seen')" class="text-[11px] bg-blue-950/60 hover:bg-blue-900/60 text-blue-300 px-2.5 py-1.5 rounded border border-blue-800/40 flex items-center gap-1">
                 <i class="fa-solid fa-file-excel"></i> Export
               </button>
             </div>
           </div>
 
           <!-- Unseen Card -->
-          <div class="bg-slate-900/60 border border-amber-500/30 rounded-lg p-3 flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+          <div class="bg-slate-900/60 border border-amber-500/30 rounded-lg p-2.5 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                 <span class="text-xs font-semibold text-slate-200">Unseen / Pending</span>
               </div>
               <span id="statUnseenCount" class="text-base font-bold text-amber-400">0</span>
             </div>
-            <div class="flex gap-2 mt-2">
+            <div class="flex gap-1.5 mt-1.5">
               <button onclick="openDetailsModal('unseen')" class="flex-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded border border-slate-700">
                 View Unseen List
               </button>
-              <button onclick="exportAnalyticsCSV('unseen')" class="text-[11px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 px-3 py-1.5 rounded border border-amber-800/40 flex items-center gap-1">
+              <button onclick="exportAnalyticsCSV('unseen')" class="text-[11px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 px-2.5 py-1.5 rounded border border-amber-800/40 flex items-center gap-1">
                 <i class="fa-solid fa-file-excel"></i> Export
               </button>
             </div>
@@ -239,17 +243,17 @@
         </div>
       </div>
 
-      <!-- Live Meta Delivery Log Table -->
-      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 shadow-lg">
-        <div class="flex items-center justify-between mb-3">
+      <!-- Live Meta Delivery Log Table (Unfrozen, fully scrollable) -->
+      <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-3.5 shadow-lg">
+        <div class="flex items-center justify-between mb-2.5">
           <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Live Meta Delivery Log</h3>
-          <button onclick="exportCurrentLogCSV()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded border border-slate-700">
+          <button onclick="exportCurrentLogCSV()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700">
             Export CSV Report
           </button>
         </div>
-        <div class="overflow-x-auto max-h-60 custom-scroll border border-slate-800 rounded-lg">
+        <div class="overflow-x-auto max-h-72 custom-scroll border border-slate-800 rounded-lg">
           <table class="w-full text-left text-[11px] text-slate-300">
-            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] sticky top-0">
+            <thead class="bg-slate-900 text-slate-400 uppercase text-[9px] sticky top-0">
               <tr>
                 <th class="p-2">Number</th>
                 <th class="p-2">Name</th>
@@ -268,79 +272,78 @@
     </div>
 
     <!-- PIPELINE VIEW -->
-    <div id="view-pipeline" class="hidden h-full p-4 overflow-x-auto custom-scroll">
-      <div class="flex gap-4 h-full min-w-[700px]">
+    <div id="view-pipeline" class="hidden h-full p-3 sm:p-4 overflow-x-auto custom-scroll">
+      <div class="flex gap-3 h-full min-w-[650px]">
         <div class="flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col">
           <h4 class="text-xs font-bold text-amber-400 mb-2">🔥 Hot Leads (<span id="countHot">0</span>)</h4>
-          <div id="pipeHot" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+          <div id="pipeHot" class="flex-1 overflow-y-auto custom-scroll space-y-1.5"></div>
         </div>
         <div class="flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col">
           <h4 class="text-xs font-bold text-blue-400 mb-2">💬 In Consultation (<span id="countConsult">0</span>)</h4>
-          <div id="pipeConsult" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+          <div id="pipeConsult" class="flex-1 overflow-y-auto custom-scroll space-y-1.5"></div>
         </div>
         <div class="flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col">
           <h4 class="text-xs font-bold text-emerald-400 mb-2">✅ Converted (<span id="countConverted">0</span>)</h4>
-          <div id="pipeConverted" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+          <div id="pipeConverted" class="flex-1 overflow-y-auto custom-scroll space-y-1.5"></div>
         </div>
       </div>
     </div>
   </main>
-
   <!-- Seen / Unseen Modal Popup -->
-  <div id="analyticsModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-[#0f172a] border border-slate-800 rounded-xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl">
-      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+  <div id="analyticsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+    <div class="bg-[#0f172a] border border-slate-800 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl">
+      <div class="p-3 border-b border-slate-800 flex items-center justify-between">
         <h3 id="modalTitle" class="text-xs font-bold text-slate-100 uppercase tracking-wider">Broadcast Details</h3>
         <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-slate-100 text-base">&times;</button>
       </div>
-      <div class="flex-1 overflow-y-auto custom-scroll p-4">
+      <div class="flex-1 overflow-y-auto custom-scroll p-3">
         <div class="overflow-x-auto border border-slate-800 rounded-lg">
           <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px]">
+            <thead class="bg-slate-900 text-slate-400 uppercase text-[9px]">
               <tr>
-                <th class="p-2.5">Phone</th>
-                <th class="p-2.5">Name</th>
-                <th class="p-2.5">Status</th>
-                <th class="p-2.5">Sent Time</th>
+                <th class="p-2">Phone</th>
+                <th class="p-2">Name</th>
+                <th class="p-2">Status</th>
+                <th class="p-2">Timestamp</th>
               </tr>
             </thead>
-            <tbody id="modalTableBody" class="divide-y divide-slate-800 font-mono">
+            <tbody id="modalTableBody" class="divide-y divide-slate-800 font-mono text-[11px]">
               <!-- Dynamic Rows -->
             </tbody>
           </table>
         </div>
       </div>
-      <div class="p-3 border-t border-slate-800 flex justify-end gap-2">
+      <div class="p-2.5 border-t border-slate-800 flex justify-end gap-2">
         <button id="btnModalExport" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded transition">
-          Export This List (CSV)
+          Export CSV
         </button>
-        <button onclick="closeDetailsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition">
+        <button onclick="closeDetailsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded">
           Close
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Settings Modal (Password & Token Config) -->
-  <div id="settingsModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-5 w-full max-w-md space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+    <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-4 w-full max-w-sm space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
         <h3 class="text-xs font-bold text-slate-100 uppercase tracking-wider">System Settings</h3>
         <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-100">&times;</button>
       </div>
-  <div>
-        <label class="text-[11px] text-slate-400 block mb-1">WhatsApp Cloud API Phone ID</label>
-        <input type="text" value="1196276640235299" disabled class="w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-400">
+      <div>
+        <label class="text-[10px] text-slate-400 block mb-1">WhatsApp Cloud API Phone ID</label>
+        <input type="text" value="1196276640235299" disabled class="w-full bg-slate-900/60 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-400">
       </div>
       <div>
-        <label class="text-[11px] text-slate-400 block mb-1">Webhook Verify Token</label>
-        <input type="text" value="vedashree_crm_secret_2026" disabled class="w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-400">
+        <label class="text-[10px] text-slate-400 block mb-1">Webhook Verify Token</label>
+        <input type="text" value="vedashree_crm_secret_2026" disabled class="w-full bg-slate-900/60 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-400">
       </div>
-      <div class="text-[11px] text-emerald-400/90 bg-emerald-950/20 p-2.5 rounded border border-emerald-800/30">
+      <div class="text-[10px] text-emerald-400/90 bg-emerald-950/20 p-2 rounded border border-emerald-800/30">
         ✓ Cloudflare Worker & D1 Database are active and handling status tracking.
       </div>
       <div class="flex justify-end">
-        <button onclick="toggleSettingsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-1.5 rounded">Close</button>
+        <button onclick="toggleSettingsModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded">Close</button>
       </div>
     </div>
   </div>
@@ -353,7 +356,6 @@
     let currentBroadcastLogs = [];
     let latestAnalyticsData = { seenList: [], unseenList: [] };
 
-    // Initialize application
     window.addEventListener("DOMContentLoaded", () => {
       const today = new Date().toISOString().substring(0, 10);
       document.getElementById("analyticsDateInput").value = today;
@@ -365,31 +367,30 @@
       setInterval(fetchBroadcastAnalytics, 15000);
     });
 
-    // 1. Navigation Switching
     function switchMainTab(tab) {
       document.getElementById("view-livechat").classList.add("hidden");
       document.getElementById("view-broadcast").classList.add("hidden");
       document.getElementById("view-pipeline").classList.add("hidden");
 
-      document.getElementById("tab-livechat").className = "px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2";
-      document.getElementById("tab-broadcast").className = "px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent";
-      document.getElementById("tab-pipeline").className = "px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent";
+      document.getElementById("tab-livechat").className = "px-3 py-2 text-xs font-medium text-slate-400 border-b-2 border-transparent flex items-center gap-1.5 shrink-0";
+      document.getElementById("tab-broadcast").className = "px-3 py-2 text-xs font-medium text-slate-400 border-b-2 border-transparent shrink-0";
+      document.getElementById("tab-pipeline").className = "px-3 py-2 text-xs font-medium text-slate-400 border-b-2 border-transparent shrink-0";
 
       if (tab === "livechat") {
         document.getElementById("view-livechat").classList.remove("hidden");
-        document.getElementById("tab-livechat").className = "px-4 py-2.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500 flex items-center gap-2";
+        document.getElementById("tab-livechat").className = "px-3 py-2 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500 flex items-center gap-1.5 shrink-0";
+        mobileBackToLeads();
       } else if (tab === "broadcast") {
         document.getElementById("view-broadcast").classList.remove("hidden");
-        document.getElementById("tab-broadcast").className = "px-4 py-2.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500";
+        document.getElementById("tab-broadcast").className = "px-3 py-2 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500 shrink-0";
         fetchBroadcastAnalytics();
       } else if (tab === "pipeline") {
         document.getElementById("view-pipeline").classList.remove("hidden");
-        document.getElementById("tab-pipeline").className = "px-4 py-2.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500";
+        document.getElementById("tab-pipeline").className = "px-3 py-2 text-xs font-medium text-emerald-400 border-b-2 border-emerald-500 shrink-0";
         renderPipelineUI();
       }
     }
 
-    // 2. Fetch Leads & Chat Logic
     async function loadLeads() {
       try {
         const res = await fetch("/api/leads");
@@ -398,7 +399,7 @@
         document.getElementById("leads-count-badge").innerText = allLeads.length;
         renderLeadsList(allLeads);
       } catch (e) {
-        console.error("Leads fetch error:", e);
+        console.error("Leads error:", e);
       }
     }
 
@@ -414,7 +415,7 @@
             <span class="text-xs font-semibold text-slate-200">${l.name || 'Sir / Ma\'am'}</span>
             <span class="text-[10px] text-slate-500">${(l.created_at || '').substring(11, 16)}</span>
           </div>
-          <div class="text-[11px] text-emerald-400 font-mono mb-1">+${l.phone}</div>
+          <div class="text-[11px] text-emerald-400 font-mono mb-0.5">+${l.phone}</div>
           <div class="text-[11px] text-slate-400 truncate">${l.last_message || 'No messages yet'}</div>
         </div>
       `).join("");
@@ -431,8 +432,25 @@
       document.getElementById("activeChatName").innerText = activeLead.name || 'Sir / Ma\'am';
       document.getElementById("activeChatPhone").innerText = `+${activeLead.phone}`;
       document.getElementById("activeChatStage").innerText = activeLead.status || 'hot';
+
+      // Mobile Responsive Switch: Hide Sidebar & Show Chat Full Screen
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        document.getElementById("leadsSidebar").classList.add("hidden");
+        document.getElementById("chatWindowSection").classList.remove("hidden");
+      } else {
+        document.getElementById("chatWindowSection").classList.remove("hidden");
+      }
+
       renderLeadsList(allLeads);
       await loadChatMessages();
+    }
+
+    function mobileBackToLeads() {
+      document.getElementById("leadsSidebar").classList.remove("hidden");
+      if (window.innerWidth < 768) {
+        document.getElementById("chatWindowSection").classList.add("hidden");
+      }
     }
 
     async function loadChatMessages() {
@@ -450,7 +468,7 @@
           const isAgent = m.sender === 'agent';
           return `
             <div class="flex ${isAgent ? 'justify-end' : 'justify-start'}">
-              <div class="max-w-[75%] rounded-xl px-3 py-2 text-xs ${isAgent ? 'bg-emerald-700/80 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'}">
+              <div class="max-w-[80%] rounded-xl px-3 py-2 text-xs ${isAgent ? 'bg-emerald-700/80 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'}">
                 <p class="whitespace-pre-wrap">${m.text || m.message}</p>
                 <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-300/70 font-mono">
                   <span>${(m.created_at || '').substring(11, 16)}</span>
@@ -493,17 +511,18 @@
       if (!activeLead) return;
       document.getElementById("chatInputText").value = `Namaste ${activeLead.name || 'Ji'}, Vedashree Wellness me aapka swagat hai. Aap kis problem ke samadhan ke liye consult karna chahte hain?`;
     }
+
     function setBroadcastMode(mode) {
       if (mode === 'file') {
         document.getElementById("sectionFileMode").classList.remove("hidden");
         document.getElementById("sectionManualMode").classList.add("hidden");
-        document.getElementById("btnSwitchFile").className = "text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-2";
-        document.getElementById("btnSwitchManual").className = "text-xs font-semibold py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-2";
+        document.getElementById("btnSwitchFile").className = "text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-1.5";
+        document.getElementById("btnSwitchManual").className = "text-xs font-semibold py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-1.5";
       } else {
         document.getElementById("sectionFileMode").classList.add("hidden");
         document.getElementById("sectionManualMode").classList.remove("hidden");
-        document.getElementById("btnSwitchManual").className = "text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-2";
-        document.getElementById("btnSwitchFile").className = "text-xs font-semibold py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-2";
+        document.getElementById("btnSwitchManual").className = "text-xs font-semibold py-2 rounded-lg bg-emerald-600 text-slate-950 transition flex items-center justify-center gap-1.5";
+        document.getElementById("btnSwitchFile").className = "text-xs font-semibold py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-1.5";
       }
     }
 
@@ -528,7 +547,7 @@
             }
           });
           document.getElementById("cntTotal").innerText = broadcastQueue.length;
-          document.getElementById("fileUploadNotice").innerText = `✓ Loaded ${broadcastQueue.length} valid contacts from file.`;
+          document.getElementById("fileUploadNotice").innerText = `✓ Loaded ${broadcastQueue.length} contacts.`;
         } catch (err) {
           alert("Error parsing file: " + err.message);
         }
@@ -574,7 +593,7 @@
 
       const btn = document.getElementById("btnStartBroadcast");
       btn.disabled = true;
-      btn.innerText = "Dispatching Broadcast...";
+      btn.innerText = "Dispatching...";
       document.getElementById("broadcastEngineStatus").innerText = "Dispatching...";
 
       let sentCount = 0;
@@ -668,10 +687,10 @@
       } else {
         tbody.innerHTML = list.map(item => `
           <tr>
-            <td class="p-2.5">+${item.phone}</td>
-            <td class="p-2.5 font-sans">${item.name}</td>
-            <td class="p-2.5 font-semibold ${item.status === 'read' ? 'text-blue-400' : (item.status === 'delivered' ? 'text-teal-400' : (item.status === 'failed' ? 'text-red-400' : 'text-slate-400'))}">${item.status.toUpperCase()}</td>
-            <td class="p-2.5 text-slate-400">${item.timestamp}</td>
+            <td class="p-2">+${item.phone}</td>
+            <td class="p-2 font-sans">${item.name}</td>
+            <td class="p-2 font-semibold ${item.status === 'read' ? 'text-blue-400' : (item.status === 'delivered' ? 'text-teal-400' : (item.status === 'failed' ? 'text-red-400' : 'text-slate-400'))}">${item.status.toUpperCase()}</td>
+            <td class="p-2 text-slate-400">${item.timestamp}</td>
           </tr>
         `).join("");
       }
@@ -693,7 +712,7 @@
       const date = document.getElementById("analyticsDateInput").value;
       let csv = "Phone,Name,Status,Timestamp\n";
       list.forEach(r => {
-        csv += `"${r.phone}","${r.name}","${r.status}","${r.timestamp}"\n`;
+   csv += `"${r.phone}","${r.name}","${r.status}","${r.timestamp}"\n`;
       });
       downloadCSVFile(csv, `Vedashree_Broadcast_${type.toUpperCase()}_${date}.csv`);
     }
@@ -726,7 +745,7 @@
       document.getElementById("countConverted").innerText = allLeads.filter(l => l.status === 'converted').length;
 
       document.getElementById("pipeHot").innerHTML = allLeads.filter(l => (l.status||'hot') === 'hot').map(l => `
-        <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+        <div class="bg-slate-900 p-2 rounded-lg border border-slate-800">
           <p class="text-xs font-bold text-slate-200">${l.name || 'Customer'}</p>
           <p class="text-[11px] text-emerald-400 font-mono">+${l.phone}</p>
         </div>
@@ -740,3 +759,4 @@
   </script>
 </body>
 </html>
+             
