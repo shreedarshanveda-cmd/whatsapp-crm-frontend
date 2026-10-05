@@ -134,18 +134,18 @@
         </div>
 
         <!-- Chat History Messages -->
-        <div id="chatMessages" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2.5">
+        <div id="chatMessages" class="flex-1 min-h-0 overflow-y-auto custom-scroll p-3 space-y-2.5">
           <div class="text-center text-xs text-slate-500 mt-20">Click on any customer lead to view chat history</div>
         </div>
 
         <!-- Chat Send Bar + Image/Gallery Attachment -->
         <div class="p-2 bg-[#0b1120] border-t border-slate-800 shrink-0">
-          <div class="flex gap-1.5 mb-2 overflow-x-auto custom-scroll pb-1">
-            <button onclick="sendQuickText('📦 Catalog: check out our wellness products at vedashree.gt.tc')" class="text-[10px] bg-slate-800 text-amber-300 px-2 py-1 rounded border border-slate-700 shrink-0">📦 Catalog</button>
-            <button onclick="sendQuickText('💳 UPI ID: vedashree@upi. Kindly share screenshot after payment.')" class="text-[10px] bg-slate-800 text-amber-300 px-2 py-1 rounded border border-slate-700 shrink-0">💳 UPI</button>
-            <button onclick="sendQuickText('🚚 Your order has been dispatched via Delhivery. Tracking will update shortly.')" class="text-[10px] bg-slate-800 text-amber-300 px-2 py-1 rounded border border-slate-700 shrink-0">🚚 Tracking</button>
-            <button onclick="generateAiDraftReply()" class="text-[10px] bg-slate-800 text-purple-300 px-2 py-1 rounded border border-slate-700 shrink-0">✨ AI Draft</button>
-          </div>
+         <div class="flex gap-1.5 mb-2 overflow-x-auto custom-scroll pb-1">
+  <button onclick="sendQuickText('📦 Catalog: check out our wellness products at vedashree.gt.tc')" class="text-[10px] bg-slate-800 text-amber-300 px-2 py-1 rounded whitespace-nowrap">📦 Catalog</button>
+  <button onclick="sendQuickText('💳 UPI ID: vedashree@upi. Kindly share screenshot after payment.')" class="text-[10px] bg-slate-800 text-yellow-300 px-2 py-1 rounded whitespace-nowrap">💳 UPI</button>
+  <button onclick="sendQuickText('🚚 Your order has been dispatched via Delhivery. Tracking will update shortly.')" class="text-[10px] bg-slate-800 text-sky-300 px-2 py-1 rounded whitespace-nowrap">🚚 Tracking</button>
+  <button onclick="generateAiDraftReply()" class="text-[10px] bg-slate-800 text-purple-300 px-2 py-1 rounded whitespace-nowrap">✨ AI Draft</button>
+         </div>
           <div class="flex items-center gap-1.5">
             <!-- Gallery / Media Attachment File Input -->
             <input type="file" id="mediaUploadInput" accept="image/*" onchange="handleMediaUpload(event)" class="hidden">
