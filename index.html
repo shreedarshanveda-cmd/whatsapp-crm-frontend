@@ -118,7 +118,7 @@
       </aside>
 
       <!-- Right Chat Window -->
-      <section id="chatWindowSection" class="hidden md:flex flex-1 flex-col bg-[#070b14] h-full max-h-full overflow-hidden absolute inset-0 md:relative">
+      <section id="chatWindowSection" style="display: flex; flex-direction: column; height: 100%; max-height: 100%; overflow: hidden; position: absolute; inset: 0; z-index: 40; background-color: #070b14;">
         <!-- Chat Header -->
         <div id="chatHeader" class="p-2.5 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between shrink-0">
           <div class="flex items-center gap-2">
@@ -134,7 +134,7 @@
         </div>
 
         <!-- Chat History Messages -->
-        <div id="chatMessages" class="flex-1 min-h-0 overflow-y-auto custom-scroll p-3 space-y-2.5">
+        <div id="chatMessages" style="flex: 1 1 0%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px;" class="custom-scroll space-y-2.5">
           <div class="text-center text-xs text-slate-500 mt-20">Click on any customer lead to view chat history</div>
         </div>
 
