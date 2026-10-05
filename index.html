@@ -21,9 +21,9 @@
     .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
     .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    /* Mobile Responsive Fix for Live Chat & Pipeline */
+    /* Mobile-First Layout & Lock Fix */
     @media (max-width: 768px) {
-      /* Quick Buttons (Catalog, UPI, Tracking) Horizontally Scrollable */
+      /* 1. Quick Buttons Horizontally Scrollable */
       .flex.gap-2.overflow-x-auto, 
       div:has(> button:contains('Catalog')) {
         display: flex !important;
@@ -33,12 +33,11 @@
         -webkit-overflow-scrolling: touch;
         padding-bottom: 4px;
       }
-      
       button:has(i) {
         flex-shrink: 0 !important;
       }
 
-      /* Pipeline Kanban Columns Mobile Swipe & Snap */
+      /* 2. Pipeline Kanban Columns Mobile Swipe */
       #view-pipeline > div,
       div[id*="pipeline"] > div {
         display: flex !important;
@@ -49,12 +48,34 @@
         gap: 12px !important;
         padding-bottom: 12px !important;
       }
-
       #view-pipeline > div > div,
       div[id*="pipeline"] > div > div {
         flex: 0 0 85% !important;
         width: 85% !important;
         scroll-snap-align: center !important;
+      }
+
+      /* 3. Chat Window Viewport Lock (Input Bar Always Visible) */
+      #chatWindowSection:not(.hidden) {
+        display: flex !important;
+        flex-direction: column !important;
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+        z-index: 50 !important;
+      }
+
+      /* 4. Messages Container Scrollable Inside */
+      #chatMessages {
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
       }
     }
   </style>
