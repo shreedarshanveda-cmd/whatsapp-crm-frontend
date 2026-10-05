@@ -333,19 +333,22 @@
     </div>
 
     <!-- PIPELINE VIEW -->
-    <div id="view-pipeline" class="hidden h-full p-3 sm:p-4 overflow-x-auto custom-scroll">
-      <div class="flex gap-3 h-full min-w-[650px]">
-        <div class="flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col">
-          <h4 class="text-xs font-bold text-amber-400 mb-2">🔥 Hot Leads (<span id="countHot">0</span>)</h4>
-          <div id="pipeHot" class="flex-1 overflow-y-auto custom-scroll space-y-1.5"></div>
+    <div id="view-pipeline" class="hidden h-full p-3 sm:p-4 overflow-x-auto overflow-y-hidden custom-scroll">
+      <div class="flex flex-row md:grid md:grid-cols-3 gap-3 h-full w-full min-w-0" style="scroll-snap-type: x mandatory;">
+        <!-- Hot Leads Column -->
+        <div class="w-[82vw] shrink-0 md:w-auto flex flex-col bg-[#0f172a] border border-slate-800 rounded-xl p-3 h-full" style="scroll-snap-align: center;">
+          <h4 class="text-xs font-bold text-amber-400 mb-2 shrink-0">🔥 Hot Leads (<span id="countHot">0</span>)</h4>
+          <div id="pipeHot" class="flex-1 min-h-0 overflow-y-auto custom-scroll space-y-1.5"></div>
         </div>
-        <div class="flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col">
-          <h4 class="text-xs font-bold text-blue-400 mb-2">💬 In Consultation (<span id="countConsult">0</span>)</h4>
-          <div id="pipeConsult" class="flex-1 overflow-y-auto custom-scroll space-y-1.5"></div>
+        <!-- In Consultation Column -->
+        <div class="w-[82vw] shrink-0 md:w-auto flex flex-col bg-[#0f172a] border border-slate-800 rounded-xl p-3 h-full" style="scroll-snap-align: center;">
+          <h4 class="text-xs font-bold text-blue-400 mb-2 shrink-0">💬 In Consultation (<span id="countConsult">0</span>)</h4>
+          <div id="pipeConsult" class="flex-1 min-h-0 overflow-y-auto custom-scroll space-y-1.5"></div>
         </div>
-        <div class="flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col">
-          <h4 class="text-xs font-bold text-emerald-400 mb-2">✅ Converted (<span id="countConverted">0</span>)</h4>
-          <div id="pipeConverted" class="flex-1 overflow-y-auto custom-scroll space-y-1.5"></div>
+        <!-- Converted Column -->
+        <div class="w-[82vw] shrink-0 md:w-auto flex flex-col bg-[#0f172a] border border-slate-800 rounded-xl p-3 h-full" style="scroll-snap-align: center;">
+          <h4 class="text-xs font-bold text-emerald-400 mb-2 shrink-0">✅ Converted (<span id="countConverted">0</span>)</h4>
+          <div id="pipeConverted" class="flex-1 min-h-0 overflow-y-auto custom-scroll space-y-1.5"></div>
         </div>
       </div>
     </div>
