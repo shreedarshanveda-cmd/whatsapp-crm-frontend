@@ -886,7 +886,7 @@
     document.getElementById("countConverted").innerText = convertedList.length;
 
     const renderCard = (l) => `
-      <div onclick="switchMainTab('livechat'); setTimeout(() => openLeadChat('${l.phone}'), 50);" class="bg-slate-900/90 hover:bg-slate-800/90 active:scale-95 transition-all p-2.5 rounded-lg border border-slate-800 cursor-pointer shadow-sm">
+      <div onclick="switchMainTab('livechat'); setTimeout(() => selectActiveLead('${l.phone}'), 50);" class="bg-slate-900/90 hover:bg-slate-800/90 active:scale-95 transition-all p-2.5 rounded-lg border border-slate-800 cursor-pointer shadow-sm">
         <div class="flex items-center justify-between mb-1">
           <p class="text-xs font-bold text-slate-200 truncate">${l.name || 'Customer'}</p>
           <span class="text-[10px] text-slate-500 font-mono">Chat →</span>
@@ -898,7 +898,7 @@
     document.getElementById("pipeHot").innerHTML = hotList.map(renderCard).join("") || '<p class="text-[10px] text-slate-500 text-center py-2">No hot leads</p>';
     document.getElementById("pipeConsult").innerHTML = consultList.map(renderCard).join("") || '<p class="text-[10px] text-slate-500 text-center py-2">No leads</p>';
     document.getElementById("pipeConverted").innerHTML = convertedList.map(renderCard).join("") || '<p class="text-[10px] text-slate-500 text-center py-2">No converted</p>';
-    }
+  }
 
     function toggleSettingsModal() {
       document.getElementById("settingsModal").classList.toggle("hidden");
