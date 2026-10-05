@@ -21,6 +21,42 @@
     .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
     .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    /* Mobile Responsive Fix for Live Chat & Pipeline */
+    @media (max-width: 768px) {
+      /* Quick Buttons (Catalog, UPI, Tracking) Horizontally Scrollable */
+      .flex.gap-2.overflow-x-auto, 
+      div:has(> button:contains('Catalog')) {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+      }
+      
+      button:has(i) {
+        flex-shrink: 0 !important;
+      }
+
+      /* Pipeline Kanban Columns Mobile Swipe & Snap */
+      #view-pipeline > div,
+      div[id*="pipeline"] > div {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 12px !important;
+        padding-bottom: 12px !important;
+      }
+
+      #view-pipeline > div > div,
+      div[id*="pipeline"] > div > div {
+        flex: 0 0 85% !important;
+        width: 85% !important;
+        scroll-snap-align: center !important;
+      }
+    }
   </style>
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
