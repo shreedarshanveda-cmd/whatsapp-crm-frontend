@@ -605,12 +605,18 @@
       await loadChatMessages();
     }
 
-    function mobileBackToLeads() {
-      document.getElementById("leadsSidebar").classList.remove("hidden");
-      if (window.innerWidth < 768) {
-        document.getElementById("chatWindowSection").classList.add("hidden");
-      }
-    }
+    let chatOpenedFrom = 'livechat';
+
+function mobileBackToLeads() {
+  if (window.innerWidth < 768) {
+    document.getElementById("chatWindowSection").classList.add("hidden");
+  }
+  if (chatOpenedFrom === 'pipeline') {
+    switchMainTab('pipeline');
+  } else {
+    document.getElementById("leadsSidebar").classList.remove("hidden");
+  }
+}
 
     async function loadChatMessages() {
       if (!activeLead) return;
