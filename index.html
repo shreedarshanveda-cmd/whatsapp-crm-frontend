@@ -630,14 +630,16 @@
     let chatOpenedFrom = 'livechat';
 
 function mobileBackToLeads() {
-  if (window.innerWidth < 768) {
-    document.getElementById("chatWindowSection").classList.add("hidden");
-  }
-  if (chatOpenedFrom === 'pipeline') {
-    switchMainTab('pipeline');
-  } else {
+    if (window.innerWidth < 768) {
+      document.getElementById("chatWindowSection").classList.add("hidden");
+    }
+    // leadsSidebar ko hamesha unhide karein taaki Live Chat tab blank na ho
     document.getElementById("leadsSidebar").classList.remove("hidden");
-  }
+
+    if (chatOpenedFrom === 'pipeline') {
+      switchMainTab('pipeline');
+      if (typeof renderPipelineUI === 'function') renderPipelineUI();
+    }
 }
 
     async function loadChatMessages() {
