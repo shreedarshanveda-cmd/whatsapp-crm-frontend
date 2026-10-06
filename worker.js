@@ -176,7 +176,59 @@ export default {
         });
       }
     }
+   // API: Delete Single Message
+    if (request.method === "POST" && url.pathname === "/api/delete-message") {
+      try {
+        const body = await request.json();
+        const msgId = body.id;
+        if (!msgId) {
+          return new Response(JSON.stringify({ error: "Missing message id" }), {
+            headers: { "Content-Type": "application/json" },
+            status: 400
+          });
+        }
+        await env.DB.prepare("DELETE FROM messages WHERE id = ?").bind(msgId).run();
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          headers: { "Content-Type": "application/json" },
+          status: 500
+        });
+      }
+    }
 
+    // API: Delete Entire Lead & Conversation
+    if (request.method === "POST" && url.pathname === "/api/delete-lead") {
+      try {
+        const body = await request.json();
+        const rawPhone = body.phone || "";
+        const cleanPhone = String(rawPhone).replace(/[^0-9]/g, "");
+        const leadId = `lead_${cleanPhone}`;
+        
+        if (!cleanPhone) {
+          return new Response(JSON.stringify({ error: "Missing phone number" }), {
+            headers: { "Content-Type": "application/json" },
+            status: 400
+          });
+        }
+
+        // Delete all messages belonging to this lead
+        await env.DB.prepare("DELETE FROM messages WHERE lead_id = ? OR lead_id = ?").bind(leadId, cleanPhone).run();
+        // Delete lead from leads table
+        await env.DB.prepare("DELETE FROM leads WHERE phone = ? OR id = ?").bind(cleanPhone, leadId).run();
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          headers: { "Content-Type": "application/json" },
+          status: 500
+        });
+      }
+    }
     // 7. API: Send Outbound 1-to-1 Message
     if (request.method === "POST" && url.pathname === "/api/send") {
       try {
