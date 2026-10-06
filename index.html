@@ -565,22 +565,44 @@
     }
 
     function renderLeadsList(leads) {
-      const container = document.getElementById("leadsListContainer");
-      if (!leads.length) {
-        container.innerHTML = '<div class="text-center text-xs text-slate-500 p-4">No leads recorded yet</div>';
-        return;
-      }
-      container.innerHTML = leads.map(l => `
-        <div onclick="chatOpenedFrom = 'livechat'; selectActiveLead('${l.phone}')" class="p-2.5 rounded-lg cursor-pointer transition ${activeLead?.phone === l.phone ? 'bg-emerald-950/40 border border-emerald-500/40' : 'bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/60'}">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs font-semibold text-slate-200">${l.name || 'Sir / Ma\'am'}</span>
-            <span class="text-[10px] text-slate-500">${(l.created_at || '').substring(11, 16)}</span>
-          </div>
-          <div class="text-[11px] text-emerald-400 font-mono mb-0.5">+${l.phone}</div>
-          <div class="text-[11px] text-slate-400 truncate">${l.last_message || 'No messages yet'}</div>
-        </div>
-      `).join("");
+    const container = document.getElementById("leadsContainer");
+    if (!leads.length) {
+      container.innerHTML = '<div class="text-center text-xs text-slate-500 p-4">No leads recorded yet</div>';
+      return;
     }
+
+    // 1. WhatsApp style sorting: Latest message/time sabse top par
+    const sortedLeads = [...leads].sort((a, b) => {
+      const timeA = new Date(a.updated_at || a.last_message_time || a.created_at || 0).getTime();
+      const timeB = new Date(b.updated_at || b.last_message_time || b.created_at || 0).getTime();
+      return timeB - timeA;
+    });
+
+    container.innerHTML = sortedLeads.map(l => {
+      const unreadCount = Number(l.unread_count || l.unread || 0);
+      const isSelected = activeLead?.phone === l.phone;
+
+      return `
+        <div onclick="chatOpenedFrom = 'livechat'; selectActiveLead('${l.phone}')" class="p-2.5 rounded-lg cursor-pointer transition ${isSelected ? 'bg-emerald-950/40 border border-emerald-500/40' : 'bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/60'} mb-1.5">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold text-slate-200 truncate max-w-[65%]">${l.name || 'Sir / Ma\'am'}</span>
+            <span class="text-[10px] ${unreadCount > 0 ? 'text-emerald-400 font-semibold' : 'text-slate-500'}">${(l.created_at || '').substring(11, 16)}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="truncate pr-2">
+              <div class="text-[11px] text-emerald-400 font-mono mb-0.5">+${l.phone}</div>
+              <div class="text-[11px] ${unreadCount > 0 ? 'text-slate-200 font-medium' : 'text-slate-400'} truncate">${l.last_message || 'No messages yet'}</div>
+            </div>
+            ${unreadCount > 0 ? `
+              <span class="min-w-[18px] h-[18px] px-1 bg-emerald-500 text-slate-950 text-[10px] font-bold rounded-full flex items-center justify-center shrink-0 shadow-sm animate-pulse">
+                ${unreadCount}
+              </span>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
 
     function filterLeadsUI() {
       const q = document.getElementById("leadSearchInput").value.toLowerCase();
