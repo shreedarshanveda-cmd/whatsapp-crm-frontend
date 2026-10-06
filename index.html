@@ -892,7 +892,7 @@ function mobileBackToLeads() {
     document.getElementById("countConverted").innerText = convertedList.length;
 
     const renderCard = (l) => `
-      <div onclick="chatOpenedFrom = 'pipeline'; switchMainTab('livechat'); setTimeout(() => selectActiveLead('${l.phone}'), 50);" class="bg-slate-900/90 hover:bg-slate-800/90 active:scale-95 transition-all p-2.5 rounded-lg border border-slate-800 cursor-pointer shadow-sm">
+      <div onclick="chatOpenedFrom = 'pipeline'; document.getElementById('view-pipeline').classList.add('hidden'); document.getElementById('view-livechat').classList.remove('hidden'); selectActiveLead('${l.phone}');" class="bg-slate-900/90 hover:bg-slate-800/90 active:scale-95 transition-all p-2.5 rounded-lg border border-slate-800 cursor-pointer shadow-sm">
         <div class="flex items-center justify-between mb-1">
           <p class="text-xs font-bold text-slate-200 truncate">${l.name || 'Customer'}</p>
           <span class="text-[10px] text-slate-500 font-mono">Chat →</span>
