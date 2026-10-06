@@ -629,20 +629,49 @@ function mobileBackToLeads() {
           container.innerHTML = '<div class="text-center text-xs text-slate-500 mt-20">No conversation history yet.</div>';
           return;
         }
-        container.innerHTML = msgs.map(m => {
-          const isAgent = m.sender === 'agent';
-          return `
-            <div class="flex ${isAgent ? 'justify-end' : 'justify-start'}">
-              <div class="max-w-[80%] rounded-xl px-3 py-2 text-xs ${isAgent ? 'bg-emerald-700/80 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'}">
-                <p class="whitespace-pre-wrap">${m.text || m.message}</p>
-                <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-300/70 font-mono">
-                  <span>${(m.created_at || '').substring(11, 16)}</span>
-                  ${isAgent ? `<span class="${m.status === 'read' ? 'text-blue-300' : 'text-slate-300'}">✓✓</span>` : ''}
-                </div>
-              </div>
+        let lastDateStr = null;
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    container.innerHTML = msgs.map(m => {
+      const isAgent = m.sender === 'agent';
+      const msgDateStr = (m.created_at || '').substring(0, 10);
+      let dateBadge = '';
+
+      if (msgDateStr && msgDateStr !== lastDateStr) {
+        lastDateStr = msgDateStr;
+        let displayLabel = msgDateStr;
+        if (msgDateStr === todayStr) {
+          displayLabel = 'Today';
+        } else if (msgDateStr === yesterdayStr) {
+          displayLabel = 'Yesterday';
+        } else {
+          const parts = msgDateStr.split('-');
+          if (parts.length === 3) displayLabel = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        dateBadge = `
+          <div class="flex justify-center my-2">
+            <span class="bg-slate-800/90 text-slate-400 text-[10px] font-medium px-2.5 py-0.5 rounded-full border border-slate-700/50 shadow-sm">${displayLabel}</span>
+          </div>
+        `;
+      }
+
+      return `
+        ${dateBadge}
+        <div class="flex ${isAgent ? 'justify-end' : 'justify-start'} mb-1.5">
+          <div class="max-w-[80%] rounded-xl px-3 py-2 text-xs ${isAgent ? 'bg-emerald-700/80 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'} shadow">
+            <p class="whitespace-pre-wrap">${m.text || m.message}</p>
+            <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-300/70 font-mono">
+              <span>${(m.created_at || '').substring(11, 16)}</span>
+              ${isAgent ? `<span class="${m.status === 'read' ? 'text-blue-300' : 'text-slate-300'}">✓✓</span>` : ''}
             </div>
-          `;
-        }).join("");
+          </div>
+        </div>
+      `;
+    }).join("");
         container.scrollTop = container.scrollHeight;
       } catch (e) {}
     }
