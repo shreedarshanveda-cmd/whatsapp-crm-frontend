@@ -898,11 +898,20 @@ async function handleDeleteMsgAction() {
 // Touch/Long-press & Desktop Right Click Controller
 document.addEventListener('touchstart', (e) => {
   const bubble = e.target.closest('.msg-bubble');
-  if (!bubble) return;
-  const touch = e.touches[0];
-  longPressTimer = setTimeout(() => {
-    showMsgActionMenu(touch.clientX, touch.clientY, bubble.dataset.msgId, bubble.dataset.msgText, bubble.dataset.isAgent);
-  }, 450);
+  const leadCard = e.target.closest('.lead-item-card');
+
+  if (bubble || leadCard) {
+    const touch = e.touches[0];
+    longPressTimer = setTimeout(() => {
+      isLongPressTriggered = true;
+      if (bubble) {
+        showMsgActionMenu(touch.clientX, touch.clientY, bubble.dataset.msgId, bubble.dataset.msgText, bubble.dataset.isAgent);
+        setTimeout(updatePasteButtonState, 50);
+      } else if (leadCard) {
+        showLeadActionMenu(touch.clientX, touch.clientY, leadCard.dataset.leadPhone, leadCard.dataset.leadName, leadCard.dataset.unread);
+      }
+    }, 450);
+  }
 }, { passive: true });
 
 document.addEventListener('touchend', () => {
@@ -915,15 +924,20 @@ document.addEventListener('touchmove', () => {
 
 document.addEventListener('contextmenu', (e) => {
   const bubble = e.target.closest('.msg-bubble');
+  const leadCard = e.target.closest('.lead-item-card');
   if (bubble) {
     e.preventDefault();
     showMsgActionMenu(e.clientX, e.clientY, bubble.dataset.msgId, bubble.dataset.msgText, bubble.dataset.isAgent);
+    setTimeout(updatePasteButtonState, 50);
+  } else if (leadCard) {
+    e.preventDefault();
+    showLeadActionMenu(e.clientX, e.clientY, leadCard.dataset.leadPhone, leadCard.dataset.leadName, leadCard.dataset.unread);
   }
 });
 
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('#msgActionPopup') && !e.target.closest('.msg-bubble')) {
-    closeMsgActionMenu();
+  if (!e.target.closest('#msgActionPopup') && !e.target.closest('#leadActionPopup') && !e.target.closest('.msg-bubble') && !e.target.closest('.lead-item-card')) {
+    closeActionPopups();
   }
 });
 
