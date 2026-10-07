@@ -763,6 +763,117 @@ function handleEditMsgAction() {
   }
   closeMsgActionMenu();
 }
+    let lastCopiedText = "";
+let activeActionLead = null;
+let isLongPressTriggered = false;
+
+async function updatePasteButtonState() {
+  const btn = document.getElementById('btnPasteAction');
+  if (!btn) return;
+  btn.disabled = true;
+  if (lastCopiedText && lastCopiedText.trim().length > 0) {
+    btn.disabled = false;
+    return;
+  }
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && text.trim().length > 0) {
+      btn.disabled = false;
+    }
+  } catch (e) {
+    btn.disabled = !lastCopiedText;
+  }
+}
+
+async function handlePasteMsgAction() {
+  closeActionPopups();
+  const input = document.getElementById('chatInputText');
+  if (!input) return;
+  try {
+    const text = await navigator.clipboard.readText();
+    const toPaste = text || lastCopiedText;
+    if (toPaste) {
+      input.value += (input.value ? ' ' : '') + toPaste;
+      input.focus();
+    }
+  } catch (err) {
+    if (lastCopiedText) {
+      input.value += (input.value ? ' ' : '') + lastCopiedText;
+      input.focus();
+    }
+  }
+}
+
+function handleLeadClick(e, phone) {
+  if (isLongPressTriggered) {
+    isLongPressTriggered = false;
+    return;
+  }
+  chatOpenedFrom = 'livechat';
+  selectActiveLead(phone);
+}
+
+function showLeadActionMenu(x, y, phone, rawName, unreadCount) {
+  closeActionPopups();
+  activeActionLead = { phone: phone, name: decodeURIComponent(rawName), unread: Number(unreadCount) > 0 };
+
+  const menu = document.createElement('div');
+  menu.id = 'leadActionPopup';
+  menu.className = 'fixed z-[999] bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-1.5 flex flex-col gap-1 backdrop-blur-md select-none min-w-[150px]';
+
+  const posX = Math.min(Math.max(10, x - 50), window.innerWidth - 170);
+  const posY = Math.min(Math.max(10, y - 40), window.innerHeight - 100);
+  menu.style.left = posX + 'px';
+  menu.style.top = posY + 'px';
+
+  const readToggleText = activeActionLead.unread ? 'Mark as Read' : 'Mark as Unread';
+  const readIcon = activeActionLead.unread ? 'fa-envelope-open text-emerald-400' : 'fa-envelope text-sky-400';
+
+  menu.innerHTML = `
+    <button type="button" onclick="handleToggleReadLeadAction()" class="px-3 py-2 text-xs text-left text-slate-200 hover:bg-slate-800 rounded-lg flex items-center gap-2 active:scale-95 transition">
+      <i class="fa-regular ${readIcon}"></i> ${readToggleText}
+    </button>
+    <button type="button" onclick="handleDeleteLeadAction()" class="px-3 py-2 text-xs text-left text-red-400 hover:bg-red-950/40 rounded-lg flex items-center gap-2 active:scale-95 transition">
+      <i class="fa-solid fa-trash-can"></i> Delete Chat
+    </button>
+  `;
+  document.body.appendChild(menu);
+}
+
+function closeActionPopups() {
+  const m1 = document.getElementById('msgActionPopup');
+  const m2 = document.getElementById('leadActionPopup');
+  if (m1) m1.remove();
+  if (m2) m2.remove();
+  activeActionMsg = null;
+  activeActionLead = null;
+}
+
+async function handleToggleReadLeadAction() {
+  if (!activeActionLead) return;
+  const phone = activeActionLead.phone;
+  const targetLead = allLeads.find(l => l.phone === phone);
+  if (targetLead) {
+    targetLead.unread_count = activeActionLead.unread ? 0 : 1;
+    renderLeadsList(allLeads);
+  }
+  closeActionPopups();
+}
+
+async function handleDeleteLeadAction() {
+  if (!activeActionLead) return;
+  const phone = activeActionLead.phone;
+  if (!confirm('Delete chat with ' + activeActionLead.name + '?')) {
+    closeActionPopups();
+    return;
+  }
+  closeActionPopups();
+  allLeads = allLeads.filter(l => l.phone !== phone);
+  renderLeadsList(allLeads);
+  if (activeLead && activeLead.phone === phone) {
+    mobileBackToLeads();
+  }
+      }
 
 async function handleDeleteMsgAction() {
   if (!activeActionMsg || !activeActionMsg.id) return;
