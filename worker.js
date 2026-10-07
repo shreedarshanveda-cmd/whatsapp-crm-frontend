@@ -100,8 +100,8 @@ export default {
               VALUES (?, ?, ?, 'Direct WhatsApp', NULL, 'hot', ?)
               ON CONFLICT(id) DO UPDATE SET
                 name = CASE WHEN excluded.name != '' THEN excluded.name ELSE leads.name END,
-                created_at = excluded.created_at
-    unread_count = COALESCE(leads.unread_count, 0) + 1
+                created_at = excluded.created_at,
+                  unread_count = COALESCE(leads.unread_count, 0) + 1
             `).bind(leadId, customerName, rawPhone, now).run();
           }
           lastWebhookError = "None";
@@ -124,6 +124,7 @@ export default {
             phone,
             COALESCE(source, 'Direct WhatsApp') AS source,
             COALESCE(stage, 'hot') AS status,
+            COALESCE(unread_count, 0) AS unread_count,
             created_at,
             (SELECT text FROM messages WHERE lead_id = leads.id ORDER BY timestamp DESC LIMIT 1) AS last_message
           FROM leads
