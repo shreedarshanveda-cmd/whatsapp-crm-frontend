@@ -99,8 +99,8 @@ export default {
               INSERT INTO leads (id, name, phone, source, ad_title, stage, created_at)
               VALUES (?, ?, ?, 'Direct WhatsApp', NULL, 'hot', ?)
               ON CONFLICT(id) DO UPDATE SET
-    name = CASE WHEN excluded.name != '' THEN excluded.name ELSE leads.name END,
-    created_at = excluded.created_at,
+                name = CASE WHEN excluded.name != '' THEN excluded.name ELSE leads.name END,
+                created_at = excluded.created_at
     unread_count = COALESCE(leads.unread_count, 0) + 1
             `).bind(leadId, customerName, rawPhone, now).run();
           }
