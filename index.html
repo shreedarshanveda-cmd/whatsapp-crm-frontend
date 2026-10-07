@@ -743,9 +743,7 @@ let buttonsHtml = `
 }
 
 function closeMsgActionMenu() {
-  const m = document.getElementById('msgActionPopup');
-  if (m) m.remove();
-  activeActionMsg = null;
+  closeActionPopups();
 }
 
 function handleCopyMsgAction() {
