@@ -152,6 +152,7 @@ export default {
       const leadId = rawParam.startsWith("lead_") ? rawParam : `lead_${cleanPhone}`;
 
       try {
+        await env.DB.prepare("UPDATE leads SET unread_count = 0 WHERE id = ? OR phone = ?").bind(leadId, cleanPhone).run();
         const { results } = await env.DB.prepare(`
           SELECT 
             id, 
