@@ -686,7 +686,7 @@ function mobileBackToLeads() {
       return `
         ${dateBadge}
         <div class="flex ${isAgent ? 'justify-end' : 'justify-start'} mb-1.5">
-          <div class="max-w-[80%] rounded-xl px-3 py-2 text-xs ${isAgent ? 'bg-emerald-700/80 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none'} shadow">
+          <div data-msg-id="${m.id}" data-msg-text="${encodeURIComponent(m.text || m.message || '')}" data-is-agent="${isAgent}" class="msg-bubble max-w-[80%] rounded-xl px-3 py-2 text-xs ${isAgent ? 'bg-emerald-700/80 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none'} shadow-sm relative select-none">
             <p class="whitespace-pre-wrap">${m.text || m.message}</p>
             <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-300/70 font-mono">
               <span>${m.created_at ? new Date(m.created_at.includes('Z') || m.created_at.includes('+') ? m.created_at : m.created_at.replace(' ', 'T') + 'Z').toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }) : ''}</span>
@@ -699,6 +699,121 @@ function mobileBackToLeads() {
         container.scrollTop = container.scrollHeight;
       } catch (e) {}
     }
+    // --- WhatsApp Style Message Long-Press / Context Action ---
+let activeActionMsg = null;
+let longPressTimer = null;
+
+function showMsgActionMenu(x, y, msgId, rawText, isAgent) {
+  closeMsgActionMenu();
+  const text = decodeURIComponent(rawText);
+  activeActionMsg = { id: msgId, text: text };
+
+  const menu = document.createElement('div');
+  menu.id = 'msgActionPopup';
+  menu.className = 'fixed z-[999] bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-1.5 flex items-center gap-1 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100';
+  
+  // Responsive screen fit
+  const posX = Math.min(Math.max(10, x - 80), window.innerWidth - 180);
+  const posY = Math.max(10, y - 55);
+  menu.style.left = posX + 'px';
+  menu.style.top = posY + 'px';
+
+  let buttonsHtml = `
+    <button onclick="handleCopyMsgAction()" class="px-2.5 py-1.5 text-xs text-slate-200 hover:bg-slate-800 rounded-lg flex items-center gap-1.5 active:scale-95 transition">
+      <i class="fa-regular fa-copy text-emerald-400"></i> Copy
+    </button>
+  `;
+
+  if (isAgent === 'true' || isAgent === true) {
+    buttonsHtml += `
+      <button onclick="handleEditMsgAction()" class="px-2.5 py-1.5 text-xs text-slate-200 hover:bg-slate-800 rounded-lg flex items-center gap-1.5 active:scale-95 transition">
+        <i class="fa-solid fa-pen text-sky-400"></i> Edit
+      </button>
+      <button onclick="handleDeleteMsgAction()" class="px-2.5 py-1.5 text-xs text-red-400 hover:bg-red-950/40 rounded-lg flex items-center gap-1.5 active:scale-95 transition">
+        <i class="fa-solid fa-trash-can"></i> Delete
+      </button>
+    `;
+  }
+
+  menu.innerHTML = buttonsHtml;
+  document.body.appendChild(menu);
+}
+
+function closeMsgActionMenu() {
+  const m = document.getElementById('msgActionPopup');
+  if (m) m.remove();
+  activeActionMsg = null;
+}
+
+function handleCopyMsgAction() {
+  if (!activeActionMsg) return;
+  navigator.clipboard.writeText(activeActionMsg.text);
+  closeMsgActionMenu();
+}
+
+function handleEditMsgAction() {
+  if (!activeActionMsg) return;
+  const input = document.getElementById('chatInputText');
+  if (input) {
+    input.value = activeActionMsg.text;
+    input.focus();
+  }
+  closeMsgActionMenu();
+}
+
+async function handleDeleteMsgAction() {
+  if (!activeActionMsg || !activeActionMsg.id) return;
+  if (!confirm("Message delete karna hai?")) {
+    closeMsgActionMenu();
+    return;
+  }
+  const idToDelete = activeActionMsg.id;
+  closeMsgActionMenu();
+  try {
+    const res = await fetch('/api/delete-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: idToDelete })
+    });
+    if (res.ok) {
+      await loadChatMessages();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Touch/Long-press & Desktop Right Click Controller
+document.addEventListener('touchstart', (e) => {
+  const bubble = e.target.closest('.msg-bubble');
+  if (!bubble) return;
+  const touch = e.touches[0];
+  longPressTimer = setTimeout(() => {
+    showMsgActionMenu(touch.clientX, touch.clientY, bubble.dataset.msgId, bubble.dataset.msgText, bubble.dataset.isAgent);
+  }, 450);
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+  if (longPressTimer) clearTimeout(longPressTimer);
+});
+
+document.addEventListener('touchmove', () => {
+  if (longPressTimer) clearTimeout(longPressTimer);
+});
+
+document.addEventListener('contextmenu', (e) => {
+  const bubble = e.target.closest('.msg-bubble');
+  if (bubble) {
+    e.preventDefault();
+    showMsgActionMenu(e.clientX, e.clientY, bubble.dataset.msgId, bubble.dataset.msgText, bubble.dataset.isAgent);
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#msgActionPopup') && !e.target.closest('.msg-bubble')) {
+    closeMsgActionMenu();
+  }
+});
 
     async function send1to1Message() {
       const input = document.getElementById("chatInputText");
