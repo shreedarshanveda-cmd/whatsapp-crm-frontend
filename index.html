@@ -718,9 +718,12 @@ function showMsgActionMenu(x, y, msgId, rawText, isAgent) {
   menu.style.left = posX + 'px';
   menu.style.top = posY + 'px';
 
-  let buttonsHtml = `
-    <button onclick="handleCopyMsgAction()" class="px-2.5 py-1.5 text-xs text-slate-200 hover:bg-slate-800 rounded-lg flex items-center gap-1.5 active:scale-95 transition">
+let buttonsHtml = `
+    <button type="button" onclick="handleCopyMsgAction()" class="px-2.5 py-1.5 text-xs text-slate-200 hover:bg-slate-800 rounded-lg flex items-center gap-1.5 active:scale-95 transition">
       <i class="fa-regular fa-copy text-emerald-400"></i> Copy
+    </button>
+    <button type="button" id="btnPasteAction" onclick="handlePasteMsgAction()" class="px-2.5 py-1.5 text-xs text-amber-300 hover:bg-slate-800 rounded-lg flex items-center gap-1.5 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
+      <i class="fa-solid fa-paste"></i> Paste
     </button>
   `;
 
