@@ -124,12 +124,10 @@ export default {
             phone,
             COALESCE(source, 'Direct WhatsApp') AS source,
             COALESCE(stage, 'hot') AS status,
-            COALESCE(unread_count, 0) AS unread_count,
-            COALESCE((SELECT timestamp FROM messages WHERE lead_id = leads.id OR lead_id = leads.phone ORDER BY timestamp DESC LIMIT 1), created_at) AS created_at,
-            COALESCE((SELECT timestamp FROM messages WHERE lead_id = leads.id OR lead_id = leads.phone ORDER BY timestamp DESC LIMIT 1), created_at) AS updated_at,
-            (SELECT text FROM messages WHERE lead_id = leads.id OR lead_id = leads.phone ORDER BY timestamp DESC LIMIT 1) AS last_message
+            created_at,
+            (SELECT text FROM messages WHERE lead_id = leads.id ORDER BY timestamp DESC LIMIT 1) AS last_message
           FROM leads
-          ORDER BY updated_at DESC
+          ORDER BY created_at DESC
         `).all();
 
         return new Response(JSON.stringify(results || []), {
