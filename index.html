@@ -82,6 +82,61 @@
   </style>
 </head>
 <body class="h-[100dvh] flex flex-col overflow-hidden">
+  <!-- SECURE VEDASHREE AUTH GATE -->
+<div id="authGateModal" class="fixed inset-0 z-[9999] bg-[#070d19]/95 backdrop-blur-md flex items-center justify-center p-4">
+  <div id="authCard" class="w-full max-w-sm bg-[#0f172a] border border-slate-800 rounded-2xl p-6 shadow-2xl relative text-center">
+    
+    <!-- Toast Notification for Wrong Password -->
+    <div id="authToast" class="hidden absolute -top-12 left-0 right-0 mx-auto w-max px-4 py-2 bg-red-600/90 border border-red-500 text-white text-xs rounded-lg shadow-lg font-medium transition-all">
+      <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> <span id="authToastMsg">Wrong Password! Try again.</span>
+    </div>
+
+    <!-- Vedashree Logo -->
+    <div class="w-16 h-16 mx-auto mb-4 rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-2 flex items-center justify-center overflow-hidden">
+      <img src="https://vedashree.gt.tc/wp-content/uploads/2026/07/cropped-Brown-Cream-Minimalist-Elegant-Monogram-Initial-Name-Logo-1-2.webp" class="w-full h-full object-contain" alt="Vedashree">
+    </div>
+
+    <h2 class="text-lg font-bold text-slate-100">VEDASHREE CRM</h2>
+    <p class="text-xs text-slate-400 mt-1 mb-6">Enter master password to access system</p>
+
+    <!-- Password Form -->
+    <div id="loginFormContainer" class="space-y-4">
+      <div class="relative">
+        <input type="password" id="adminPasswordInput" placeholder="Enter Password" 
+          class="w-full bg-[#0b1120] border border-slate-700 focus:border-emerald-500 text-slate-100 text-sm rounded-xl px-4 py-3 pr-11 outline-none transition-all placeholder:text-slate-500">
+        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 top-3.5 text-slate-400 hover:text-emerald-400">
+          <i id="pwdEyeIcon" class="fa-solid fa-eye"></i>
+        </button>
+      </div>
+
+      <button type="button" onclick="handleAdminLogin()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold text-sm rounded-xl shadow-lg shadow-emerald-950 transition-all flex items-center justify-center gap-2">
+        <span>Unlock CRM</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+      </button>
+
+      <div class="pt-2">
+        <button type="button" onclick="triggerForgotPasswordOtp()" class="text-xs text-slate-400 hover:text-emerald-400 underline transition-colors">
+          Forgot Password? Get OTP on WhatsApp
+        </button>
+      </div>
+    </div>
+
+    <!-- OTP Reset Form -->
+    <div id="otpFormContainer" class="hidden space-y-4">
+      <p class="text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-2 rounded-lg">OTP has been sent to your registered WhatsApp.</p>
+      <input type="number" id="otpResetInput" placeholder="Enter 6-digit OTP" 
+        class="w-full bg-[#0b1120] border border-slate-700 focus:border-emerald-500 text-slate-100 text-center tracking-widest text-lg rounded-xl px-4 py-2.5 outline-none">
+      
+      <button type="button" onclick="verifyOtpAndLogin()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm rounded-xl transition-all">
+        Verify OTP & Unlock
+      </button>
+
+      <button type="button" onclick="backToPasswordLogin()" class="text-xs text-slate-400 hover:text-slate-300">
+        Back to Password
+      </button>
+    </div>
+
+  </div>
+</div>
 
   <!-- Top Header with Gemini AI Switch -->
   <header class="bg-[#0f172a] border-b border-slate-800 px-3 py-2 flex items-center justify-between shrink-0">
