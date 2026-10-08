@@ -1259,6 +1259,75 @@ document.addEventListener('click', (e) => {
     function toggleSettingsModal() {
       document.getElementById("settingsModal").classList.toggle("hidden");
     }
+    /* ================= VEDASHREE AUTH ENGINE ================= */
+const MASTER_CRM_KEY = "Vishal_jha";
+
+// 1. Session check on page load
+window.addEventListener("DOMContentLoaded", () => {
+  const isAuth = localStorage.getItem("vedashree_auth_session");
+  const authModal = document.getElementById("authGateModal");
+  if (isAuth === "true") {
+    if (authModal) authModal.classList.add("hidden");
+  } else {
+    if (authModal) authModal.classList.remove("hidden");
+  }
+});
+
+// 2. Toggle Password Hide / Show
+function togglePasswordVisibility() {
+  const pwdInput = document.getElementById("adminPasswordInput");
+  const eyeIcon = document.getElementById("pwdEyeIcon");
+  if (!pwdInput) return;
+  if (pwdInput.type === "password") {
+    pwdInput.type = "text";
+    if (eyeIcon) eyeIcon.className = "fa-solid fa-eye-slash";
+  } else {
+    pwdInput.type = "password";
+    if (eyeIcon) eyeIcon.className = "fa-solid fa-eye";
+  }
+}
+
+// 3. Login Verification & Wrong Password Alert
+function handleAdminLogin() {
+  const pwdInput = document.getElementById("adminPasswordInput");
+  const authModal = document.getElementById("authGateModal");
+  const authToast = document.getElementById("authToast");
+  const authToastMsg = document.getElementById("authToastMsg");
+  const val = pwdInput ? pwdInput.value.trim() : "";
+
+  if (val === MASTER_CRM_KEY) {
+    localStorage.setItem("vedashree_auth_session", "true");
+    if (authModal) authModal.classList.add("hidden");
+    if (authToast) authToast.classList.add("hidden");
+    if (typeof checkUnreadNotifications === "function") {
+      checkUnreadNotifications();
+    }
+  } else {
+    // Show toast error
+    if (authToast && authToastMsg) {
+      authToastMsg.innerText = "Wrong Password! Try again.";
+      authToast.classList.remove("hidden");
+      setTimeout(() => {
+        authToast.classList.add("hidden");
+      }, 3000);
+    }
+    // Shake animation
+    const card = document.getElementById("authCard");
+    if (card) {
+      card.classList.add("animate-bounce");
+      setTimeout(() => card.classList.remove("animate-bounce"), 600);
+    }
+  }
+}
+
+// 4. Logout Function
+function handleAdminLogout() {
+  localStorage.removeItem("vedashree_auth_session");
+  const authModal = document.getElementById("authGateModal");
+  const pwdInput = document.getElementById("adminPasswordInput");
+  if (pwdInput) pwdInput.value = "";
+  if (authModal) authModal.classList.remove("hidden");
+    }
   </script>
 </body>
 </html>
