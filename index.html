@@ -1391,7 +1391,6 @@ function backToPasswordLogin() {
 
   // Auto-register inline Service Worker for Android Mobile & Desktop
   function initNotificationServiceWorker() {
-  function initNotificationServiceWorker() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").then(function(reg) {
       swRegistration = reg;
@@ -1399,8 +1398,7 @@ function backToPasswordLogin() {
       console.log("SW Reg Error:", err);
     });
   }
-  }
-  initNotificationServiceWorker();
+   initNotificationServiceWorker();
 
   // Request notification permission
   async function requestNotificationAccess() {
