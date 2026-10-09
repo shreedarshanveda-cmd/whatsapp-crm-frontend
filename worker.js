@@ -113,6 +113,31 @@ export default {
         return new Response("OK", { status: 200 });
       }
     }
+    // Service Worker Endpoint for Push Notifications
+  if (request.method === "GET" && url.pathname === "/sw.js") {
+    const swCode = `
+      self.addEventListener('install', function(e) { self.skipWaiting(); });
+      self.addEventListener('activate', function(e) { e.waitUntil(self.clients.claim()); });
+      self.addEventListener('notificationclick', function(e) {
+        e.notification.close();
+        e.waitUntil(
+          clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+            for (let i = 0; i < clientList.length; i++) {
+              let client = clientList[i];
+              if (client.url && 'focus' in client) return client.focus();
+            }
+            if (clients.openWindow) return clients.openWindow('/');
+          })
+        );
+      });
+    `;
+    return new Response(swCode, {
+      headers: {
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Cache-Control": "no-cache"
+      }
+    });
+  }
 
     // 5. API: Fetch Leads List
     if (request.method === "GET" && url.pathname === "/api/leads") {
