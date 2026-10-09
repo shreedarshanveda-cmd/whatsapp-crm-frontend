@@ -1296,6 +1296,7 @@ function handleAdminLogin() {
   const val = pwdInput ? pwdInput.value.trim() : "";
 
   if (val === MASTER_CRM_KEY) {
+    if (typeof requestNotificationAccess === "function") requestNotificationAccess();
     localStorage.setItem("vedashree_auth_session", "true");
     if (authModal) authModal.classList.add("hidden");
     if (authToast) authToast.classList.add("hidden");
@@ -1352,6 +1353,7 @@ function verifyOtpAndLogin() {
   const authModal = document.getElementById("authGateModal");
 
   if (enteredKey === MASTER_RECOVERY_KEY) {
+    if (typeof requestNotificationAccess === "function") requestNotificationAccess();
     localStorage.setItem("vedashree_auth_session", "true");
     if (authModal) authModal.classList.add("hidden");
     if (authToast) authToast.classList.add("hidden");
