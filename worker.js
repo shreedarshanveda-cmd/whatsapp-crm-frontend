@@ -79,7 +79,40 @@ export default {
         if (messages && Array.isArray(messages) && messages.length > 0) {
           const msg = messages[0];
           const rawPhone = String(msg.from || "").replace(/[^0-9]/g, "");
-          const textBody = msg.text?.body || (msg.type ? `[${msg.type.toUpperCase()}]` : "Message");
+          let textBody = "";
+        let mediaUrl = null;
+        let mediaType = msg.type || "text";
+        let mediaName = null;
+
+        if (msg.type === "text") {
+          textBody = msg.text?.body || "";
+        } else if (msg.type === "image") {
+          textBody = msg.image?.caption || "";
+          mediaName = "image_" + (msg.image?.id || Date.now()) + ".jpg";
+          mediaUrl = `/api/media?id=${encodeURIComponent(msg.image?.id || "")}`;
+        } else if (msg.type === "video") {
+          textBody = msg.video?.caption || "";
+          mediaName = "video_" + (msg.video?.id || Date.now()) + ".mp4";
+          mediaUrl = `/api/media?id=${encodeURIComponent(msg.video?.id || "")}`;
+        } else if (msg.type === "audio" || msg.type === "voice") {
+          textBody = "[Voice Message]";
+          mediaName = "audio_" + (msg.audio?.id || msg.voice?.id || Date.now()) + ".ogg";
+          mediaUrl = `/api/media?id=${encodeURIComponent(msg.audio?.id || msg.voice?.id || "")}`;
+        } else if (msg.type === "document") {
+          textBody = msg.document?.caption || "";
+          mediaName = msg.document?.filename || ("document_" + (msg.document?.id || Date.now()));
+          mediaUrl = `/api/media?id=${encodeURIComponent(msg.document?.id || "")}`;
+        } else if (msg.type === "location") {
+          const lat = msg.location?.latitude;
+          const lng = msg.location?.longitude;
+          const locName = msg.location?.name || "";
+          const locAddr = msg.location?.address || "";
+          textBody = locName ? `${locName} (${locAddr})` : (locAddr || "Shared Location");
+          mediaName = "Google Maps Location";
+          mediaUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        } else {
+          textBody = msg.type ? `[${msg.type.toUpperCase()}]` : "Message";
+            }
           const msgId = msg.id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
           
           let customerName = "";
@@ -92,8 +125,8 @@ export default {
 
             await env.DB.prepare(`
               INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
-              VALUES (?, ?, 'customer', ?, NULL, NULL, NULL, 'delivered', ?)
-            `).bind(msgId, leadId, textBody, now).run();
+              VALUES (?, ?, 'customer', ?, ?, ?, ?, 'delivered', ?)
+            ).bind(msgId, leadId, textBody, mediaUrl, mediaType, mediaName, now).run();
 
             await env.DB.prepare(`
               INSERT INTO leads (id, name, phone, source, ad_title, stage, created_at)
