@@ -1427,8 +1427,8 @@ async function checkUnreadNotifications() {
       if (!Array.isArray(leads)) return;
 
       leads.forEach((ld) => {
-        if (ld.unread_count && ld.unread_count > 0 && ld.last_message_id !== lastNotifiedMsgId) {
-          lastNotifiedMsgId = ld.last_message_id;
+        if (ld.unread_count && ld.unread_count > 0 && ld.last_message !== lastNotifiedMsgId) {
+          lastNotifiedMsgId = ld.last_message;
           new Notification("New Lead Message: " + (ld.name || ld.phone), {
             body: ld.last_message || "You have a new unread message",
             icon: "https://raw.githubusercontent.com/shreedarshanveda-cmd/whatsapp-crm-frontend/main/icon-192.png"
