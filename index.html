@@ -1327,9 +1327,9 @@ function handleAdminLogout() {
   const pwdInput = document.getElementById("adminPasswordInput");
   if (pwdInput) pwdInput.value = "";
   if (authModal) authModal.classList.remove("hidden");
+  if (typeof stopNotificationPolling === "function") stopNotificationPolling();
 }
-    // 5. Trigger WhatsApp OTP
-let // 5. Master Recovery Key Engine (Offline Fallback)
+    // 5. Master Recovery Key Engine (Offline Fallback)
 const MASTER_RECOVERY_KEY = "1996";
 
 function triggerForgotPasswordOtp() {
@@ -1382,6 +1382,70 @@ function backToPasswordLogin() {
   const otpInput = document.getElementById("otpResetInput");
   if (otpInput) otpInput.value = "";
   }
+    // 8. Background Web Push Notification Engine
+let notifPollInterval = null;
+let lastNotifiedMsgId = null;
+
+// Request notification permission
+function requestNotificationAccess() {
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+}
+
+// Stop polling on logout
+function stopNotificationPolling() {
+  if (notifPollInterval) {
+    clearInterval(notifPollInterval);
+    notifPollInterval = null;
+  }
+}
+
+// Check & Catch-up notifications
+async function checkUnreadNotifications() {
+  if (!("Notification" in window)) return;
+  
+  if (Notification.permission === "default") {
+    await Notification.requestPermission();
+  }
+  if (Notification.permission !== "granted") return;
+
+  // Catch-up / poll function
+  const fetchNewMessages = async () => {
+    const isAuth = localStorage.getItem("vedashree_auth_session");
+    if (isAuth !== "true") {
+      stopNotificationPolling();
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/leads");
+      if (!res.ok) return;
+      const leads = await res.json();
+      if (!Array.isArray(leads)) return;
+
+      leads.forEach((ld) => {
+        if (ld.unread_count && ld.unread_count > 0 && ld.last_message_id !== lastNotifiedMsgId) {
+          lastNotifiedMsgId = ld.last_message_id;
+          new Notification("New Lead Message: " + (ld.name || ld.phone), {
+            body: ld.last_message || "You have a new unread message",
+            icon: "https://raw.githubusercontent.com/shreedarshanveda-cmd/whatsapp-crm-frontend/main/icon-192.png"
+          });
+        }
+      });
+    } catch (e) {
+      console.log("Notification check skipped:", e);
+    }
+  };
+
+  // Immediate catch-up on login
+  await fetchNewMessages();
+
+  // Background polling every 10 seconds while logged in
+  if (!notifPollInterval) {
+    notifPollInterval = setInterval(fetchNewMessages, 10000);
+  }
+    }
   </script>
 </body>
 </html>
