@@ -1384,70 +1384,111 @@ function backToPasswordLogin() {
   const otpInput = document.getElementById("otpResetInput");
   if (otpInput) otpInput.value = "";
   }
-    // 8. Background Web Push Notification Engine
-let notifPollInterval = null;
-let lastNotifiedMsgId = null;
+    // 8. Background Web Push Notification Engine (WhatsApp Style)
+  let notifPollInterval = null;
+  let lastNotifiedMsg = null;
+  let swRegistration = null;
 
-// Request notification permission
-function requestNotificationAccess() {
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
-  }
-}
-
-// Stop polling on logout
-function stopNotificationPolling() {
-  if (notifPollInterval) {
-    clearInterval(notifPollInterval);
-    notifPollInterval = null;
-  }
-}
-
-// Check & Catch-up notifications
-async function checkUnreadNotifications() {
-  if (!("Notification" in window)) return;
-  
-  if (Notification.permission === "default") {
-    await Notification.requestPermission();
-  }
-  if (Notification.permission !== "granted") return;
-
-  // Catch-up / poll function
-  const fetchNewMessages = async () => {
-    const isAuth = localStorage.getItem("vedashree_auth_session");
-    if (isAuth !== "true") {
-      stopNotificationPolling();
-      return;
+  // Auto-register inline Service Worker for Android Mobile & Desktop
+  function initNotificationServiceWorker() {
+    if ("serviceWorker" in navigator) {
+      try {
+        const swBlob = new Blob([
+          `self.addEventListener('notificationclick', function(e) {
+            e.notification.close();
+            e.waitUntil(
+              clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+                for (let i = 0; i < clientList.length; i++) {
+                  let client = clientList[i];
+                  if (client.url && 'focus' in client) return client.focus();
+                }
+                if (clients.openWindow) return clients.openWindow('/');
+              })
+            );
+          });`
+        ], { type: "application/javascript" });
+        const swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl).then(function(reg) {
+          swRegistration = reg;
+        }).catch(function() {
+          console.log("SW Init Fallback");
+        });
+      } catch (err) {
+        console.log("SW Blob Error");
+      }
     }
-
-    try {
-      const res = await fetch("/api/leads");
-      if (!res.ok) return;
-      const leads = await res.json();
-      if (!Array.isArray(leads)) return;
-
-      leads.forEach((ld) => {
-        if (ld.unread_count && ld.unread_count > 0 && ld.last_message !== lastNotifiedMsgId) {
-          lastNotifiedMsgId = ld.last_message;
-          new Notification("New Lead Message: " + (ld.name || ld.phone), {
-            body: ld.last_message || "You have a new unread message",
-            icon: "https://raw.githubusercontent.com/shreedarshanveda-cmd/whatsapp-crm-frontend/main/icon-192.png"
-          });
-        }
-      });
-    } catch (e) {
-      console.log("Notification check skipped:", e);
-    }
-  };
-
-  // Immediate catch-up on login
-  fetchNewMessages();
-
-  // Background polling every 10 seconds while logged in
-  if (!notifPollInterval) {
-    notifPollInterval = setInterval(fetchNewMessages, 45000);
   }
+  initNotificationServiceWorker();
+
+  // Request notification permission
+  async function requestNotificationAccess() {
+    if ("Notification" in window && Notification.permission === "default") {
+      await Notification.requestPermission();
     }
+  }
+
+  // Stop polling on logout
+  function stopNotificationPolling() {
+    if (notifPollInterval) {
+      clearInterval(notifPollInterval);
+      notifPollInterval = null;
+    }
+  }
+
+  // Check & Catch-up notifications
+  async function checkUnreadNotifications() {
+    if (!("Notification" in window)) return;
+
+    if (Notification.permission === "default") {
+      await Notification.requestPermission();
+    }
+    if (Notification.permission !== "granted") return;
+
+    const fetchNewMessages = async () => {
+      const isAuth = localStorage.getItem("vedashree_auth_session");
+      if (isAuth !== "true") {
+        stopNotificationPolling();
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/leads");
+        if (!res.ok) return;
+        const leads = await res.json();
+        if (!Array.isArray(leads)) return;
+
+        leads.forEach((ld) => {
+          if (ld.unread_count && ld.unread_count > 0 && ld.last_message && ld.last_message !== lastNotifiedMsg) {
+            lastNotifiedMsg = ld.last_message;
+            const notifTitle = (ld.name && ld.name.trim() !== "") ? ld.name : (ld.phone || "New WhatsApp Message");
+            const notifBody = ld.last_message;
+            const notifOptions = {
+              body: notifBody,
+              icon: "https://raw.githubusercontent.com/shreedarshanveda-cmd/whatsapp-crm-frontend/main/icon-192.png",
+              badge: "https://raw.githubusercontent.com/shreedarshanveda-cmd/whatsapp-crm-frontend/main/icon-192.png",
+              vibrate: [200, 100, 200],
+              tag: "lead-msg-" + (ld.id || ld.phone),
+              renotify: true
+            };
+
+            if (swRegistration && swRegistration.showNotification) {
+              swRegistration.showNotification(notifTitle, notifOptions);
+            } else {
+              new Notification(notifTitle, notifOptions);
+            }
+          }
+        });
+      } catch (e) {
+        console.log("Notification check skipped:", e);
+      }
+    };
+
+    fetchNewMessages();
+
+    if (!notifPollInterval) {
+      notifPollInterval = setInterval(fetchNewMessages, 45000);
+    }
+  }
   </script>
 </body>
 </html>
