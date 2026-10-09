@@ -1439,7 +1439,7 @@ async function checkUnreadNotifications() {
   };
 
   // Immediate catch-up on login
-  await fetchNewMessages();
+  fetchNewMessages();
 
   // Background polling every 10 seconds while logged in
   if (!notifPollInterval) {
