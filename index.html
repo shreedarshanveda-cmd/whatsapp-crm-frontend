@@ -743,7 +743,40 @@ function mobileBackToLeads() {
         ${dateBadge}
         <div class="flex ${isAgent ? 'justify-end' : 'justify-start'} mb-1.5">
           <div data-msg-id="${m.id}" data-msg-text="${encodeURIComponent(m.text || m.message || '')}" data-is-agent="${isAgent}" class="msg-bubble max-w-[80%] rounded-xl px-3 py-2 text-xs ${isAgent ? 'bg-emerald-700/80 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none'} shadow-sm relative select-none">
-            <p class="whitespace-pre-wrap">${m.text || m.message}</p>
+            ${m.media_url && m.media_type === 'image' ? `
+          <div class="mb-1 rounded overflow-hidden max-w-[240px]">
+            <a href="${m.media_url}" target="_blank">
+              <img src="${m.media_url}" alt="WhatsApp Image" class="w-full h-auto object-cover rounded border border-slate-700/50 hover:opacity-95" loading="lazy" />
+            </a>
+          </div>
+        ` : ''}
+        ${m.media_url && m.media_type === 'video' ? `
+          <div class="mb-1 rounded overflow-hidden max-w-[260px]">
+            <video src="${m.media_url}" controls class="w-full rounded border border-slate-700/50"></video>
+          </div>
+        ` : ''}
+        ${m.media_url && (m.media_type === 'audio' || m.media_type === 'voice') ? `
+          <div class="mb-1 max-w-[240px]">
+            <audio src="${m.media_url}" controls class="w-full h-8"></audio>
+          </div>
+        ` : ''}
+        ${m.media_url && m.media_type === 'document' ? `
+          <div class="mb-1 p-2 rounded bg-slate-800/80 border border-slate-700 flex items-center gap-2 max-w-[240px]">
+            <span class="text-emerald-400 font-bold text-xs">📄</span>
+            <a href="${m.media_url}" target="_blank" download="${m.media_name || 'document'}" class="text-xs text-sky-400 hover:underline truncate block">
+              ${m.media_name || 'Download Document'}
+            </a>
+          </div>
+        ` : ''}
+        ${m.media_type === 'location' ? `
+          <div class="mb-1 p-2 rounded bg-slate-800/80 border border-slate-700 flex items-center gap-2 max-w-[240px]">
+            <span class="text-red-400 text-sm">📍</span>
+            <a href="${m.media_url}" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-400 font-medium hover:underline">
+              View Location on Google Maps
+            </a>
+          </div>
+        ` : ''}
+        ${(m.text || m.message) ? `<p class="whitespace-pre-wrap">${m.text || m.message}</p>` : ''}
             <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-300/70 font-mono">
               <span>${m.created_at ? new Date(m.created_at.includes('Z') || m.created_at.includes('+') ? m.created_at : m.created_at.replace(' ', 'T') + 'Z').toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }) : ''}</span>
               ${isAgent ? `<span class="${m.status === 'read' ? 'text-blue-300' : 'text-slate-300'}">✓✓</span>` : ''}
