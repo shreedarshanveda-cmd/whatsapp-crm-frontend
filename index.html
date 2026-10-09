@@ -1327,87 +1327,61 @@ function handleAdminLogout() {
   const pwdInput = document.getElementById("adminPasswordInput");
   if (pwdInput) pwdInput.value = "";
   if (authModal) authModal.classList.remove("hidden");
-    }
+}
     // 5. Trigger WhatsApp OTP
-let currentGeneratedOtp = null;
+let // 5. Master Recovery Key Engine (Offline Fallback)
+const MASTER_RECOVERY_KEY = "1996";
 
-async function triggerForgotPasswordOtp() {
-  const authToast = document.getElementById("authToast");
-  const authToastMsg = document.getElementById("authToastMsg");
-  
-  if (authToast && authToastMsg) {
-    authToastMsg.innerText = "Sending OTP to WhatsApp...";
-    authToast.className = "absolute -top-12 left-0 right-0 mx-auto w-max px-4 py-2 bg-emerald-600/90 border border-emerald-500 text-white text-xs rounded-lg shadow-lg font-medium transition-all";
-    authToast.classList.remove("hidden");
-  }
-
-  try {
-    const res = await fetch("/api/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: "919599433875" })
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      document.getElementById("loginFormContainer").classList.add("hidden");
-      document.getElementById("otpFormContainer").classList.remove("hidden");
-      if (authToast) authToast.classList.add("hidden");
-    } else {
-      throw new Error(data.message || "Failed to send OTP");
-    }
-  } catch (err) {
-    if (authToast && authToastMsg) {
-      authToastMsg.innerText = "Failed to send OTP. Try again!";
-      authToast.className = "absolute -top-12 left-0 right-0 mx-auto w-max px-4 py-2 bg-red-600/90 border border-red-500 text-white text-xs rounded-lg shadow-lg font-medium transition-all";
-      setTimeout(() => authToast.classList.add("hidden"), 3000);
-    }
+function triggerForgotPasswordOtp() {
+  document.getElementById("loginFormContainer").classList.add("hidden");
+  const otpForm = document.getElementById("otpFormContainer");
+  if (otpForm) otpForm.classList.remove("hidden");
+  const otpInput = document.getElementById("otpResetInput");
+  if (otpInput) {
+    otpInput.placeholder = "Enter Master Recovery Key";
+    otpInput.value = "";
+    otpInput.focus();
   }
 }
 
-// 6. Verify OTP & Unlock
-async function verifyOtpAndLogin() {
+function verifyOtpAndLogin() {
   const otpInput = document.getElementById("otpResetInput");
-  const otpVal = otpInput ? otpInput.value.trim() : "";
+  const enteredKey = otpInput ? otpInput.value.trim() : "";
   const authToast = document.getElementById("authToast");
   const authToastMsg = document.getElementById("authToastMsg");
+  const authModal = document.getElementById("authGateModal");
 
-  try {
-    const res = await fetch("/api/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: "919599433875", otp: otpVal })
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      localStorage.setItem("vedashree_auth_session", "true");
-      document.getElementById("authGateModal").classList.add("hidden");
-      if (authToast) authToast.classList.add("hidden");
-      backToPasswordLogin();
-      if (typeof checkUnreadNotifications === "function") {
-        checkUnreadNotifications();
-      }
-    } else {
-      throw new Error("Invalid OTP");
+  if (enteredKey === MASTER_RECOVERY_KEY) {
+    localStorage.setItem("vedashree_auth_session", "true");
+    if (authModal) authModal.classList.add("hidden");
+    if (authToast) authToast.classList.add("hidden");
+    backToPasswordLogin();
+    if (typeof checkUnreadNotifications === "function") {
+      checkUnreadNotifications();
     }
-  } catch (err) {
+  } else {
     if (authToast && authToastMsg) {
-      authToastMsg.innerText = "Invalid OTP! Check WhatsApp.";
+      authToastMsg.innerText = "Invalid Recovery Key! Access Denied.";
       authToast.className = "absolute -top-12 left-0 right-0 mx-auto w-max px-4 py-2 bg-red-600/90 border border-red-500 text-white text-xs rounded-lg shadow-lg font-medium transition-all";
       authToast.classList.remove("hidden");
       setTimeout(() => authToast.classList.add("hidden"), 3000);
     }
+    const card = document.getElementById("authCard");
+    if (card) {
+      card.classList.add("animate-bounce");
+      setTimeout(() => card.classList.remove("animate-bounce"), 600);
+    }
   }
 }
 
-// 7. Back to Password Screen
 function backToPasswordLogin() {
-  document.getElementById("otpFormContainer").classList.add("hidden");
-  document.getElementById("loginFormContainer").classList.remove("hidden");
+  const otpForm = document.getElementById("otpFormContainer");
+  const loginForm = document.getElementById("loginFormContainer");
+  if (otpForm) otpForm.classList.add("hidden");
+  if (loginForm) loginForm.classList.remove("hidden");
   const otpInput = document.getElementById("otpResetInput");
   if (otpInput) otpInput.value = "";
-    }
+  }
   </script>
 </body>
 </html>
