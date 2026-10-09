@@ -213,10 +213,13 @@ export default {
         await env.DB.prepare("UPDATE leads SET unread_count = 0 WHERE id = ? OR phone = ?").bind(leadId, cleanPhone).run();
         const { results } = await env.DB.prepare(`
           SELECT 
-            id, 
+            id,
             lead_id,
-            text, 
-            text AS message, 
+            text,
+            text AS message,
+            media_url,
+            media_type,
+            media_name,
             CASE WHEN sender = 'agent' THEN 'agent' ELSE 'customer' END AS sender,
             COALESCE(timestamp, datetime('now')) AS created_at
           FROM messages 
@@ -237,6 +240,38 @@ export default {
         });
       }
     }
+    // 6.1 API: Fetch WhatsApp Media from Meta Cloud API
+  if (request.method === "GET" && url.pathname === "/api/media") {
+    try {
+      const mediaId = url.searchParams.get("id");
+      if (!mediaId) return new Response("Missing media id", { status: 400 });
+
+      const metaToken = env.WHATSAPP_TOKEN || env.META_ACCESS_TOKEN || env.ACCESS_TOKEN;
+      if (!metaToken) return new Response("WhatsApp token not configured in worker env", { status: 500 });
+
+      const metaRes = await fetch(`https://graph.facebook.com/v19.0/${mediaId}`, {
+        headers: { "Authorization": `Bearer ${metaToken}` }
+      });
+      if (!metaRes.ok) return new Response("Failed to retrieve media meta", { status: metaRes.status });
+
+      const metaData = await metaRes.json();
+      if (!metaData.url) return new Response("Media download URL missing", { status: 404 });
+
+      const fileRes = await fetch(metaData.url, {
+        headers: { "Authorization": `Bearer ${metaToken}` }
+      });
+
+      return new Response(fileRes.body, {
+        status: 200,
+        headers: {
+          "Content-Type": fileRes.headers.get("Content-Type") || metaData.mime_type || "application/octet-stream",
+          "Cache-Control": "public, max-age=86400"
+        }
+      });
+    } catch (err) {
+      return new Response("Media Error: " + err.message, { status: 500 });
+    }
+        }
    // API: Delete Single Message
     if (request.method === "POST" && url.pathname === "/api/delete-message") {
       try {
