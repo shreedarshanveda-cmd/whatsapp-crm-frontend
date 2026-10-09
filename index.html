@@ -1391,32 +1391,14 @@ function backToPasswordLogin() {
 
   // Auto-register inline Service Worker for Android Mobile & Desktop
   function initNotificationServiceWorker() {
-    if ("serviceWorker" in navigator) {
-      try {
-        const swBlob = new Blob([
-          `self.addEventListener('notificationclick', function(e) {
-            e.notification.close();
-            e.waitUntil(
-              clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
-                for (let i = 0; i < clientList.length; i++) {
-                  let client = clientList[i];
-                  if (client.url && 'focus' in client) return client.focus();
-                }
-                if (clients.openWindow) return clients.openWindow('/');
-              })
-            );
-          });`
-        ], { type: "application/javascript" });
-        const swUrl = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swUrl).then(function(reg) {
-          swRegistration = reg;
-        }).catch(function() {
-          console.log("SW Init Fallback");
-        });
-      } catch (err) {
-        console.log("SW Blob Error");
-      }
-    }
+  function initNotificationServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js").then(function(reg) {
+      swRegistration = reg;
+    }).catch(function(err) {
+      console.log("SW Reg Error:", err);
+    });
+  }
   }
   initNotificationServiceWorker();
 
