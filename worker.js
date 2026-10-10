@@ -184,7 +184,14 @@ export default {
             COALESCE(stage, 'hot') AS status,
             COALESCE(unread_count, 0) AS unread_count,
             created_at,
-            (SELECT text FROM messages WHERE lead_id = leads.id ORDER BY timestamp DESC LIMIT 1) AS last_message
+            (SELECT CASE 
+              WHEN media_type = 'image' THEN '📷 Photo'
+              WHEN media_type = 'video' THEN '🎥 Video'
+              WHEN media_type = 'audio' OR media_type = 'voice' THEN '🎵 Voice message'
+              WHEN media_type = 'document' THEN '📄 Document'
+              WHEN media_type = 'location' THEN '📍 Location'
+              ELSE COALESCE(NULLIF(text, ''), 'Message')
+            END FROM messages WHERE lead_id = leads.id ORDER BY timestamp DESC LIMIT 1) AS last_message
           FROM leads
           ORDER BY created_at DESC
         `).all();
