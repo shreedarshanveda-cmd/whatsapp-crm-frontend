@@ -127,7 +127,7 @@ export default {
             INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, timestamp)
             VALUES (?, ?, 'customer', ?, ?, ?, ?, 'delivered', ?)
           `).bind(msgId, leadId, textBody, mediaUrl, mediaType, mediaName, now).run();
-
+            
             await env.DB.prepare(`
               INSERT INTO leads (id, name, phone, source, ad_title, stage, created_at)
               VALUES (?, ?, ?, 'Direct WhatsApp', NULL, 'hot', ?)
