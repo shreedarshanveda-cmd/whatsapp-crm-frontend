@@ -678,6 +678,7 @@
       } else {
         document.getElementById("chatWindowSection").classList.remove("hidden");
       }
+      document.getElementById("chatMessages").innerHTML = '<div class="flex items-center justify-center h-full text-slate-500 text-xs py-8"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading messages...</div>';
 
       renderLeadsList(allLeads);
       await loadChatMessages();
