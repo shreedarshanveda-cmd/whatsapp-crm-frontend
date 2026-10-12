@@ -137,16 +137,17 @@ export default {
                   unread_count = COALESCE(leads.unread_count, 0) + 1
             `).bind(leadId, customerName, rawPhone, now).run();
           }
-          // C. Trigger AI Ayurvedic Sales Executive Auto-Reply
-      if (rawPhone && textBody && textBody.trim().length > 0 && env.GEMINI_API_KEY) {
-        ctx.waitUntil((async () => {
-          try {
-            await handleGeminiAutoReply(env, rawPhone, customerName, textBody, msgId);
-          } catch (aiErr) {
-            console.error("AI AutoReply Error:", aiErr);
-          }
-        })());
+          // C. Direct Trigger AI Ayurvedic Sales Executive
+      if (rawPhone && textBody && textBody.trim().length > 0) {
+        try {
+          await handleGeminiAutoReply(env, rawPhone, customerName, textBody, msgId);
+        } catch (aiErr) {
+          console.error("AI Execution Error:", aiErr);
+        }
       }
+
+      lastWebhookError = "None";
+        }
           lastWebhookError = "None";
         }
 
