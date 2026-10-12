@@ -612,10 +612,12 @@ export default {
 };
 
 // ==========================================
-// VEDASHREE AI SALES & AYURVEDIC DOCTOR ENGINE (WITH HUMAN TYPING DELAY)
+// VEDASHREE AI SALES & AYURVEDIC DOCTOR ENGINE (WITH LOGS & FALLBACK)
 // ==========================================
 async function handleGeminiAutoReply(env, phone, customerName, userMessage, incomingMsgId) {
-  // 1. Message ko turant 'Read' (Blue Tick) mark karein
+  console.log(`[AI Engine] Starting reply for phone: ${phone}, msg: ${userMessage}`);
+
+  // 1. Step: Message ko turant 'Read' (Blue Tick) mark karein
   if (incomingMsgId && env.PHONE_NUMBER_ID && env.WHATSAPP_TOKEN) {
     try {
       await fetch(`https://graph.facebook.com/v20.0/${env.PHONE_NUMBER_ID}/messages`, {
@@ -630,8 +632,9 @@ async function handleGeminiAutoReply(env, phone, customerName, userMessage, inco
           message_id: incomingMsgId
         })
       });
+      console.log(`[AI Engine] Marked message as READ: ${incomingMsgId}`);
     } catch (e) {
-      console.error("Read receipt error:", e);
+      console.error("[AI Engine] Read status error:", e);
     }
   }
 
@@ -665,7 +668,8 @@ CLOSING PROTOCOL:
 Har baat ke baad order close karne ke liye puchein:
 "Kya main aapka Cash on Delivery (COD) parcel dispatch karwa doon? Kripya apna Naam, Pura Address aur Pincode share kar dijiye."`;
 
-  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  // Gemini 1.5 Flash endpoint
+  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${env.GEMINI_API_KEY}`;
 
   const payload = {
     contents: [
@@ -680,49 +684,77 @@ Har baat ke baad order close karne ke liye puchein:
     }
   };
 
-  const response = await fetch(geminiEndpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  let replyText = "";
+  try {
+    const response = await fetch(geminiEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  if (!response.ok) return;
+    if (!response.ok) {
+      const errBody = await response.text();
+      console.error(`[AI Engine] Gemini API HTTP Error ${response.status}:`, errBody);
+      return;
+    }
 
-  const data = await response.json();
-  const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!replyText) return;
+    const data = await response.json();
+    replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    console.log(`[AI Engine] Gemini Generated Reply:`, replyText);
+  } catch (err) {
+    console.error("[AI Engine] Gemini Fetch Exception:", err);
+    return;
+  }
 
-  // 2. Natural Human Typing Delay (4 second pause)
-  await new Promise(resolve => setTimeout(resolve, 4000));
+  if (!replyText || replyText.trim().length === 0) {
+    console.error("[AI Engine] Reply text is empty, aborting.");
+    return;
+  }
+
+  // 2. Natural Human Typing Pause (3 seconds)
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
   // 3. Send via WhatsApp Meta Cloud API
   const metaUrl = `https://graph.facebook.com/v20.0/${env.PHONE_NUMBER_ID}/messages`;
-  await fetch(metaUrl, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${env.WHATSAPP_TOKEN}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: phone,
-      type: "text",
-      text: { preview_url: false, body: replyText }
-    })
-  });
+  try {
+    const sendRes = await fetch(metaUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.WHATSAPP_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: phone,
+        type: "text",
+        text: { preview_url: false, body: replyText }
+      })
+    });
 
-  // 4. Log in D1 Database messages table
-  const leadId = `lead_${phone}`;
-  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  const aiMsgId = `ai_${Date.now()}`;
+    const sendData = await sendRes.json();
+    console.log(`[AI Engine] Meta Message Send Status:`, sendRes.status, JSON.stringify(sendData));
+  } catch (sendErr) {
+    console.error("[AI Engine] Meta Send Exception:", sendErr);
+    return;
+  }
 
-  await env.DB.prepare(`
-    INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, time)
-    VALUES (?, ?, 'agent', ?, NULL, 'text', NULL, 'sent', ?)
-  `).bind(aiMsgId, leadId, replyText, now).run();
+  // 4. Save to Database
+  try {
+    const leadId = `lead_${phone}`;
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const aiMsgId = `ai_${Date.now()}`;
 
-  await env.DB.prepare(`
-    UPDATE leads SET updated_at = ?, last_message = ? WHERE id = ?
-  `).bind(now, replyText, leadId).run();
-          }
+    await env.DB.prepare(`
+      INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, time)
+      VALUES (?, ?, 'agent', ?, NULL, 'text', NULL, 'sent', ?)
+    `).bind(aiMsgId, leadId, replyText, now).run();
+
+    await env.DB.prepare(`
+      UPDATE leads SET updated_at = ?, last_message = ? WHERE id = ?
+    `).bind(now, replyText, leadId).run();
+    console.log(`[AI Engine] Successfully saved message to CRM DB.`);
+  } catch (dbErr) {
+    console.error("[AI Engine] DB Save Exception:", dbErr);
+  }
+}
