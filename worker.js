@@ -137,7 +137,7 @@ export default {
                   unread_count = COALESCE(leads.unread_count, 0) + 1
             `).bind(leadId, customerName, rawPhone, now).run();
           }
-          // C. Direct Trigger AI Ayurvedic Sales Executive
+          /// C. Direct Trigger AI Ayurvedic Sales Executive
       if (rawPhone && textBody && textBody.trim().length > 0) {
         try {
           await handleGeminiAutoReply(env, rawPhone, customerName, textBody, msgId);
@@ -147,8 +147,6 @@ export default {
       }
 
       lastWebhookError = "None";
-        }
-          lastWebhookError = "None";
         }
 
         return new Response("EVENT_RECEIVED", { status: 200 });
@@ -670,7 +668,7 @@ Har baat ke baad order close karne ke liye puchein:
 "Kya main aapka Cash on Delivery (COD) parcel dispatch karwa doon? Kripya apna Naam, Pura Address aur Pincode share kar dijiye."`;
 
   // Gemini 1.5 Flash endpoint
-  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${env.GEMINI_API_KEY}`;
+  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
 
   const payload = {
     contents: [
