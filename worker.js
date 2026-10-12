@@ -600,3 +600,119 @@ export default {
     });
   }
 };
+
+// ==========================================
+// VEDASHREE AI SALES & AYURVEDIC DOCTOR ENGINE (WITH HUMAN TYPING DELAY)
+// ==========================================
+async function handleGeminiAutoReply(env, phone, customerName, userMessage, incomingMsgId) {
+  // 1. Message ko turant 'Read' (Blue Tick) mark karein
+  if (incomingMsgId && env.PHONE_NUMBER_ID && env.WHATSAPP_TOKEN) {
+    try {
+      await fetch(`https://graph.facebook.com/v20.0/${env.PHONE_NUMBER_ID}/messages`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${env.WHATSAPP_TOKEN}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          status: "read",
+          message_id: incomingMsgId
+        })
+      });
+    } catch (e) {
+      console.error("Read receipt error:", e);
+    }
+  }
+
+  const systemPrompt = `Aap "Vedashree Wellness" ke Senior Ayurvedic Vaidya aur Expert Sales Advisor hain.
+Aapka uddeshya hai: Customer ki pareshani ko gaur se sunna, unhe emotionally connect karna, unka poora bharosa jeetna aur Cash on Delivery (COD) order book karna.
+
+COMMUNICATION STYLE:
+- Bhasha: Natural Hinglish / Hindi (jaise ek samajhdar vaidya aur dost dil se baat karta hai).
+- Sambodhan: "Ji sir" ya "Bhai sahab" samman ke sath.
+- Empathy Hook: Samasya sunkar pehle unka darr aur tension kam karein. Samjhayein ki aajkal ke bhagdaud aur stress bhare jeevan mein yeh dikkat bohot aam hai aur Ayurveda mein iska bohot saral aur jad se upchar hai.
+- KABHI BHI kisi sawal ke liye seedha "NAHI" mat boliye.
+
+AUTHENTIC PRODUCT CATALOG & PRICING:
+1. Mustang Power Booster Capsules — ₹1,499 (Vidarikand, Gokshura, Safed Musli, Kaunch Beej; Josh, timing aur andruni kamzori ke liye)
+2. ROCK STAMINA POWDER — ₹1,499 (Energy, body endurance, physical strength)
+3. Hammer Of Night Capsule — ₹1,249 (Night performance aur instant stamina)
+4. MUSTANG POWER OIL — ₹999 (Bahari tel malish, blood flow aur firmness)
+5. VIRON FORTE PRASH — ₹1,249 (Dhatu poshan, rasayan tonic)
+6. Pure Gold Shilajit Prash — ₹1,149 (100% Shuddh Himalayan Shilajit, Ashwagandha)
+
+SPECIAL COMBO KITS (SAVE BIG):
+- Complete Power Combo (Capsules + Oil): ₹2,199 (Save ₹300)
+- Royal Wellness Combo (Shilajit Prash + Mustang Capsules): ₹2,299
+
+SMART OBJECTION HANDLING:
+- Guarantee maange par: "Ji sir, bilkul! Hum dawa ki poori jimedaari lete hain ki yeh dawa agar aap hamare bataye gaye Ayurvedic niyamo aur parhez ke sath lenge, toh 100% aapko behtareen fayeda milega. Yeh 100% shuddh Ayush certified jadi-butiyan hain jinka koi side-effect nahi hai. Sath hi aapko Cash on Delivery (COD) mil raha hai jahan parcel hath mein aane par hi payment karni hai."
+- Discount maange par: "Sir, authentic Himalayan Shilajit aur durlabh butiyon ki wajah se rate bohot genuine hain, par aapki bachat ke liye hamara Special Combo Pack hai jisme seedhe ₹300 se ₹500 tak bachte hain aur delivery bilkul FREE hai."
+- Privacy: "Parcel 100% Gupt (Discreet) Packing mein aata hai, bahar kisi bimari ya dawa ka naam nahi hota."
+
+CLOSING PROTOCOL:
+Har baat ke baad order close karne ke liye puchein:
+"Kya main aapka Cash on Delivery (COD) parcel dispatch karwa doon? Kripya apna Naam, Pura Address aur Pincode share kar dijiye."`;
+
+  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+
+  const payload = {
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: `${systemPrompt}\n\nCustomer Name: ${customerName || "Customer"}\nCustomer Message: "${userMessage}"\n\nAapka Jawab:` }]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 350
+    }
+  };
+
+  const response = await fetch(geminiEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) return;
+
+  const data = await response.json();
+  const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!replyText) return;
+
+  // 2. Natural Human Typing Delay (4 second pause)
+  await new Promise(resolve => setTimeout(resolve, 4000));
+
+  // 3. Send via WhatsApp Meta Cloud API
+  const metaUrl = `https://graph.facebook.com/v20.0/${env.PHONE_NUMBER_ID}/messages`;
+  await fetch(metaUrl, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${env.WHATSAPP_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phone,
+      type: "text",
+      text: { preview_url: false, body: replyText }
+    })
+  });
+
+  // 4. Log in D1 Database messages table
+  const leadId = `lead_${phone}`;
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  const aiMsgId = `ai_${Date.now()}`;
+
+  await env.DB.prepare(`
+    INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, time)
+    VALUES (?, ?, 'agent', ?, NULL, 'text', NULL, 'sent', ?)
+  `).bind(aiMsgId, leadId, replyText, now).run();
+
+  await env.DB.prepare(`
+    UPDATE leads SET updated_at = ?, last_message = ? WHERE id = ?
+  `).bind(now, replyText, leadId).run();
+          }
