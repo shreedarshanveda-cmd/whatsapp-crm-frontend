@@ -3,7 +3,7 @@ import HTML_CONTENT from "./index.html";
 let lastWebhookError = "None";
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     // 1. Error Tracking Endpoint
