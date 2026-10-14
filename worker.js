@@ -669,7 +669,8 @@ Har baat ke baad order close karne ke liye puchein:
 
   let replyText = "";
     try {
-      const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+      // Force fresh cache bypass
+const aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Customer Name: ${customerName || "Customer"}\nCustomer Message: "${userMessage}"` }
