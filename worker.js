@@ -695,7 +695,7 @@ Har baat ke baad order close karne ke liye puchein:
 
     if (!response.ok) {
       const errBody = await response.text();
-      console.error(`[AI Engine] Gemini API HTTP Error ${response.status}:`, errBody);
+      try { const j = JSON.parse(errBody); console.error('[AI Engine] Error Details:', j.error?.message || errBody); } catch(e) { console.error('[AI Engine] Raw Error:', errBody); }
       return;
     }
 
