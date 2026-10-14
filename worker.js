@@ -667,48 +667,23 @@ CLOSING PROTOCOL:
 Har baat ke baad order close karne ke liye puchein:
 "Kya main aapka Cash on Delivery (COD) parcel dispatch karwa doon? Kripya apna Naam, Pura Address aur Pincode share kar dijiye."`;
 
-  // Gemini 1.5 Flash endpoint
-  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${env.GEMINI_API_KEY}`;
-
-  const payload = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: `${systemPrompt}\n\nCustomer Name: ${customerName || "Customer"}\nCustomer Message: "${userMessage}"\n\nAapka Jawab:` }]
-      }
-    ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 500,
-      thinkingConfig: {
-        thinkingBudget: 0
-      }
-    }
-  };
-
   let replyText = "";
-  try {
-    const response = await fetch(geminiEndpoint, {
-      method: "POST",
-      headers: {
-  "Content-Type": "application/json"
-},
-      body: JSON.stringify(payload)
-    });
+    try {
+      const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Customer Name: ${customerName || "Customer"}\nCustomer Message: "${userMessage}"` }
+        ],
+        max_tokens: 400,
+        temperature: 0.6
+      });
 
-    if (!response.ok) {
-      const errBody = await response.text();
-      try { const j = JSON.parse(errBody); console.error('[AI Engine] Error Details:', j.error?.message || errBody); } catch(e) { console.error('[AI Engine] Raw Error:', errBody); }
+      replyText = aiResponse.response || "";
+      console.log("[AI Engine] Llama 3 Generated Reply:", replyText);
+    } catch (err) {
+      console.error("[AI Engine] Llama 3 Fetch Exception:", err);
       return;
     }
-
-    const data = await response.json();
-    replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    console.log(`[AI Engine] Gemini Generated Reply:`, replyText);
-  } catch (err) {
-    console.error("[AI Engine] Gemini Fetch Exception:", err);
-    return;
-  }
 
   if (!replyText || replyText.trim().length === 0) {
     console.error("[AI Engine] Reply text is empty, aborting.");
