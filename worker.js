@@ -668,7 +668,7 @@ Har baat ke baad order close karne ke liye puchein:
 "Kya main aapka Cash on Delivery (COD) parcel dispatch karwa doon? Kripya apna Naam, Pura Address aur Pincode share kar dijiye."`;
 
   // Gemini 1.5 Flash endpoint
-  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
 
   const payload = {
     contents: [
@@ -688,8 +688,7 @@ Har baat ke baad order close karne ke liye puchein:
     const response = await fetch(geminiEndpoint, {
       method: "POST",
       headers: {
-  "Content-Type": "application/json",
-  "x-goog-api-key": env.GEMINI_API_KEY
+  "Content-Type": "application/json"
 },
       body: JSON.stringify(payload)
     });
