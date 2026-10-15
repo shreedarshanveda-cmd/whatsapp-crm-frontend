@@ -721,7 +721,8 @@ const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
 
   // 4. Save to Database
   try {
-    const leadId = `lead_${phone}`;
+    const leadRow = await env.DB.prepare('SELECT id FROM leads WHERE phone = ? LIMIT 1').bind(phone).first();
+    const leadId = leadRow ? leadRow.id : `lead_${phone}`;
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
     const aiMsgId = `ai_${Date.now()}`;
 
