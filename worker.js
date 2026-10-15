@@ -639,9 +639,14 @@ export default {
 // VEDASHREE AI SALES & AYURVEDIC DOCTOR ENGINE (WITH LOGS & FALLBACK)
 // ==========================================
 async function handleGeminiAutoReply(env, phone, customerName, userMessage, incomingMsgId) {
-  if (!isAiGloballyActive) {
-    console.log("[AI Engine] AI is turned OFF. Skipping auto-reply.");
-    return;
+  try {
+      const aiSetting = await env.DB.prepare("SELECT value FROM settings WHERE key = 'ai_active'").first();
+      if (aiSetting && aiSetting.value === "false") {
+        console.log("[AI Engine] AI is turned OFF globally in D1. Skipping auto-reply.");
+        return;
+      }
+    } catch (err) {
+      console.error("[AI Engine] Failed to read AI setting from D1:", err);
   }
   console.log(`[AI Engine] Starting reply for phone: ${phone}, msg: ${userMessage}`);
 
