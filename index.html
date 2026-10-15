@@ -975,17 +975,23 @@ async function handleDeleteMsgAction() {
   const idToDelete = activeActionMsg.id;
   closeMsgActionMenu();
   try {
-    const res = await fetch('/api/delete-message', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: idToDelete })
-    });
-    if (res.ok) {
-      await loadChatMessages();
+      const chatBox = document.querySelector('.chat-messages') || document.getElementById('chatMessages') || document.querySelector('[id*="chat"]') || document.querySelector('[class*="chat"]');
+      const savedScroll = chatBox ? chatBox.scrollTop : null;
+
+      const res = await fetch('/api/delete-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: idToDelete })
+      });
+      if (res.ok) {
+        await loadChatMessages();
+        if (chatBox && savedScroll !== null) {
+          setTimeout(() => { chatBox.scrollTop = savedScroll; }, 50);
+        }
+      }
+    } catch (e) {
+      console.error(e);
     }
-  } catch (e) {
-    console.error(e);
-  }
 }
 
 // Touch/Long-press & Desktop Right Click Controller
