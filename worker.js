@@ -25,20 +25,30 @@ export default {
         return new Response(JSON.stringify({ error: e.message }), { status: 500 });
       }
     }
-    // 2.5 AI Toggle Endpoint
+    // 2.5 AI Toggle Persistent Endpoint
     if (url.pathname === "/api/toggle-ai") {
       if (request.method === "POST") {
         try {
           const body = await request.json();
           if (typeof body.active === "boolean") {
-            isAiGloballyActive = body.active;
+            const val = body.active ? "true" : "false";
+            await env.DB.prepare(`
+              INSERT INTO settings (key, value) VALUES ('ai_active', ?)
+              ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            `).bind(val).run();
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error("[Settings Toggle Error]", e);
+        }
       }
-      return new Response(JSON.stringify({ active: isAiGloballyActive }), {
+
+      const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'ai_active'").first();
+      const isActive = row ? row.value === "true" : true;
+
+      return new Response(JSON.stringify({ active: isActive }), {
         headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
       });
-          }
+    }
 
     // 3. Meta Webhook Verification (GET)
     if (request.method === "GET" && url.pathname === "/webhook") {
