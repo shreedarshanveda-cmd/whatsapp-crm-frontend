@@ -727,7 +727,7 @@ const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
     const aiMsgId = `ai_${Date.now()}`;
 
     await env.DB.prepare(`
-      INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, time)
+      INSERT OR REPLACE INTO messages (id, lead_id, sender, text, media_url, media_type, media_name, status, created_at)
       VALUES (?, ?, 'agent', ?, NULL, 'text', NULL, 'sent', ?)
     `).bind(aiMsgId, leadId, replyText, now).run();
 
