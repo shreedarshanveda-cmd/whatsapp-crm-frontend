@@ -1,6 +1,7 @@
 import HTML_CONTENT from "./index.html";
 
 let lastWebhookError = "None";
+let isAiGloballyActive = true;
 
 export default {
   async fetch(request, env, ctx) {
@@ -24,6 +25,20 @@ export default {
         return new Response(JSON.stringify({ error: e.message }), { status: 500 });
       }
     }
+    // 2.5 AI Toggle Endpoint
+    if (url.pathname === "/api/toggle-ai") {
+      if (request.method === "POST") {
+        try {
+          const body = await request.json();
+          if (typeof body.active === "boolean") {
+            isAiGloballyActive = body.active;
+          }
+        } catch (e) {}
+      }
+      return new Response(JSON.stringify({ active: isAiGloballyActive }), {
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+      });
+          }
 
     // 3. Meta Webhook Verification (GET)
     if (request.method === "GET" && url.pathname === "/webhook") {
@@ -614,6 +629,10 @@ export default {
 // VEDASHREE AI SALES & AYURVEDIC DOCTOR ENGINE (WITH LOGS & FALLBACK)
 // ==========================================
 async function handleGeminiAutoReply(env, phone, customerName, userMessage, incomingMsgId) {
+  if (!isAiGloballyActive) {
+    console.log("[AI Engine] AI is turned OFF. Skipping auto-reply.");
+    return;
+  }
   console.log(`[AI Engine] Starting reply for phone: ${phone}, msg: ${userMessage}`);
 
   // 1. Step: Message ko turant 'Read' (Blue Tick) mark karein
