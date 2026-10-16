@@ -702,14 +702,38 @@ VEDASHREE PRODUCT & PRICING GUIDE:
   let replyText = "";
     try {
       // Force fresh cache bypass
-const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Customer Name: ${customerName || "Customer"}\nCustomer Message: "${userMessage}"` }
-        ],
-        max_tokens: 150,
-        temperature: 0.4
-      });
+// Fetch last 4 messages for human context (Low token usage)
+    let conversationHistory = [];
+    try {
+      const historyRes = await env.DB.prepare(`
+        SELECT sender, message FROM messages 
+        WHERE phone = ? 
+        ORDER BY id DESC LIMIT 4
+      `).bind(phone).all();
+
+      if (historyRes && historyRes.results && historyRes.results.length > 0) {
+        const sortedHistory = historyRes.results.reverse();
+        conversationHistory = sortedHistory.map(row => ({
+          role: (row.sender === "me" || row.sender === "ai") ? "assistant" : "user",
+          content: row.message
+        }));
+      }
+    } catch (dbErr) {
+      console.error("[Chat History Fetch Error]:", dbErr);
+    }
+
+    if (conversationHistory.length === 0) {
+      conversationHistory.push({ role: "user", content: userMessage });
+    }
+
+    const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...conversationHistory
+      ],
+      max_tokens: 120,
+      temperature: 0.4
+    });
 
       replyText = aiResponse.response || "";
       console.log("[AI Engine] Llama 3 Generated Reply:", replyText);
