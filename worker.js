@@ -715,16 +715,16 @@ CUSTOMIZED FORMULA PRICING REFERENCE:
     let conversationHistory = [];
     try {
       const historyRes = await env.DB.prepare(`
-        SELECT sender, message FROM messages 
+        SELECT sender, text FROM messages 
         WHERE phone = ? 
-        ORDER BY id DESC LIMIT 4
+        ORDER BY id DESC LIMIT 10
       `).bind(phone).all();
 
       if (historyRes && historyRes.results && historyRes.results.length > 0) {
         const sortedHistory = historyRes.results.reverse();
         conversationHistory = sortedHistory.map(row => ({
           role: (row.sender === "me" || row.sender === "ai") ? "assistant" : "user",
-          content: row.message
+          content: row.text
         }));
       }
     } catch (dbErr) {
