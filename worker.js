@@ -751,11 +751,21 @@ CUSTOMIZED FORMULA PRICING REFERENCE:
     };
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${env.GEMINI_API_KEY}`;
-    const geminiRes = await fetch(geminiUrl, {
+    let geminiRes = await fetch(geminiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(geminiPayload)
     });
+
+    if (geminiRes.status === 503) {
+      console.log("[AI Engine] Gemini 503 Overload detected, retrying after 1.5s...");
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      geminiRes = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(geminiPayload)
+      });
+    }
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
