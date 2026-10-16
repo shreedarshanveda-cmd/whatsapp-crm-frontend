@@ -716,17 +716,16 @@ VEDASHREE PRODUCT PRICING:
       console.error("[Chat History Fetch Error]:", dbErr);
     }
 
-    if (conversationHistory.length === 0) {
-      conversationHistory.push({ role: "user", content: userMessage });
-    }
+    const finalMessages = [
+      { role: "system", content: systemPrompt },
+      ...conversationHistory,
+      { role: "user", content: userMessage }
+    ];
 
     const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...conversationHistory
-      ],
+      messages: finalMessages,
       max_tokens: 120,
-      temperature: 0.4
+      temperature: 0.3
     });
 
       replyText = aiResponse.response || "";
