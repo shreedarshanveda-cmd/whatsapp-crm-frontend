@@ -731,24 +731,45 @@ CUSTOMIZED FORMULA PRICING REFERENCE:
       console.error("[Chat History Fetch Error]:", dbErr);
     }
 
-    const finalMessages = [
-      { role: "system", content: systemPrompt },
-      ...conversationHistory,
-      { role: "user", content: userMessage }
-    ];
+    const formattedHistory = conversationHistory.map(row => ({
+      role: row.role === "assistant" ? "model" : "user",
+      parts: [{ text: row.content }]
+    }));
 
-    const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
-      messages: finalMessages,
-      max_tokens: 120,
-      temperature: 0.3
+    const geminiPayload = {
+      system_instruction: {
+        parts: [{ text: systemPrompt }]
+      },
+      contents: [
+        ...formattedHistory,
+        { role: "user", parts: [{ text: userMessage }] }
+      ],
+      generationConfig: {
+        maxOutputTokens: 150,
+        temperature: 0.3
+      }
+    };
+
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+    const geminiRes = await fetch(geminiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(geminiPayload)
     });
 
-      replyText = aiResponse.response || "";
-      console.log("[AI Engine] Llama 3 Generated Reply:", replyText);
-    } catch (err) {
-      console.error("[AI Engine] Llama 3 Fetch Exception:", err);
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error("[AI Engine] Gemini API Error:", geminiRes.status, errText);
       return;
     }
+
+    const geminiData = await geminiRes.json();
+    replyText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    console.log("[AI Engine] Gemini Generated Reply:", replyText);
+    } catch (err) {
+      console.error("[AI Engine] Gemini Fetch Exception:", err);
+      return;
+                                  }
 
   if (!replyText || replyText.trim().length === 0) {
     console.error("[AI Engine] Reply text is empty, aborting.");
