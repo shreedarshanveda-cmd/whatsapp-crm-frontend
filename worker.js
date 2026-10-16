@@ -745,12 +745,12 @@ CUSTOMIZED FORMULA PRICING REFERENCE:
         { role: "user", parts: [{ text: userMessage }] }
       ],
       generationConfig: {
-        maxOutputTokens: 150,
+        maxOutputTokens: 800,
         temperature: 0.3
       }
     };
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${env.GEMINI_API_KEY}`;
     const geminiRes = await fetch(geminiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
