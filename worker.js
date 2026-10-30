@@ -432,32 +432,23 @@ export default {
           { name: "vedashree_vitality_consult_v1", language: "en", status: "APPROVED" }
         ];
 
-        if (env.WHATSAPP_TOKEN) {
-          const wabaRes = await fetch("https://graph.facebook.com/v20.0/1196276640235299?fields=whatsapp_business_account", {
-            headers: { "Authorization": `Bearer ${env.WHATSAPP_TOKEN}` }
-          });
-          if (wabaRes.ok) {
-            const wabaData = await wabaRes.json();
-            const wabaId = wabaData.whatsapp_business_account?.id;
-            if (wabaId) {
-              const tmplRes = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?status=APPROVED&limit=50`, {
-                headers: { "Authorization": `Bearer ${env.WHATSAPP_TOKEN}` }
-              });
-              if (tmplRes.ok) {
-                const tmplData = await tmplRes.json();
-                if (Array.isArray(tmplData.data) && tmplData.data.length > 0) {
-                  templates = tmplData.data.map(t => ({
-                    name: t.name,
-                    language: t.language,
-                    status: t.status,
-                    has_param: JSON.stringify(t.components || []).includes("{{1}}")
-                  }));
-                }
-              }
-            }
-          }
+        const wabaId = env.WABA_ID;
+    if (env.WHATSAPP_TOKEN && wabaId) {
+      const tmplRes = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/message_templates?status=APPROVED&limit=100`, {
+        headers: { "Authorization": `Bearer ${env.WHATSAPP_TOKEN}` }
+      });
+      if (tmplRes.ok) {
+        const tmplData = await tmplRes.json();
+        if (Array.isArray(tmplData.data) && tmplData.data.length > 0) {
+          templates = tmplData.data.map(t => ({
+            name: t.name,
+            language: t.language,
+            status: t.status,
+            has_param: JSON.stringify(t.components || []).includes("{{1}}")
+          }));
         }
-
+      }
+    }
         return new Response(JSON.stringify(templates), {
           headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
         });
